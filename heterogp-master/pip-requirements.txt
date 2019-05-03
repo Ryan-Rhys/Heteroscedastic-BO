@@ -1,6 +1,0 @@
-numpy
-tensorflow
-matplotlib
-jupyter
-ipython
-gpflow
