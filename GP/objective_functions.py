@@ -8,13 +8,14 @@ from matplotlib import pyplot as plt
 import numpy as np
 
 
-def linear_sin_noise(X, noise, fplot=True):
+def linear_sin_noise(X, noise, plot_sample, fplot=True):
     """
     1D noise function defined where noise increases linearly in the input domain. Bounds for a bimodal function could be
     [0, 3*pi]
 
     :param X: input dimension
     :param noise: noise level coefficient for linearly increasing noise
+    :param plot_sample: Sample for plotting purposes (points in the input domain)
     :param fplot: Boolean indicating whether to plot the objective, samples and noise function
     :return: f(X) + noise(X)
     """
@@ -22,14 +23,13 @@ def linear_sin_noise(X, noise, fplot=True):
     linear_sin_noise = np.sin(X) + (noise * np.random.randn(*X.shape) * X)
 
     if fplot:
-        #plt.plot(X, linear_sin_noise, '+', color='green', markersize='12', linewidth='8', label='samples with Gaussian noise')
-        #plt.plot(X, np.sin(X), color='blue', label='mean of generative process')
-        plt.plot(X, noise*X, color='red', label='noise function')
+        plt.plot(X, linear_sin_noise, '+', color='green', markersize='12', linewidth='8', label='samples with Gaussian noise')
+        plt.plot(plot_sample, np.sin(plot_sample), color='blue', label='mean of generative process')
+        plt.plot(plot_sample, noise*plot_sample, color='red', label='noise function')
         plt.xlabel('x')
-        plt.ylabel('noise(x)')
-        plt.title('Noise Function')
-        #plt.legend()
-        plt.ylim(0, 3)
+        plt.title('Heteroscedastic Sine Wave')
+        plt.legend()
+        plt.ylim(-3, 3)
         plt.xlim(0, 3*np.pi)
         plt.show()
 
@@ -44,13 +44,15 @@ def max_sin_noise_objective(X, noise, fplot=True):
     :param X: input to evaluate objective; can be an array of values
     :param noise: noise level coefficient
     :param fplot: Boolean indicating whether to plot the black-box objective
-    :return: value of the black-box objective that penalises aleatoric noise
+    :return: value of the black-box objective that penalises aleatoric noise, value of the noise at X
     """
 
-    objective = np.sin(X) - (noise * X)
+    noise_value = noise * X  # value of the heteroscedastic noise at the point(s) X
+    objective_value = np.sin(X) # value of the objective at the point(s) X
+    composite_objective = objective_value - noise_value
 
     if fplot:
-        plt.plot(X, objective, color='purple', label='objective - aleatoric noise')
+        plt.plot(X, composite_objective, color='purple', label='objective - aleatoric noise')
         plt.xlabel('x')
         plt.ylabel('objective(x)')
         plt.title('Black-box Objective')
@@ -58,7 +60,10 @@ def max_sin_noise_objective(X, noise, fplot=True):
         plt.xlim(0, 3*np.pi)
         plt.show()
 
-    return objective
+    composite_objective = float(composite_objective)
+    noise_value = float(noise_value)
+
+    return composite_objective, noise_value
 
 
 def min_branin_noise_function(x1, x2):

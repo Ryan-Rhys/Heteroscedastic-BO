@@ -28,6 +28,8 @@ def posterior_predictive(xs, y, xs_star, noise, l, sigma_f, mean_func=zero_mean,
              the Cholesky decomposition of the covariance matrix.
     """
 
+    jitter = 1e-3
+
     m = len(xs)  # number of training points
     mean_vector = mean_func(xs)  # mean function applied to the training inputs
     K = kernel(xs, xs, l, sigma_f)  # covariance matrix applied to the x-values of the data points
@@ -43,6 +45,8 @@ def posterior_predictive(xs, y, xs_star, noise, l, sigma_f, mean_func=zero_mean,
     if not full_cov:
         pred_var = np.diag(pred_var)
         pred_var = pred_var.reshape(pred_mean.shape)
+
+    pred_var += (jitter * np.eye(pred_var.shape[0]))
 
     return pred_mean, pred_var, K, L
 
@@ -204,19 +208,44 @@ def my_nll_fn(xs, y, noise, kernel_function, mean_function):
     return step
 
 
-def nll_fn(X_train, Y_train, noise):
+def nll_fn(X_train, Y_train):
     """
     :param X_train: training inputs locations
     :param Y_train: training targets
-    :param noise: noise parameter
     :return: optimisation step
 
     Martin Krasser's negative log marginal likelihood computation to be fed into the scipy optimiser.
 
     Returns a function that computes the negative log-likelihood for training data X_train and Y_train and given
-    noise level. Args: X_train: training locations (m x d). Y_train: training targets (m x 1). noise: known noise
-    level of Y_train. Returns: Minimization objective.
+    noise level. Args: X_train: training locations (m x d). Y_train: training targets (m x 1).
+    Returns: Minimization objective. July 12th - adding noise as an extra optimisation parameter
     """
+
+    jitter = 1e-3  # additive jitter term to prevent numerical instability
+
+    def step(theta):
+        K = scipy_kernel(X_train, X_train, l=theta[0:len(theta) - 2], sigma_f=theta[-2]) + theta[-1]**2 + jitter * np.eye(len(X_train))
+        # Compute determinant via Cholesky decomposition
+        return np.sum(np.log(np.diagonal(cholesky(K)))) + 0.5 * Y_train.T.dot(inv(K).dot(Y_train)) + \
+               0.5 * len(X_train) * np.log(2*np.pi)
+    return step
+
+
+def nll_fn_het(X_train, Y_train, noise):
+    """
+    :param X_train: training inputs locations
+    :param Y_train: training targets
+    :param noise: fixed noise parameter of y_train
+    :return: optimisation step
+
+    Martin Krasser's negative log marginal likelihood computation to be fed into the scipy optimiser.
+
+    Returns a function that computes the negative log-likelihood for training data X_train and Y_train and given
+    noise level. Args: X_train: training locations (m x d). Y_train: training targets (m x 1).
+    Returns: Minimization objective. For the heteroscedastic GP we don't optimise the noise level. For some reason it
+    works better this way.
+    """
+
     def step(theta):
         K = scipy_kernel(X_train, X_train, l=theta[0:len(theta) - 1], sigma_f=theta[-1]) + noise**2 * np.eye(len(X_train))
         # Compute determinant via Cholesky decomposition

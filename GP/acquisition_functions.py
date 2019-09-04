@@ -40,7 +40,7 @@ def expected_improvement(X, X_sample, gpr, xi=0.01):
     return ei
 
 
-def my_expected_improvement(X, X_sample, Y_sample, noise, l_init, sigma_f_init):
+def my_expected_improvement(X, X_sample, Y_sample, noise, l_opt, sigma_f_opt, mu_sample_opt):
     """
     Computes the EI using a homoscedastic GP.
 
@@ -48,14 +48,11 @@ def my_expected_improvement(X, X_sample, Y_sample, noise, l_init, sigma_f_init):
     :param X_sample: Sample locations (m x d).
     :param Y_sample:  values at the sample locations (m x 1).
     :param noise: noise level in the latent function.
-    :param l_init: lengthscale(s) of the GP kernel.
-    :param sigma_f_init: vertical lengthscale of the GP kernel.
+    :param l_opt: optimised lengthscale(s) of the GP kernel.
+    :param sigma_f_opt: optimised vertical lengthscale of the GP kernel.
+    :param mu_sample_opt: incumbent eta
     :return: Expected improvements at points X.
     """
-
-    l_opt, sigma_f_opt = bo_fit_homo_gp(X_sample, Y_sample, noise, l_init, sigma_f_init)
-    mu_sample, _ = bo_predict_homo_gp(X_sample, Y_sample, X_sample, noise, l_opt, sigma_f_opt)  # predictive mean for sample locations
-    mu_sample_opt = np.max(mu_sample)
 
     mu, var = bo_predict_homo_gp(X_sample, Y_sample, X, noise, l_opt, sigma_f_opt)
     std = np.sqrt(np.diag(var))
@@ -69,30 +66,25 @@ def my_expected_improvement(X, X_sample, Y_sample, noise, l_init, sigma_f_init):
     return ei
 
 
-def heteroscedastic_expected_improvement(X, X_sample, Y_sample, noise, l_init, sigma_f_init, l_noise_init,
-                                         sigma_f_noise_init, gp2_noise, num_iters, sample_size, hetero_ei=True):
+def heteroscedastic_expected_improvement(X, X_sample, Y_sample, variance_estimator, noise_func, gp1_l_opt, gp1_sigma_f_opt, gp2_l_opt,
+                                         gp2_sigma_f_opt, gp2_noise, mu_sample_opt, hetero_ei=True):
     """
     Computes the EI using a heteroscedastic GP.
 
     :param X: Test locations (n x d)
     :param X_sample: Sample locations (m x d)
     :param Y_sample: Sample labels (m x 1)
-    :param noise: initial noise level
-    :param l_init: GP1 lengthscale
-    :param sigma_f_init: GP1 signal amplitude
-    :param l_noise_init: GP2 lengthscale
-    :param sigma_f_noise_init: GP2 signal amplitude
+    :param variances_estimator: estimated variance at sample locations (m x 1)
+    :param noise_func: learned noise function
+    :param gp1_l_opt: optimised lengthscale for GP1
+    :param gp1_sigma_f_opt: optimised lengthscale for GP1
+    :param gp2_l_opt: optimised lengthscale for GP2
+    :param gp2_sigma_f_opt: optimised signal amplitude for GP2
     :param gp2_noise: GP2 noise level
-    :param num_iters: number of iterations to run most likely heteroscedastic GP for.
-    :param sample_size: sample size for constructing the variance estimator of the heteroscedastic GP
+    :param mu_sample_opt: incumbent eta
     :param hetero_ei: whether to use the ei minus one standard deviation as acquisition function
     :return: expected improvement at the test locations.
     """
-
-    noise_func, gp2_noise, gp1_l_opt, gp1_sigma_f_opt, gp2_l_opt, gp2_sigma_f_opt, variance_estimator = \
-        bo_fit_hetero_gp(X_sample, Y_sample, noise, l_init, sigma_f_init, l_noise_init, sigma_f_noise_init, gp2_noise, num_iters, sample_size)
-    mu_sample, _, _ = bo_predict_hetero_gp(X_sample, Y_sample, variance_estimator, X_sample, noise_func, gp1_l_opt, gp1_sigma_f_opt, gp2_noise, gp2_l_opt, gp2_sigma_f_opt)
-    mu_sample_opt = np.max(mu_sample)
 
     mu, var, aleatoric_std = bo_predict_hetero_gp(X_sample, Y_sample, variance_estimator, X, noise_func, gp1_l_opt, gp1_sigma_f_opt, gp2_noise, gp2_l_opt, gp2_sigma_f_opt)
     std = np.sqrt(np.diag(var))
@@ -116,7 +108,7 @@ def heteroscedastic_expected_improvement(X, X_sample, Y_sample, noise, l_init, s
     return ei
 
 
-def my_propose_location(acquisition, X_sample, Y_sample, noise, l_init, sigma_f_init, bounds, n_restarts=25, min_val=1):
+def my_propose_location(acquisition, X_sample, Y_sample, noise, l_init, sigma_f_init, bounds, plot_sample, n_restarts=1, min_val=1):
     """
     Proposes the next sampling point by optimising the acquisition function.
 
@@ -127,6 +119,7 @@ def my_propose_location(acquisition, X_sample, Y_sample, noise, l_init, sigma_f_
     :param l_init: GP lengthscale to start optimisation with.
     :param sigma_f_init: vertical lengthscale to start optimisation with.
     :param bounds: bounds of the BO problem.
+    :param plot_sample: for plotting the predictive mean and variance. Same for as X_sample but usually bigger.
     :param n_restarts: number of restarts for the optimiser.
     :param min_val: minimum value to do better than (will likely change depending on the problem).
     :return: Location of the acquisition function maximum.
@@ -134,6 +127,15 @@ def my_propose_location(acquisition, X_sample, Y_sample, noise, l_init, sigma_f_
 
     dim = X_sample.shape[1]
     min_x = None
+
+    l_opt, sigma_f_opt = bo_fit_homo_gp(X_sample, Y_sample, noise, l_init, sigma_f_init)
+
+    # Purpose of this line is just to plot.
+
+    _, _ = bo_predict_homo_gp(X_sample, Y_sample, plot_sample, noise, l_opt, sigma_f_opt, f_plot=False)  # predictive mean at test locations (uniformly spaced in the bounds.
+
+    mu_sample, _ = bo_predict_homo_gp(X_sample, Y_sample, X_sample, noise, l_opt, sigma_f_opt)  # predictive mean for sample locations
+    mu_sample_opt = np.max(mu_sample)
 
     def min_obj(X):
         """
@@ -145,21 +147,29 @@ def my_propose_location(acquisition, X_sample, Y_sample, noise, l_init, sigma_f_
 
         X = X.reshape(-1, 1).T  # Might have to be changed for higher dimensions (have added .T since writing this)
 
-        return -acquisition(X, X_sample, Y_sample, noise, l_init, sigma_f_init)
+        return -acquisition(X, X_sample, Y_sample, noise, l_opt, sigma_f_opt, mu_sample_opt)
 
     # Find the best optimum by starting from n_restart different random points.
-    for x0 in np.random.uniform(bounds[:, 0], bounds[:, 1], size=(n_restarts, dim)):
-        res = minimize(min_obj, x0=x0, bounds=bounds, method='L-BFGS-B')
-        if res.fun < min_val:
-            min_val = res.fun[0]
-            min_x = res.x
+
+    if dim == 1:  # change bounds for a single dimensions. Added for UCI dataset NAS experiments
+        for x0 in np.random.uniform(bounds[0], bounds[1], size=(n_restarts, dim)):
+            res = minimize(min_obj, x0=x0, bounds=bounds.reshape(-1, 2), method='L-BFGS-B')
+            if res.fun < min_val:
+                min_val = res.fun[0]
+                min_x = res.x
+    else:
+        for x0 in np.random.uniform(bounds[:, 0], bounds[:, 1], size=(n_restarts, dim)):
+            res = minimize(min_obj, x0=x0, bounds=bounds, method='L-BFGS-B')
+            if res.fun < min_val:
+                min_val = res.fun[0]
+                min_x = res.x
 
     return min_x.reshape(-1, 1).T
 
 
 def heteroscedastic_propose_location(acquisition, X_sample, Y_sample, noise, l_init, sigma_f_init,
                                      l_noise_init, sigma_f_noise_init, gp2_noise, num_iters, sample_size,
-                                     bounds, n_restarts=25, min_val=1):
+                                     bounds, plot_sample, n_restarts=25, min_val=1):
     """
     Proposes the next sampling point by optimising the acquisition function.
 
@@ -175,6 +185,7 @@ def heteroscedastic_propose_location(acquisition, X_sample, Y_sample, noise, l_i
     :param num_iters: number of iterations to run the heteroscedastic GP
     :param sample_size: samples for variance estimator.
     :param bounds: bounds of the BO problem.
+    :param plot_sample: for plotting the predictive mean and variance. Same for as X_sample but usually bigger.
     :param n_restarts: number of restarts for the optimiser.
     :param min_val: minimum value to do better than (will likely change depending on the problem).
     :return: Location of the acquisition function maximum.
@@ -182,6 +193,18 @@ def heteroscedastic_propose_location(acquisition, X_sample, Y_sample, noise, l_i
 
     dim = X_sample.shape[1]
     min_x = None
+
+    # Set f_plot to true if you want to test whether the first iteration of the heteroscedastic GP is equivalent to the homoscedastic GP.
+
+    noise_func, gp2_noise, gp1_l_opt, gp1_sigma_f_opt, gp2_l_opt, gp2_sigma_f_opt, variance_estimator = \
+        bo_fit_hetero_gp(X_sample, Y_sample, noise, l_init, sigma_f_init, l_noise_init, sigma_f_noise_init, gp2_noise, num_iters, sample_size, plot_sample, f_plot=False)
+
+    # Purpose of this line is for plotting.
+
+    _, _, _ = bo_predict_hetero_gp(X_sample, Y_sample, variance_estimator, X_sample, noise_func, gp1_l_opt, gp1_sigma_f_opt, gp2_noise, gp2_l_opt, gp2_sigma_f_opt, f_plot=False, f_plot2=False)
+
+    mu_sample, _, _ = bo_predict_hetero_gp(X_sample, Y_sample, variance_estimator, X_sample, noise_func, gp1_l_opt, gp1_sigma_f_opt, gp2_noise, gp2_l_opt, gp2_sigma_f_opt)
+    mu_sample_opt = np.max(mu_sample)
 
     def min_obj(X):
         """
@@ -193,13 +216,21 @@ def heteroscedastic_propose_location(acquisition, X_sample, Y_sample, noise, l_i
 
         X = X.reshape(-1, 1).T  # Might have to be changed for higher dimensions.
 
-        return -acquisition(X, X_sample, Y_sample, noise, l_init, sigma_f_init, l_noise_init, sigma_f_noise_init, gp2_noise, num_iters, sample_size)
+        #return -acquisition(X, X_sample, Y_sample, noise, l_init, sigma_f_init, l_noise_init, sigma_f_noise_init, gp2_noise, num_iters, sample_size)
+        return -acquisition(X, X_sample, Y_sample, variance_estimator, noise_func, gp1_l_opt, gp1_sigma_f_opt, gp2_l_opt, gp2_sigma_f_opt, gp2_noise, mu_sample_opt, hetero_ei=True)
 
-    # Find the best optimum by starting from n_restart different random points.
-    for x0 in np.random.uniform(bounds[:, 0], bounds[:, 1], size=(n_restarts, dim)):
-        res = minimize(min_obj, x0=x0, bounds=bounds, method='L-BFGS-B')
-        if res.fun < min_val:
-            min_val = res.fun[0]
-            min_x = res.x
+    if dim == 1:  # change bounds for a single dimensions. Added for UCI dataset NAS experiments
+        for x0 in np.random.uniform(bounds[0], bounds[1], size=(n_restarts, dim)):
+            res = minimize(min_obj, x0=x0, bounds=bounds.reshape(-1, 2), method='L-BFGS-B')
+            if res.fun < min_val:
+                min_val = res.fun[0]
+                min_x = res.x
+    else:
+        # Find the best optimum by starting from n_restart different random points.
+        for x0 in np.random.uniform(bounds[:, 0], bounds[:, 1], size=(n_restarts, dim)):
+            res = minimize(min_obj, x0=x0, bounds=bounds, method='L-BFGS-B')
+            if res.fun < min_val:
+                min_val = res.fun[0]
+                min_x = res.x
 
     return min_x.reshape(-1, 1).T  # added the tranpose for (2,) cases. shouldn't affect (1,) cases.
