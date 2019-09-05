@@ -66,15 +66,16 @@ def my_expected_improvement(X, X_sample, Y_sample, noise, l_opt, sigma_f_opt, mu
     return ei
 
 
-def heteroscedastic_expected_improvement(X, X_sample, Y_sample, variance_estimator, noise_func, gp1_l_opt, gp1_sigma_f_opt, gp2_l_opt,
-                                         gp2_sigma_f_opt, gp2_noise, mu_sample_opt, hetero_ei=True):
+def heteroscedastic_expected_improvement(X, X_sample, Y_sample, variance_estimator, noise_func, gp1_l_opt,
+                                         gp1_sigma_f_opt, gp2_l_opt, gp2_sigma_f_opt, gp2_noise, mu_sample_opt,
+                                         hetero_ei=True):
     """
     Computes the EI using a heteroscedastic GP.
 
     :param X: Test locations (n x d)
     :param X_sample: Sample locations (m x d)
     :param Y_sample: Sample labels (m x 1)
-    :param variances_estimator: estimated variance at sample locations (m x 1)
+    :param variance_estimator: estimated variance at sample locations (m x 1)
     :param noise_func: learned noise function
     :param gp1_l_opt: optimised lengthscale for GP1
     :param gp1_sigma_f_opt: optimised lengthscale for GP1
@@ -108,7 +109,8 @@ def heteroscedastic_expected_improvement(X, X_sample, Y_sample, variance_estimat
     return ei
 
 
-def my_propose_location(acquisition, X_sample, Y_sample, noise, l_init, sigma_f_init, bounds, plot_sample, n_restarts=1, min_val=1):
+def my_propose_location(acquisition, X_sample, Y_sample, noise, l_init, sigma_f_init, bounds, plot_sample, n_restarts=1,
+                        min_val=1):
     """
     Proposes the next sampling point by optimising the acquisition function.
 
