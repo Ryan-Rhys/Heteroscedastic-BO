@@ -42,14 +42,14 @@ if __name__ == '__main__':
         np.random.seed(numpy_seed)
         set_random_seed(tf_seed)
 
-        noise = 1.5  # noise coefficient will be noise(X) will be linear e.g. 0.2 * X
+        noise_coeff = 1.5  # noise coefficient will be noise(X) will be linear e.g. 0.2 * X
         bounds = np.array([0, 3*np.pi]).reshape(-1, 1)  # bounds of the Bayesian Optimisation problem.
 
         #  Initial noisy data points sampled uniformly at random from the input space.
 
         X_init = np.random.uniform(0, 3*np.pi, 7).reshape(-1, 1)  # sample 3 points at random from the bounds to initialise with
         plot_sample = np.linspace(0, 3*np.pi, 50).reshape(-1, 1)  # samples for plotting purposes
-        Y_init = linear_sin_noise(X_init, noise, plot_sample, fplot=False)
+        Y_init = linear_sin_noise(X_init, noise_coeff, plot_sample, fplot=False)
 
         # Initialize samples
         homo_X_sample = X_init.reshape(-1, 1)
@@ -61,6 +61,7 @@ if __name__ == '__main__':
 
         l_init = 1.0
         sigma_f_init = 1.0
+        noise = 1.0
         l_noise_init = 1
         sigma_f_noise_init = 1.0
         gp2_noise = 1.0
@@ -88,8 +89,8 @@ if __name__ == '__main__':
             homo_collected_x.append(homo_X_next)
 
             # Obtain next noisy sample from the objective function
-            homo_Y_next = linear_sin_noise(homo_X_next, noise, plot_sample, fplot=False)
-            homo_composite_obj_val, homo_noise_val = max_sin_noise_objective(homo_X_next, noise, fplot=False)
+            homo_Y_next = linear_sin_noise(homo_X_next, noise_coeff, plot_sample, fplot=False)
+            homo_composite_obj_val, homo_noise_val = max_sin_noise_objective(homo_X_next, noise_coeff, fplot=False)
 
             if homo_composite_obj_val > homo_best_so_far:
                 homo_best_so_far = homo_composite_obj_val
@@ -108,8 +109,8 @@ if __name__ == '__main__':
             het_collected_x.append(het_X_next)
 
             # Obtain next noisy sample from the objective function
-            het_Y_next = linear_sin_noise(het_X_next, noise, plot_sample, fplot=False)
-            het_composite_obj_val, het_noise_val = max_sin_noise_objective(het_X_next, noise, fplot=False)
+            het_Y_next = linear_sin_noise(het_X_next, noise_coeff, plot_sample, fplot=False)
+            het_composite_obj_val, het_noise_val = max_sin_noise_objective(het_X_next, noise_coeff, fplot=False)
 
             if het_composite_obj_val > het_best_so_far:
                 het_best_so_far = het_composite_obj_val
