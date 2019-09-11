@@ -6,6 +6,7 @@ This module contains objective functions for Bayesian Optimisation.
 
 from matplotlib import pyplot as plt
 import numpy as np
+from utils import load_free_solv,get_y_and_std_from_x, load_p_inorg, load_quasar
 
 
 def linear_sin_noise(X, noise, plot_sample, fplot=True):
@@ -178,3 +179,59 @@ def heteroscedastic_branin(x1, x2):
     f += noise(x1, x2) * np.random.randn(*x1.shape)  # Add noise to the Branin function f.
 
     return f
+
+
+def min_free_solv_objective(X):
+    """
+    Objective function for minimizing f(x) + s(x) (f is the function and s is the true noise).
+
+    :param x: input to evaluate objective; can be an array of values
+    :return: true function value and true noise value
+    """
+
+    #### THIS FUNCTION IS WRONG! IT SHOULD RETURN THE OBJECTIVE, EXPERIMENTAL MEAN - EXPERIMENTAL NOISE
+
+    # Load the free solvation energies dataset
+    X_ref, Y_ref, U_ref = load_free_solv()
+
+    # Get the indices of the desired locations in the dataset
+    n_X = X.shape[0]
+    X_idx = np.array([]).astype(int)
+    for i in range(n_X):
+        x = X[i]
+        x_idx = np.where((X_ref > x - 1e-6).all(axis=1) & (X_ref < x + 1e-6).all(axis=1))[0]
+        X_idx = np.append(X_idx,x_idx)
+    
+    # Get the true function and noise values
+    function_value = Y_ref[X_idx]
+    noise_value = U_ref[X_idx]
+    
+    return function_value, noise_value
+
+def max_p_inorg_objective(X):
+    """
+    Give composite objective (y - true noise) for the p_inorg dataset.
+
+    :param X: locations at which to return the objective.
+    :return: objective y - true noise
+    """
+
+    y, std = get_y_and_std_from_x(X,load_p_inorg)
+    obj = y-std
+    
+    return obj[0]
+
+def max_quasar_objective(X):
+    """
+    Give composite objective (y - true std) for the quasar dataset.
+
+    :param X: locations at which to return the objective.
+    :return: objective y - true nstd
+    """
+
+    y, std = get_y_and_std_from_x(X,load_quasar)
+    obj = y-std
+    
+    return obj[0]
+
+

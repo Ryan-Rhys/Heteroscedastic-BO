@@ -11,6 +11,11 @@ from scipy.linalg import cholesky, inv, solve_triangular
 from kernels import kernel, anisotropic_kernel, scipy_kernel
 from mean_functions import zero_mean
 
+import pandas as pd
+import os
+import matplotlib.pyplot as plt
+from matplotlib.ticker import MaxNLocator
+
 
 def posterior_predictive(xs, y, xs_star, noise, l, sigma_f, mean_func=zero_mean, kernel=anisotropic_kernel, full_cov=True):
     """
@@ -325,3 +330,134 @@ def one_d_train_test_split(xs, ys, split_ratio):
     ys_test = ys_test.reshape(len(ys_test), 1)
 
     return xs_train, ys_train, xs_test, ys_test
+
+
+def load_free_solv():
+    """
+    Load the free solvation energy dataset.
+    
+    :return: x locations, y values and uncertainty (std) values
+    """
+
+    current_path = os.getcwd().split('Heteroscedastic-BO')
+    if len(current_path) == 1:
+        raise RuntimeError('BO must be run within directory Heteroscedastic-BO')
+    hetGP_path = current_path[0]
+    free_solv_path = hetGP_path + '/Heteroscedastic-BO/GP/datasets/FreeSolv_Dataset/'
+
+    X = pd.read_csv(free_solv_path + 'latent_freesolv_features.txt',sep=' ',header=None).values
+    Y = pd.read_pickle(free_solv_path + 'free_energies.pickle')
+    U = pd.read_pickle(free_solv_path + 'uncertainties.pickle') # The uncertainties are standard deviations, as specified here: https://pubs.acs.org/doi/full/10.1021/jp0667442
+
+    return X,Y,U
+
+
+def load_p_inorg():
+    """
+    Load the p inorg dataset.
+    
+    :return: x locations, y values and uncertainty (std) values
+    """    
+
+    current_path = os.getcwd().split('Heteroscedastic-BO')
+    if len(current_path) == 1:
+        raise RuntimeError('BO must be run within directory Heteroscedastic-BO')
+    hetGP_path = current_path[0]
+    p_inorg_path = hetGP_path + '/Heteroscedastic-BO/GP/datasets/P_inorg_Dataset_Hou_2017/'
+
+    X = pd.read_csv(p_inorg_path + 'x_dbd.txt',sep='\t',header=None).values.squeeze()
+    Y = pd.read_csv(p_inorg_path + 'y_p.txt',sep='\t',header=None).values.squeeze()
+    U = pd.read_csv(p_inorg_path + 'std.txt',sep='\t',header=None).values.squeeze()
+
+    np.random.seed(0)
+    X = X + np.random.randn(*X.shape)*1e-6 # Dirty trick to make them distinguishable
+
+    return X,Y,U
+
+def load_quasar():
+    """
+    Load the quasar dataset.
+    
+    :return: x locations, y values and uncertainty (std) values
+    """    
+
+    current_path = os.getcwd().split('Heteroscedastic-BO')
+    if len(current_path) == 1:
+        raise RuntimeError('BO must be run within directory Heteroscedastic-BO')
+    hetGP_path = current_path[0]
+    quasar_path = hetGP_path + '/Heteroscedastic-BO/GP/datasets/Quasar_Dataset_Scheneider_2005/'
+
+    X = pd.read_csv(quasar_path + 'x.txt',sep='\t',header=None).values.squeeze()
+    Y = pd.read_csv(quasar_path + 'y.txt',sep='\t',header=None).values.squeeze()
+    U = pd.read_csv(quasar_path + 's.txt',sep='\t',header=None).values.squeeze()
+
+    return X,Y,U
+
+
+def get_y_and_std_from_x(X,load_dataset_func):
+    """
+    When your function can only be evaluated at discrete points (i.e. the points you have in your dataset),
+    get y and std values from x values.
+    """
+
+    X_ref, Y_ref, U_ref = load_dataset_func()
+
+    # Get the indices of the desired locations in the dataset
+    X_idx = get_x_idx(X,X_ref)
+    
+    # Get the true function and noise values
+    function_value = Y_ref[X_idx]
+    std_value = U_ref[X_idx]
+    
+    return function_value, std_value
+
+
+def get_x_idx(X,X_dataset):
+    """
+    Get index of X sample(s) within the X dataset.
+    :param X: samples to get index of
+    :param X_dataset: dataset to get index from
+    :return: integer with the indices
+    """
+
+    n_X = X.shape[0]
+    X_idx = np.array([]).astype(int)
+    stds = np.array([]).astype(float)
+    for i in range(n_X):
+        x = X[i]
+        x_idx = np.where((X_dataset > x - 1e-10) & (X_dataset < x + 1e-10))
+        X_idx = np.append(X_idx,x_idx)
+
+    return X_idx
+
+
+
+def plot_BO_progress(homo_means, homo_std, het_means, het_std, filepath=None):
+    """
+    Produce a figure in the style of the figure from the toy sin experiment.
+
+    :param homo_means: numpy array with the means of the homoscedastic objective values
+    :param homo_std: numpy array with the stds of the homoscedastic objective values
+    :param het_means: numpy array with the means of the heteroscedastic objective values
+    :param het_std: numpy array with the stds of the heteroscedastic objective values
+    """
+
+    iter_x = np.arange(1,homo_means.shape[0]+1)
+    ax = plt.gca()
+    ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+    plt.plot(iter_x, homo_means, color='r', label='Homoscedastic')
+    plt.plot(iter_x, het_means, color='b', label='Heteroscedastic')
+    lower_homo = homo_means - homo_std
+    upper_homo = homo_means + homo_std
+    lower_hetero = het_means - het_std
+    upper_hetero = het_means + het_std
+    plt.fill_between(iter_x, lower_homo, upper_homo, color='r', label='Homoscedastic', alpha=0.1)
+    plt.fill_between(iter_x, lower_hetero, upper_hetero, color='b', label='Heteroscedastic', alpha=0.1)
+    plt.title('Best Objective Function Value Found so Far')
+    plt.xlabel('Number of Function Evaluations')
+    plt.ylabel('Objective Function Value - Noise')
+    plt.legend(loc=4)
+    if filepath is None:
+        plt.show()
+    else:
+        plt.savefig(filepath)

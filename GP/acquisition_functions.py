@@ -54,6 +54,8 @@ def my_expected_improvement(X, X_sample, Y_sample, noise, l_opt, sigma_f_opt, mu
     :return: Expected improvements at points X.
     """
 
+    #import pdb; pdb.set_trace()
+
     mu, var = bo_predict_homo_gp(X_sample, Y_sample, X, noise, l_opt, sigma_f_opt)
     std = np.sqrt(np.diag(var))
 
@@ -66,16 +68,15 @@ def my_expected_improvement(X, X_sample, Y_sample, noise, l_opt, sigma_f_opt, mu
     return ei
 
 
-def heteroscedastic_expected_improvement(X, X_sample, Y_sample, variance_estimator, noise_func, gp1_l_opt,
-                                         gp1_sigma_f_opt, gp2_l_opt, gp2_sigma_f_opt, gp2_noise, mu_sample_opt,
-                                         hetero_ei=True):
+def heteroscedastic_expected_improvement(X, X_sample, Y_sample, variance_estimator, noise_func, gp1_l_opt, gp1_sigma_f_opt, gp2_l_opt,
+                                         gp2_sigma_f_opt, gp2_noise, mu_sample_opt, hetero_ei=True):
     """
     Computes the EI using a heteroscedastic GP.
 
     :param X: Test locations (n x d)
     :param X_sample: Sample locations (m x d)
     :param Y_sample: Sample labels (m x 1)
-    :param variance_estimator: estimated variance at sample locations (m x 1)
+    :param variances_estimator: estimated variance at sample locations (m x 1)
     :param noise_func: learned noise function
     :param gp1_l_opt: optimised lengthscale for GP1
     :param gp1_sigma_f_opt: optimised lengthscale for GP1
@@ -109,8 +110,7 @@ def heteroscedastic_expected_improvement(X, X_sample, Y_sample, variance_estimat
     return ei
 
 
-def my_propose_location(acquisition, X_sample, Y_sample, noise, l_init, sigma_f_init, bounds, plot_sample, n_restarts=1,
-                        min_val=1):
+def my_propose_location(acquisition, X_sample, Y_sample, noise, l_init, sigma_f_init, plot_sample, n_restarts=1, min_val=1, bounds=None, x_to_evaluate=None):
     """
     Proposes the next sampling point by optimising the acquisition function.
 
@@ -124,6 +124,7 @@ def my_propose_location(acquisition, X_sample, Y_sample, noise, l_init, sigma_f_
     :param plot_sample: for plotting the predictive mean and variance. Same for as X_sample but usually bigger.
     :param n_restarts: number of restarts for the optimiser.
     :param min_val: minimum value to do better than (will likely change depending on the problem).
+    :param x_to_evaluate: iterable of locations that may potentially be evaluated. Useful for problems where the domain of x is limited to a set of points (as in the FreeSolv dataset)
     :return: Location of the acquisition function maximum.
     """
 
@@ -147,31 +148,41 @@ def my_propose_location(acquisition, X_sample, Y_sample, noise, l_init, sigma_f_
         :return: minimisation objective.
         """
 
+        #import pdb; pdb.set_trace()
+
         X = X.reshape(-1, 1).T  # Might have to be changed for higher dimensions (have added .T since writing this)
 
         return -acquisition(X, X_sample, Y_sample, noise, l_opt, sigma_f_opt, mu_sample_opt)
 
     # Find the best optimum by starting from n_restart different random points.
 
-    if dim == 1:  # change bounds for a single dimensions. Added for UCI dataset NAS experiments
-        for x0 in np.random.uniform(bounds[0], bounds[1], size=(n_restarts, dim)):
-            res = minimize(min_obj, x0=x0, bounds=bounds.reshape(-1, 2), method='L-BFGS-B')
-            if res.fun < min_val:
-                min_val = res.fun[0]
-                min_x = res.x
+    if x_to_evaluate is None:
+        if dim == 1:  # change bounds for a single dimensions. Added for UCI dataset NAS experiments
+            for x0 in np.random.uniform(bounds[0], bounds[1], size=(n_restarts, dim)):
+                res = minimize(min_obj, x0=x0, bounds=bounds.reshape(-1, 2), method='L-BFGS-B')
+                if res.fun < min_val:
+                    min_val = res.fun[0]
+                    min_x = res.x
+        else:
+            for x0 in np.random.uniform(bounds[:, 0], bounds[:, 1], size=(n_restarts, dim)):
+                res = minimize(min_obj, x0=x0, bounds=bounds, method='L-BFGS-B')
+                if res.fun < min_val:
+                    min_val = res.fun[0]
+                    min_x = res.x 
     else:
-        for x0 in np.random.uniform(bounds[:, 0], bounds[:, 1], size=(n_restarts, dim)):
-            res = minimize(min_obj, x0=x0, bounds=bounds, method='L-BFGS-B')
-            if res.fun < min_val:
-                min_val = res.fun[0]
-                min_x = res.x
+        for x in x_to_evaluate:
+            #import pdb; pdb.set_trace()
+            this_val = min_obj(x)
+            if this_val < min_val:
+                min_val = this_val
+                min_x = x
 
     return min_x.reshape(-1, 1).T
 
 
 def heteroscedastic_propose_location(acquisition, X_sample, Y_sample, noise, l_init, sigma_f_init,
                                      l_noise_init, sigma_f_noise_init, gp2_noise, num_iters, sample_size,
-                                     bounds, plot_sample, n_restarts=25, min_val=1):
+                                     plot_sample, n_restarts=25, min_val=1, bounds=None, x_to_evaluate=None):
     """
     Proposes the next sampling point by optimising the acquisition function.
 
@@ -221,18 +232,26 @@ def heteroscedastic_propose_location(acquisition, X_sample, Y_sample, noise, l_i
         #return -acquisition(X, X_sample, Y_sample, noise, l_init, sigma_f_init, l_noise_init, sigma_f_noise_init, gp2_noise, num_iters, sample_size)
         return -acquisition(X, X_sample, Y_sample, variance_estimator, noise_func, gp1_l_opt, gp1_sigma_f_opt, gp2_l_opt, gp2_sigma_f_opt, gp2_noise, mu_sample_opt, hetero_ei=True)
 
-    if dim == 1:  # change bounds for a single dimensions. Added for UCI dataset NAS experiments
-        for x0 in np.random.uniform(bounds[0], bounds[1], size=(n_restarts, dim)):
-            res = minimize(min_obj, x0=x0, bounds=bounds.reshape(-1, 2), method='L-BFGS-B')
-            if res.fun < min_val:
-                min_val = res.fun[0]
-                min_x = res.x
+    if x_to_evaluate is None:
+        if dim == 1:  # change bounds for a single dimensions. Added for UCI dataset NAS experiments
+            for x0 in np.random.uniform(bounds[0], bounds[1], size=(n_restarts, dim)):
+                res = minimize(min_obj, x0=x0, bounds=bounds.reshape(-1, 2), method='L-BFGS-B')
+                if res.fun < min_val:
+                    min_val = res.fun[0]
+                    min_x = res.x
+        else:
+            # Find the best optimum by starting from n_restart different random points.
+            for x0 in np.random.uniform(bounds[:, 0], bounds[:, 1], size=(n_restarts, dim)):
+                res = minimize(min_obj, x0=x0, bounds=bounds, method='L-BFGS-B')
+                if res.fun < min_val:
+                    min_val = res.fun[0]
+                    min_x = res.x
     else:
-        # Find the best optimum by starting from n_restart different random points.
-        for x0 in np.random.uniform(bounds[:, 0], bounds[:, 1], size=(n_restarts, dim)):
-            res = minimize(min_obj, x0=x0, bounds=bounds, method='L-BFGS-B')
-            if res.fun < min_val:
-                min_val = res.fun[0]
-                min_x = res.x
+        for x in x_to_evaluate:
+            #import pdb; pdb.set_trace()
+            this_val = min_obj(x)
+            if this_val < min_val:
+                min_val = this_val
+                min_x = x
 
     return min_x.reshape(-1, 1).T  # added the tranpose for (2,) cases. shouldn't affect (1,) cases.
