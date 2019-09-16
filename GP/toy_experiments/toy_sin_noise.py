@@ -251,7 +251,7 @@ if __name__ == '__main__':
     plt.ylabel('Objective Function Value - Noise')
     plt.legend(loc=4)
     plt.savefig('toy_figures/bayesopt_plot{}_iters_{}_random_trials_and_{}_coefficient_times_100_and_noise_coeff_times_'
-                '100_of_{}_init_num_samples_of_{}_and_seed_{}_with_aei_and_het_aei_epistemic_ei'.format(bayes_opt_iters, random_trials, int(coefficient*100), int(noise_coeff*100), init_num_samples, numpy_seed))
+                '100_of_{}_init_num_samples_of_{}_and_seed_{}_with_het_aei_full_unc'.format(bayes_opt_iters, random_trials, int(coefficient*100), int(noise_coeff*100), init_num_samples, numpy_seed))
 
     # plt.plot(np.array(collected_x1), np.array(collected_x2), '+', color='green', markersize='12', linewidth='8')
     # plt.xlabel('x1')

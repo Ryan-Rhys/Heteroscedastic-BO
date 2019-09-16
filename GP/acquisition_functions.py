@@ -161,8 +161,8 @@ def heteroscedastic_augmented_expected_improvement(X, X_sample, Y_sample, varian
 
     mu, var, aleatoric_std = bo_predict_hetero_gp(X_sample, Y_sample, variance_estimator, X, noise_func, gp1_l_opt, gp1_sigma_f_opt, gp2_noise, gp2_l_opt, gp2_sigma_f_opt)
     epistemic_unc = var - aleatoric_std
-    #std = np.sqrt(np.diag(var))
-    std = np.sqrt(np.diag(epistemic_unc))
+    std = np.sqrt(np.diag(var))
+    #std = np.sqrt(np.diag(epistemic_unc))
 
 
     if hetero_ei:
@@ -172,7 +172,7 @@ def heteroscedastic_augmented_expected_improvement(X, X_sample, Y_sample, varian
             Z = imp / std
             ei = imp * norm.cdf(Z) + std * norm.pdf(Z)
             ei[std == 0.0] = 0.0
-            aei = ei*(1 - aleatoric_std/np.sqrt(aleatoric_std**2 + epistemic_unc**2))
+            aei = ei*(1 - aleatoric_std/np.sqrt(aleatoric_std**2 + std**2))
 
         return aei
 
