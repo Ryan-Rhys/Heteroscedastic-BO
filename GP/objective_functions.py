@@ -189,4 +189,6 @@ def heteroscedastic_branin(x1, x2):
 
     f += noise(x1, x2) * np.random.randn(*x1.shape)  # Add noise to the Branin function f.
 
-    return f
+    # -f makes the problem into a maximisation problem (consistent with the sin function experiment.
+
+    return -f

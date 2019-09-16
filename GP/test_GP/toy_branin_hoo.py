@@ -1,7 +1,7 @@
-# Copyright Lee Group 2019
 # Author: Ryan-Rhys Griffiths
 """
-This module contains the code for benchmarking heteroscedastic Bayesian Optimisation on a number of toy functions.
+This module contains the code for benchmarking heteroscedastic Bayesian Optimisation on the 2D Branin-Hoo Function
+with heteroscedastic noise.
 """
 
 import matplotlib.pyplot as plt
@@ -11,13 +11,11 @@ from tensorflow import set_random_seed
 
 from acquisition_functions import heteroscedastic_expected_improvement, heteroscedastic_propose_location, \
     my_propose_location, my_expected_improvement, augmented_expected_improvement, heteroscedastic_augmented_expected_improvement
-from objective_functions import linear_sin_noise, max_sin_noise_objective
+from objective_functions import branin_function, min_branin_noise_function, heteroscedastic_branin
+
 
 
 if __name__ == '__main__':
-
-    modification = True  # Switches between sin(x) - False and sin(x) + 0.05x - True
-    coefficient = 0.2  # tunes the relative size of the maxima in the function (used when modification = True)
 
     # Number of iterations
     bayes_opt_iters = 10
@@ -53,16 +51,17 @@ if __name__ == '__main__':
         np.random.seed(numpy_seed)
         set_random_seed(tf_seed)
 
-        noise_coeff = 0.25  # noise coefficient will be noise(X) will be linear e.g. 0.2 * X
-        bounds = np.array([0, 10]).reshape(-1, 1)  # bounds of the Bayesian Optimisation problem.
+        noise_coeff = 0.2
+        bounds = np.array([[-5.0, 10.0], [0.0, 15.0]])  # bounds of the Bayesian Optimisation problem.
 
         #  Initial noisy data points sampled uniformly at random from the input space.
 
-        init_num_samples = 5  # all un-named plots were 33 initial samples
-        X_init = np.random.uniform(0, 10, init_num_samples).reshape(-1, 1)  # sample 7 points at random from the bounds to initialise with
-        plot_sample = np.linspace(0, 10, 50).reshape(-1, 1)  # samples for plotting purposes
+        grid_size = 3
 
-        Y_init = linear_sin_noise(X_init, noise_coeff, plot_sample, coefficient, modification, fplot=False)
+        x1 = np.random.uniform(-5.0, 10.0, size=(grid_size,))
+        x2 = np.random.uniform(0.0, 15.0, size=(grid_size,))
+        X_init = np.array(np.meshgrid(x1, x2)).T.reshape(-1, 2)
+        Y_init = heteroscedastic_branin(X_init[:, 0], X_init[:, 1])
 
         # Initialize samples
         homo_X_sample = X_init.reshape(-1, 1)
