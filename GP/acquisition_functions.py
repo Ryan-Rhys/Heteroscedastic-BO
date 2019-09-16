@@ -66,6 +66,33 @@ def my_expected_improvement(X, X_sample, Y_sample, noise, l_opt, sigma_f_opt, mu
     return ei
 
 
+def augmented_expected_improvement(X, X_sample, Y_sample, noise, l_opt, sigma_f_opt, mu_sample_opt):
+    """
+    Computes the AEI using a homoscedastic GP.
+
+    :param X: Test locations (n x d)
+    :param X_sample: Sample locations (m x d).
+    :param Y_sample:  Noise-corrupted values at the sample locations (m x 1).
+    :param noise: noise level in the latent function.
+    :param l_opt: optimised lengthscale(s) of the GP kernel.
+    :param sigma_f_opt: optimised vertical lengthscale of the GP kernel.
+    :param mu_sample_opt: incumbent eta
+    :return: Expected improvements at points X.
+    """
+
+    mu, var = bo_predict_homo_gp(X_sample, Y_sample, X, noise, l_opt, sigma_f_opt)
+    std = np.sqrt(np.diag(var))
+
+    with np.errstate(divide='warn'):
+        imp = mu - mu_sample_opt
+        Z = imp / std
+        ei = imp * norm.cdf(Z) + std * norm.pdf(Z)
+        ei[std == 0.0] = 0.0
+        aei = ei*(1 - noise/np.sqrt(noise**2 + var**2))
+
+    return aei
+
+
 def heteroscedastic_expected_improvement(X, X_sample, Y_sample, variance_estimator, noise_func, gp1_l_opt,
                                          gp1_sigma_f_opt, gp2_l_opt, gp2_sigma_f_opt, gp2_noise, mu_sample_opt,
                                          hetero_ei=True):
@@ -107,6 +134,57 @@ def heteroscedastic_expected_improvement(X, X_sample, Y_sample, variance_estimat
             ei[std == 0.0] = 0.0
 
     return ei
+
+
+def heteroscedastic_augmented_expected_improvement(X, X_sample, Y_sample, variance_estimator, noise_func, gp1_l_opt,
+                                                   gp1_sigma_f_opt, gp2_l_opt, gp2_sigma_f_opt, gp2_noise, mu_sample_opt,
+                                                   hetero_ei=True):
+    """
+    Computes the AEI using a heteroscedastic GP.
+
+    :param X: Test locations (n x d)
+    :param X_sample: Sample locations (m x d)
+    :param Y_sample: Sample labels (m x 1)
+    :param variance_estimator: estimated variance at sample locations (m x 1)
+    :param noise_func: learned noise function
+    :param gp1_l_opt: optimised lengthscale for GP1
+    :param gp1_sigma_f_opt: optimised lengthscale for GP1
+    :param gp2_l_opt: optimised lengthscale for GP2
+    :param gp2_sigma_f_opt: optimised signal amplitude for GP2
+    :param gp2_noise: GP2 noise level
+    :param mu_sample_opt: incumbent eta
+    :param hetero_ei: whether to use the ei minus one standard deviation as acquisition function
+    :return: expected improvement at the test locations.
+    """
+
+    # var is epistemic + aleatoric uncertainty
+
+    mu, var, aleatoric_std = bo_predict_hetero_gp(X_sample, Y_sample, variance_estimator, X, noise_func, gp1_l_opt, gp1_sigma_f_opt, gp2_noise, gp2_l_opt, gp2_sigma_f_opt)
+    epistemic_unc = var - aleatoric_std
+    #std = np.sqrt(np.diag(var))
+    std = np.sqrt(np.diag(epistemic_unc))
+
+
+    if hetero_ei:
+
+        with np.errstate(divide='warn'):
+            imp = mu - mu_sample_opt
+            Z = imp / std
+            ei = imp * norm.cdf(Z) + std * norm.pdf(Z)
+            ei[std == 0.0] = 0.0
+            aei = ei*(1 - aleatoric_std/np.sqrt(aleatoric_std**2 + epistemic_unc**2))
+
+        return aei
+
+    else:
+
+        with np.errstate(divide='warn'):
+            imp = mu - mu_sample_opt
+            Z = imp / std
+            ei = imp * norm.cdf(Z) + std * norm.pdf(Z)
+            ei[std == 0.0] = 0.0
+
+        return ei
 
 
 def my_propose_location(acquisition, X_sample, Y_sample, noise, l_init, sigma_f_init, bounds, plot_sample, n_restarts=1,
