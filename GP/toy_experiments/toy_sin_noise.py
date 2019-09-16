@@ -16,8 +16,11 @@ from objective_functions import linear_sin_noise, max_sin_noise_objective
 
 if __name__ == '__main__':
 
+    modification = True  # Switches between sin(x) - False and sin(x) + 0.05x - True
+    coefficient = 0.2  # tunes the relative size of the maxima in the function (used when modification = True)
+
     # Number of iterations
-    bayes_opt_iters = 20
+    bayes_opt_iters = 10
 
     # We perform random trials of Bayesian Optimisation
 
@@ -37,19 +40,21 @@ if __name__ == '__main__':
 
     for i in range(random_trials):
 
-        numpy_seed = i + 50
-        tf_seed = i + 51
+        numpy_seed = i + 62
+        tf_seed = i + 63
         np.random.seed(numpy_seed)
         set_random_seed(tf_seed)
 
-        noise_coeff = 1.5  # noise coefficient will be noise(X) will be linear e.g. 0.2 * X
-        bounds = np.array([0, 3*np.pi]).reshape(-1, 1)  # bounds of the Bayesian Optimisation problem.
+        noise_coeff = 0.25  # noise coefficient will be noise(X) will be linear e.g. 0.2 * X
+        bounds = np.array([0, 10]).reshape(-1, 1)  # bounds of the Bayesian Optimisation problem.
 
         #  Initial noisy data points sampled uniformly at random from the input space.
 
-        X_init = np.random.uniform(0, 3*np.pi, 7).reshape(-1, 1)  # sample 3 points at random from the bounds to initialise with
-        plot_sample = np.linspace(0, 3*np.pi, 50).reshape(-1, 1)  # samples for plotting purposes
-        Y_init = linear_sin_noise(X_init, noise_coeff, plot_sample, fplot=False)
+        init_num_samples = 5  # all un-named plots were 33 initial samples
+        X_init = np.random.uniform(0, 10, init_num_samples).reshape(-1, 1)  # sample 7 points at random from the bounds to initialise with
+        plot_sample = np.linspace(0, 10, 50).reshape(-1, 1)  # samples for plotting purposes
+
+        Y_init = linear_sin_noise(X_init, noise_coeff, plot_sample, coefficient, modification, fplot=False)
 
         # Initialize samples
         homo_X_sample = X_init.reshape(-1, 1)
@@ -61,8 +66,8 @@ if __name__ == '__main__':
 
         l_init = 1.0
         sigma_f_init = 1.0
-        noise = 1.0
-        l_noise_init = 1
+        noise = 1.0  # need to be careful about how we set this because it's not currently being optimised in the code (see reviewer comment)
+        l_noise_init = 1.0
         sigma_f_noise_init = 1.0
         gp2_noise = 1.0
         num_iters = 10
@@ -89,8 +94,8 @@ if __name__ == '__main__':
             homo_collected_x.append(homo_X_next)
 
             # Obtain next noisy sample from the objective function
-            homo_Y_next = linear_sin_noise(homo_X_next, noise_coeff, plot_sample, fplot=False)
-            homo_composite_obj_val, homo_noise_val = max_sin_noise_objective(homo_X_next, noise_coeff, fplot=False)
+            homo_Y_next = linear_sin_noise(homo_X_next, noise_coeff, plot_sample, coefficient, modification, fplot=False)
+            homo_composite_obj_val, homo_noise_val = max_sin_noise_objective(homo_X_next, noise_coeff, coefficient, modification, fplot=False)
 
             if homo_composite_obj_val > homo_best_so_far:
                 homo_best_so_far = homo_composite_obj_val
@@ -102,15 +107,16 @@ if __name__ == '__main__':
             homo_X_sample = np.vstack((homo_X_sample, homo_X_next))
             homo_Y_sample = np.vstack((homo_Y_sample, homo_Y_next))
 
-            het_X_next = heteroscedastic_propose_location(heteroscedastic_expected_improvement, het_X_sample, het_Y_sample, noise, l_init,
-                                                      sigma_f_init, l_noise_init, sigma_f_noise_init, gp2_noise, num_iters,
-                                                      sample_size, bounds, plot_sample, n_restarts=3, min_val=300)
+            het_X_next = heteroscedastic_propose_location(heteroscedastic_expected_improvement, het_X_sample,
+                                                          het_Y_sample, noise, l_init, sigma_f_init, l_noise_init,
+                                                          sigma_f_noise_init, gp2_noise, num_iters, sample_size, bounds,
+                                                          plot_sample, n_restarts=3, min_val=300)
 
             het_collected_x.append(het_X_next)
 
             # Obtain next noisy sample from the objective function
-            het_Y_next = linear_sin_noise(het_X_next, noise_coeff, plot_sample, fplot=False)
-            het_composite_obj_val, het_noise_val = max_sin_noise_objective(het_X_next, noise_coeff, fplot=False)
+            het_Y_next = linear_sin_noise(het_X_next, noise_coeff, plot_sample, modification, fplot=False)
+            het_composite_obj_val, het_noise_val = max_sin_noise_objective(het_X_next, noise_coeff, coefficient, modification, fplot=False)
 
             if het_composite_obj_val > het_best_so_far:
                 het_best_so_far = het_composite_obj_val
@@ -158,7 +164,8 @@ if __name__ == '__main__':
     plt.xlabel('Number of Function Evaluations')
     plt.ylabel('Objective Function Value - Noise')
     plt.legend(loc=4)
-    plt.savefig('toy_figures/bayesopt_plot{}_iters_{}_random_trials'.format(bayes_opt_iters, random_trials))
+    plt.savefig('toy_figures/bayesopt_plot{}_iters_{}_random_trials_and_{}_coefficient_times_100_and_noise_coeff_times_'
+                '100_of_{}_init_num_samples_of_{}_and_seed_{}_with_noise_opt'.format(bayes_opt_iters, random_trials, int(coefficient*100), int(noise_coeff*100), init_num_samples, numpy_seed))
 
     # plt.plot(np.array(collected_x1), np.array(collected_x2), '+', color='green', markersize='12', linewidth='8')
     # plt.xlabel('x1')

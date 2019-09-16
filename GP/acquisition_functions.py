@@ -46,7 +46,7 @@ def my_expected_improvement(X, X_sample, Y_sample, noise, l_opt, sigma_f_opt, mu
 
     :param X: Test locations (n x d)
     :param X_sample: Sample locations (m x d).
-    :param Y_sample:  values at the sample locations (m x 1).
+    :param Y_sample:  Noise-corrupted values at the sample locations (m x 1).
     :param noise: noise level in the latent function.
     :param l_opt: optimised lengthscale(s) of the GP kernel.
     :param sigma_f_opt: optimised vertical lengthscale of the GP kernel.
@@ -116,7 +116,7 @@ def my_propose_location(acquisition, X_sample, Y_sample, noise, l_init, sigma_f_
 
     :param acquisition: Acquisition function.
     :param X_sample: Sample locations (n x d).
-    :param Y_sample: Sample values (n x 1).
+    :param Y_sample: Noise-corrupted sample values (n x 1).
     :param noise: noise level.
     :param l_init: GP lengthscale to start optimisation with.
     :param sigma_f_init: vertical lengthscale to start optimisation with.
@@ -130,7 +130,8 @@ def my_propose_location(acquisition, X_sample, Y_sample, noise, l_init, sigma_f_
     dim = X_sample.shape[1]
     min_x = None
 
-    l_opt, sigma_f_opt = bo_fit_homo_gp(X_sample, Y_sample, noise, l_init, sigma_f_init)
+    l_opt, sigma_f_opt, noise = bo_fit_homo_gp(X_sample, Y_sample, noise, l_init, sigma_f_init)
+    #l_opt, sigma_f_opt = bo_fit_homo_gp(X_sample, Y_sample, noise, l_init, sigma_f_init)
 
     # Purpose of this line is just to plot.
 
