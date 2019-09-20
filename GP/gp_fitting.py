@@ -30,15 +30,16 @@ def fit_homo_gp(xs, ys, noise, xs_star, l_init, sigma_f_init, fplot=True):
     """
 
     dimensionality = xs.shape[1]  # Extract the dimensionality of the input so that lengthscales are appropriate dimension
-    hypers = [l_init]*dimensionality + [sigma_f_init]  # we initialise each dimension with the same lengthscale value
+    hypers = [l_init]*dimensionality + [sigma_f_init] + [noise]  # we initialise each dimension with the same lengthscale value
     bounds = [(1e-2, 900)]*len(hypers)  # we initialise the bounds to be the same in each case
 
     # We fit GP1 to the data
 
     res = minimize(nll_fn_het(xs, ys, noise), hypers, bounds=bounds, method='L-BFGS-B')
 
-    l_opt = np.array(res.x[:-1]).reshape(-1, 1)  # res.x[:-1]
-    sigma_f_opt = res.x[-1] # res.x[-1] before noise included
+    l_opt = np.array(res.x[:-2]).reshape(-1, 1)  # res.x[:-1]
+    sigma_f_opt = res.x[-2]  # res.x[-1] before noise included
+    noise = res.x[-1]
 
     pred_mean, pred_var, _, _ = posterior_predictive(xs, ys, xs_star, noise, l_opt, sigma_f_opt, mean_func=zero_mean, kernel=scipy_kernel)
     nlml = neg_log_marg_lik_krasser(xs, ys, noise, l_opt, sigma_f_opt)
@@ -62,8 +63,8 @@ def fit_homo_gp(xs, ys, noise, xs_star, l_init, sigma_f_init, fplot=True):
         upper = upper.reshape(plot_xs_star.shape)
         lower = lower.reshape(plot_xs_star.shape)
         plt.fill_between(plot_xs_star, upper, lower, color='gray', alpha=0.2)
-        plt.xlabel('input, x')
-        plt.ylabel('f(x)')
+        plt.xlabel('Density (Dry Bulk)')
+        plt.ylabel('Standardised Phosphorus Fraction')
         plt.title('Homoscedastic GP Posterior')
         plt.show()
 
@@ -92,7 +93,7 @@ def fit_hetero_gp(xs, ys, aleatoric_noise, xs_star, l_init, sigma_f_init, l_nois
     dimensionality = xs.shape[1]  # in order to plot only in the 1D input case.
     gp1_hypers = [l_init]*dimensionality + [sigma_f_init]  # we initialise each dimension with the same lengthscale value
     gp2_hypers = [l_noise_init]*dimensionality + [sigma_f_noise_init]  # we initialise each dimensions with the same lengthscale value for gp2 as well.
-    bounds = [(1e-2, 900)]*len(gp1_hypers)  # we initialise the bounds to be the same in each case
+    bounds = [(1, 900)]*len(gp1_hypers)  # we initialise the bounds to be the same in each case
 
     for i in range(0, num_iters):
 
@@ -180,9 +181,9 @@ def fit_hetero_gp(xs, ys, aleatoric_noise, xs_star, l_init, sigma_f_init, l_nois
             upper = upper.reshape(xs_star.shape)
             lower = lower.reshape(xs_star.shape)
             plt.fill_between(xs_star.reshape(len(xs_star),), upper.reshape(len(xs_star),), lower.reshape(len(xs_star),), color='gray', alpha=0.2)
-            plt.xlabel('input, x')
-            plt.ylabel('f(x)')
-            plt.title('GP1 Posterior')
+            plt.xlabel('Density (Dry Bulk)')
+            plt.ylabel('Standardised Phosphorus Fraction')
+            plt.title('Heteroscedastic GP Posterior')
             plt.show()
 
         # We construct the most likely heteroscedastic GP noise estimator

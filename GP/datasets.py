@@ -11,6 +11,123 @@ import numpy as np
 import pickle
 
 
+def soil(fplot_data=False):
+    """
+    Constructs the soil dataset.
+
+    :param fplot_data: Boolean indicating whether or not to plot the dataset
+    :return: x, y and errors
+    """
+
+    x_soil = []
+    y_soil = []
+    std_soil = []
+
+    with open('Soil/soil_x.txt', 'r') as file:
+        for line in file:
+            x_data = line.split()
+            x_soil.append(float(x_data[0]))
+    with open('Soil/soil_y.txt', 'r') as file:
+        for line in file:
+            y_data = line.split()
+            y_soil.append(float(y_data[0]))
+    with open('Soil/soil_std.txt', 'r') as file:
+        for line in file:
+            std_data = line.split()
+            std_soil.append(float(std_data[0]))
+
+    x_soil = np.array(x_soil)
+    y_soil = np.array(y_soil)
+    std_soil = np.array(std_soil)
+
+    if fplot_data:
+        plt.plot(x_soil, y_soil, '+', color='green', markersize='12', linewidth='8')
+        plt.xlabel('Density, dry bulk (g/cm^3)')
+        plt.ylabel('Inorganic Phosphorus (mg/kg)')
+        plt.title('Soil Phosphorus Fraction as a Function of Density')
+        plt.show()
+
+    return x_soil.reshape(-1, 1), y_soil.reshape(-1, 1), std_soil.reshape(-1, 1)
+
+
+def soil_bo(fplot_data=False):
+    """
+    Constructs the soil dataset.
+
+    :param fplot_data: Boolean indicating whether or not to plot the dataset
+    :return: x, y and errors
+    """
+
+    x_soil = []
+    y_soil = []
+    std_soil = []
+
+    with open('../Soil/soil_x.txt', 'r') as file:
+        for line in file:
+            x_data = line.split()
+            x_soil.append(float(x_data[0]))
+    with open('../Soil/soil_y.txt', 'r') as file:
+        for line in file:
+            y_data = line.split()
+            y_soil.append(float(y_data[0]))
+    with open('../Soil/soil_std.txt', 'r') as file:
+        for line in file:
+            std_data = line.split()
+            std_soil.append(float(std_data[0]))
+
+    x_soil = np.array(x_soil)
+    y_soil = np.array(y_soil)
+    std_soil = np.array(std_soil)
+
+    if fplot_data:
+        plt.plot(x_soil, y_soil, '+', color='green', markersize='12', linewidth='8')
+        plt.xlabel('x')
+        plt.ylabel('y')
+        plt.title('Soil')
+        plt.show()
+
+    return x_soil.reshape(-1, 1), y_soil.reshape(-1, 1), std_soil.reshape(-1, 1)
+
+
+def quasar(fplot_data=False):
+    """
+    Constructs the quasar dataset.
+
+    :param fplot_data: Boolean indicating whether or not to plot the dataset
+    :return: x, y and errors
+    """
+
+    x_quasar = []
+    y_quasar = []
+    std_quasar = []
+
+    with open('Quasar/quasar_x.txt', 'r') as file:
+        for line in file:
+            x_data = line.split()
+            x_quasar.append(float(x_data[0]))
+    with open('Quasar/quasar_y.txt', 'r') as file:
+        for line in file:
+            y_data = line.split()
+            y_quasar.append(float(y_data[0]))
+    with open('Quasar/quasar_std.txt', 'r') as file:
+        for line in file:
+            std_data = line.split()
+            std_quasar.append(float(std_data[0]))
+
+    x_quasar = np.array(x_quasar)
+    y_quasar = np.array(y_quasar)
+    std_quasar = np.array(std_quasar)
+
+    if fplot_data:
+        plt.plot(x_quasar, y_quasar, '+', color='green', markersize='12', linewidth='8')
+        plt.xlabel('x')
+        plt.ylabel('y')
+        plt.title('Quasar')
+        plt.show()
+
+    return x_quasar.reshape(-1, 1), y_quasar.reshape(-1, 1), std_quasar.reshape(-1, 1)
+
+
 def silverman_1985(fplot_data=False):
     """
     Constructs the Silverman motorcycle dataset (1985).

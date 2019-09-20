@@ -30,13 +30,14 @@ def linear_sin_noise(X, noise, plot_sample, coefficient, modification=False, fpl
         plot_sin_function = np.sin(plot_sample)
 
     if fplot:
-        plt.plot(X, linear_sin_noise, '+', color='green', markersize='12', linewidth='8', label='samples with Gaussian noise')
-        plt.plot(plot_sample, plot_sin_function, color='blue', label='mean of generative process')
-        plt.plot(plot_sample, noise*plot_sample, color='red', label='noise function')
+        #plt.plot(X, linear_sin_noise, '+', color='green', markersize='12', linewidth='8', label='samples with Gaussian noise')
+        #plt.plot(plot_sample, plot_sin_function, color='blue', label='mean of generative process')
+        plt.plot(plot_sample, plot_sin_function - noise*plot_sample, color='purple')#, label='noise function')
         plt.xlabel('x')
-        plt.title('Heteroscedastic Sine Wave')
-        plt.legend()
-        plt.ylim(-3, 3)
+        plt.ylabel('f(x)')
+        plt.title('Black-Box Objective')
+        #plt.legend()
+        plt.ylim(-2, 2)
         plt.xlim(0, 10)
         plt.show()
 
@@ -191,4 +192,4 @@ def heteroscedastic_branin(x1, x2):
 
     # -f makes the problem into a maximisation problem (consistent with the sin function experiment.
 
-    return -f
+    return f
