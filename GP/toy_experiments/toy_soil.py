@@ -13,7 +13,6 @@ from tensorflow import set_random_seed
 from acquisition_functions import heteroscedastic_expected_improvement, heteroscedastic_propose_location, \
     my_propose_location, my_expected_improvement, augmented_expected_improvement, heteroscedastic_augmented_expected_improvement
 from datasets import soil_bo
-from objective_functions import branin_function, min_branin_noise_function, heteroscedastic_branin
 
 
 if __name__ == '__main__':

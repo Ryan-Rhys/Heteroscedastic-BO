@@ -79,6 +79,41 @@ def max_sin_noise_objective(X, noise, coefficient, modification=False, fplot=Tru
     return composite_objective, noise_value
 
 
+def max_one_off_sin_noise_objective(X, noise, coefficient, modification=False, fplot=True):
+    """
+    Objective function for maximising objective + aleatoric noise (a one-off good value!) for the sin wave with linear
+    noise. Used for monitoring the best value in the optimisation obtained so far.
+
+    :param X: input to evaluate objective; can be an array of values
+    :param noise: noise level coefficient
+    :param coefficient: Has the effect of making the maximum with larger noise larger
+    :param modification: Whether to modify the function to have one maxima lower than the other
+    :param fplot: Boolean indicating whether to plot the black-box objective
+    :return: value of the black-box objective that penalises aleatoric noise, value of the noise at X
+    """
+
+    noise_value = noise * X  # value of the heteroscedastic noise at the point(s) X
+    if modification:
+        objective_value = np.sin(X) + coefficient*X
+    else:
+        objective_value = np.sin(X)  # value of the objective at the point(s) X
+    composite_objective = objective_value + noise_value
+
+    if fplot:
+        plt.plot(X, composite_objective, color='purple', label='objective + aleatoric noise')
+        plt.xlabel('x')
+        plt.ylabel('objective(x)')
+        plt.title('Black-box Objective')
+        plt.ylim(-3, 1)
+        plt.xlim(0, 10)
+        plt.show()
+
+    composite_objective = float(composite_objective)
+    noise_value = float(noise_value)
+
+    return composite_objective, noise_value
+
+
 def min_branin_noise_function(x1, x2):
     """
     Objective function for minimising objective + aleatoric noise
@@ -89,6 +124,18 @@ def min_branin_noise_function(x1, x2):
     """
 
     return branin_plot_function(x1, x2) + noise_plot_function(x1, x2)
+
+
+def one_off_min_branin_noise_function(x1, x2):
+    """
+    Objective function for minimising objective - aleatoric noise (one off value)
+
+    :param x1: first input dimension
+    :param x2: second input dimension
+    :return: value of the black-box objective that penalises aleatoric noise.
+    """
+
+    return branin_plot_function(x1, x2) - noise_plot_function(x1, x2)
 
 
 def branin_function(x1, x2, noise=0.0):

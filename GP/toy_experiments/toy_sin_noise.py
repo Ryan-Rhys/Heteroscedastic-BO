@@ -137,7 +137,7 @@ if __name__ == '__main__':
             het_collected_x.append(het_X_next)
 
             # Obtain next noisy sample from the objective function
-            het_Y_next = linear_sin_noise(het_X_next, noise_coeff, plot_sample, modification, fplot=False)
+            het_Y_next = linear_sin_noise(het_X_next, noise_coeff, plot_sample, coefficient, modification, fplot=False)
             het_composite_obj_val, het_noise_val = max_sin_noise_objective(het_X_next, noise_coeff, coefficient, modification, fplot=False)
 
             if het_composite_obj_val > het_best_so_far:
@@ -158,7 +158,7 @@ if __name__ == '__main__':
             aug_collected_x.append(aug_X_next)
 
             # Obtain next noisy sample from the objective function
-            aug_Y_next = linear_sin_noise(aug_X_next, noise_coeff, plot_sample, modification, fplot=False)
+            aug_Y_next = linear_sin_noise(aug_X_next, noise_coeff, plot_sample, coefficient, modification, fplot=False)
             aug_composite_obj_val, aug_noise_val = max_sin_noise_objective(aug_X_next, noise_coeff, coefficient, modification, fplot=False)
 
             if aug_composite_obj_val > aug_best_so_far:
@@ -181,7 +181,7 @@ if __name__ == '__main__':
             aug_het_collected_x.append(aug_het_X_next)
 
             # Obtain next noisy sample from the objective function
-            aug_het_Y_next = linear_sin_noise(aug_het_X_next, noise_coeff, plot_sample, modification, fplot=False)
+            aug_het_Y_next = linear_sin_noise(aug_het_X_next, noise_coeff, plot_sample, coefficient, modification, fplot=False)
             aug_het_composite_obj_val, aug_het_noise_val = max_sin_noise_objective(aug_het_X_next, noise_coeff, coefficient, modification, fplot=False)
 
             if aug_het_composite_obj_val > aug_het_best_so_far:
@@ -223,7 +223,7 @@ if __name__ == '__main__':
     print('List of heteroscedastic errors is: ' + str(hetero_errs))
     print('List of average AEI values is: ' + str(aug_means))
     print('List of AEI errors is: ' + str(aug_errs))
-    print('List of average het-AEI values is: ' + str(aug_het_errs))
+    print('List of average het-AEI values is: ' + str(aug_het_means))
     print('List of het-AEI errors is: ' + str(aug_het_errs))
 
     iter_x = np.arange(1, bayes_opt_iters + 1)
@@ -251,7 +251,7 @@ if __name__ == '__main__':
     plt.ylabel('Objective Function Value - Noise')
     plt.legend(loc=4)
     plt.savefig('toy_figures/bayesopt_plot{}_iters_{}_random_trials_and_{}_coefficient_times_100_and_noise_coeff_times_'
-                '100_of_{}_init_num_samples_of_{}_and_seed_{}_with_het_aei_full_unc'.format(bayes_opt_iters, random_trials, int(coefficient*100), int(noise_coeff*100), init_num_samples, numpy_seed))
+                '100_of_{}_init_num_samples_of_{}_and_seed_{}_with_het_aei_full_unc_mistake_corrected'.format(bayes_opt_iters, random_trials, int(coefficient*100), int(noise_coeff*100), init_num_samples, numpy_seed))
 
     # plt.plot(np.array(collected_x1), np.array(collected_x2), '+', color='green', markersize='12', linewidth='8')
     # plt.xlabel('x1')
