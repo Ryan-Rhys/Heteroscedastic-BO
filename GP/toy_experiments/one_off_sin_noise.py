@@ -1,7 +1,8 @@
 # Copyright Lee Group 2019
 # Author: Ryan-Rhys Griffiths
 """
-This module contains the code for benchmarking heteroscedastic Bayesian Optimisation on a number of toy functions.
+This module contains the code for benchmarking heteroscedastic Bayesian Optimisation on the task of finding a maximum
+disregarding noise on the toy sin wave function.
 """
 
 import matplotlib.pyplot as plt
@@ -9,18 +10,18 @@ from matplotlib.ticker import MaxNLocator
 import numpy as np
 from tensorflow import set_random_seed
 
-from acquisition_functions import heteroscedastic_expected_improvement, heteroscedastic_propose_location, \
-    my_propose_location, my_expected_improvement, augmented_expected_improvement, heteroscedastic_augmented_expected_improvement
-from objective_functions import linear_sin_noise, max_sin_noise_objective
+from acquisition_functions import heteroscedastic_one_off_expected_improvement, heteroscedastic_propose_location, \
+    my_propose_location, my_expected_improvement, augmented_expected_improvement, heteroscedastic_one_off_augmented_expected_improvement
+from objective_functions import linear_sin_noise, max_one_off_sin_noise_objective
 
 
 if __name__ == '__main__':
 
-    modification = True  # Switches between sin(x) - False and sin(x) + 0.05x - True
-    coefficient = 0.2  # tunes the relative size of the maxima in the function (used when modification = True)
+    modification = True  # Switches between sin(x) - False and sin(x) + modification*x - True
+    coefficient = -0.2  # tunes the relative size of the maxima in the function (used when modification = True). Should be negative in the case that we're antifragile and looking for noise.
 
     # Number of iterations
-    bayes_opt_iters = 5
+    bayes_opt_iters = 20
 
     # We perform random trials of Bayesian Optimisation
 
@@ -115,7 +116,7 @@ if __name__ == '__main__':
 
             # Obtain next noisy sample from the objective function
             homo_Y_next = linear_sin_noise(homo_X_next, noise_coeff, plot_sample, coefficient, modification, fplot=False)
-            homo_composite_obj_val, homo_noise_val = max_sin_noise_objective(homo_X_next, noise_coeff, coefficient, modification, fplot=False)
+            homo_composite_obj_val, homo_noise_val = max_one_off_sin_noise_objective(homo_X_next, noise_coeff, coefficient, modification, fplot=False)
 
             if homo_composite_obj_val > homo_best_so_far:
                 homo_best_so_far = homo_composite_obj_val
@@ -129,7 +130,7 @@ if __name__ == '__main__':
 
             # Obtain next sampling point from the het acquisition function (ANPEI)
 
-            het_X_next = heteroscedastic_propose_location(heteroscedastic_expected_improvement, het_X_sample,
+            het_X_next = heteroscedastic_propose_location(heteroscedastic_one_off_expected_improvement, het_X_sample,
                                                           het_Y_sample, noise, l_init, sigma_f_init, l_noise_init,
                                                           sigma_f_noise_init, gp2_noise, num_iters, sample_size, bounds,
                                                           plot_sample, n_restarts=3, min_val=300)
@@ -138,7 +139,7 @@ if __name__ == '__main__':
 
             # Obtain next noisy sample from the objective function
             het_Y_next = linear_sin_noise(het_X_next, noise_coeff, plot_sample, coefficient, modification, fplot=False)
-            het_composite_obj_val, het_noise_val = max_sin_noise_objective(het_X_next, noise_coeff, coefficient, modification, fplot=False)
+            het_composite_obj_val, het_noise_val = max_one_off_sin_noise_objective(het_X_next, noise_coeff, coefficient, modification, fplot=False)
 
             if het_composite_obj_val > het_best_so_far:
                 het_best_so_far = het_composite_obj_val
@@ -159,7 +160,7 @@ if __name__ == '__main__':
 
             # Obtain next noisy sample from the objective function
             aug_Y_next = linear_sin_noise(aug_X_next, noise_coeff, plot_sample, coefficient, modification, fplot=False)
-            aug_composite_obj_val, aug_noise_val = max_sin_noise_objective(aug_X_next, noise_coeff, coefficient, modification, fplot=False)
+            aug_composite_obj_val, aug_noise_val = max_one_off_sin_noise_objective(aug_X_next, noise_coeff, coefficient, modification, fplot=False)
 
             if aug_composite_obj_val > aug_best_so_far:
                 aug_best_so_far = aug_composite_obj_val
@@ -173,7 +174,7 @@ if __name__ == '__main__':
 
             # Obtain next sampling point from the heteroscedastic augmented expected improvement (het-AEI)
 
-            aug_het_X_next = heteroscedastic_propose_location(heteroscedastic_augmented_expected_improvement, aug_het_X_sample,
+            aug_het_X_next = heteroscedastic_propose_location(heteroscedastic_one_off_augmented_expected_improvement, aug_het_X_sample,
                                                           aug_het_Y_sample, noise, l_init, sigma_f_init, l_noise_init,
                                                           sigma_f_noise_init, gp2_noise, num_iters, sample_size, bounds,
                                                           plot_sample, n_restarts=3, min_val=300)
@@ -182,7 +183,7 @@ if __name__ == '__main__':
 
             # Obtain next noisy sample from the objective function
             aug_het_Y_next = linear_sin_noise(aug_het_X_next, noise_coeff, plot_sample, coefficient, modification, fplot=False)
-            aug_het_composite_obj_val, aug_het_noise_val = max_sin_noise_objective(aug_het_X_next, noise_coeff, coefficient, modification, fplot=False)
+            aug_het_composite_obj_val, aug_het_noise_val = max_one_off_sin_noise_objective(aug_het_X_next, noise_coeff, coefficient, modification, fplot=False)
 
             if aug_het_composite_obj_val > aug_het_best_so_far:
                 aug_het_best_so_far = aug_het_composite_obj_val
@@ -248,10 +249,10 @@ if __name__ == '__main__':
     plt.fill_between(iter_x, lower_het_aei, upper_het_aei, color='c', label='Heteroscedastic AEI', alpha=0.1)
     plt.title('Best Objective Function Value Found so Far')
     plt.xlabel('Number of Function Evaluations')
-    plt.ylabel('Objective Function Value - Noise')
+    plt.ylabel('Objective Function Value + Noise')
     plt.legend(loc=4)
-    plt.savefig('toy_figures/bayesopt_plot{}_iters_{}_random_trials_and_{}_coefficient_times_100_and_noise_coeff_times_'
-                '100_of_{}_init_num_samples_of_{}_and_seed_{}_with_het_aei_full_unc_mistake_corrected'.format(bayes_opt_iters, random_trials, int(coefficient*100), int(noise_coeff*100), init_num_samples, numpy_seed))
+    plt.savefig('one_off_sin_figures/bayesopt_plot{}_iters_{}_random_trials_and_{}_coefficient_times_100_and_noise_coeff_times_'
+                '100_of_{}_init_num_samples_of_{}_and_seed_{}_with_het_aei_full_unc'.format(bayes_opt_iters, random_trials, int(coefficient*100), int(noise_coeff*100), init_num_samples, numpy_seed))
 
     # plt.plot(np.array(collected_x1), np.array(collected_x2), '+', color='green', markersize='12', linewidth='8')
     # plt.xlabel('x1')

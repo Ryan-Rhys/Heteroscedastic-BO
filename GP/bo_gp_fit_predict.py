@@ -28,17 +28,24 @@ def bo_fit_homo_gp(xs, ys, noise, l_init, sigma_f_init):
     """
 
     dimensionality = xs.shape[1]  # Extract the dimensionality of the input so that lengthscales are appropriate dimension
-    hypers = [l_init]*dimensionality + [sigma_f_init]  # we initialise each dimension with the same lengthscale value
+    # Have added in noise here
+    hypers = [l_init]*dimensionality + [sigma_f_init] + [noise]  # we initialise each dimension with the same lengthscale value
+    #hypers = [l_init]*dimensionality + [sigma_f_init]
     bounds = [(1e-2, 900)]*len(hypers)  # we initialise the bounds to be the same in each case
 
     # We fit GP1 to the data
 
     res = minimize(nll_fn_het(xs, ys, noise), hypers, bounds=bounds, method='L-BFGS-B')
 
-    l_opt = np.array(res.x[:-1]).reshape(-1, 1)
-    sigma_f_opt = res.x[-1]
+    l_opt = np.array(res.x[:-2]).reshape(-1, 1)
+    sigma_f_opt = res.x[-2]
+    noise_opt = res.x[-1]
 
-    return l_opt, sigma_f_opt
+    #sigma_f_opt = res.x[-1]
+
+    return l_opt, sigma_f_opt, noise_opt
+
+    #return l_opt, sigma_f_opt
 
 
 def bo_predict_homo_gp(xs, ys, xs_star, noise, l_opt, sigma_f_opt, f_plot=False):
@@ -97,7 +104,7 @@ def bo_fit_hetero_gp(xs, ys, noise, l_init, sigma_f_init, l_noise_init, sigma_f_
     dimensionality = xs.shape[1]  # in order to plot only in the 1D input case.
     gp1_hypers = [l_init]*dimensionality + [sigma_f_init]  # we initialise each dimension with the same lengthscale value
     gp2_hypers = [l_noise_init]*dimensionality + [sigma_f_noise_init]  # we initialise each dimensions with the same lengthscale value for gp2 as well.
-    bounds = [(0.5, 900)]*len(gp1_hypers)  # we initialise the bounds to be the same in each case
+    bounds = [(0.1, 900)]*len(gp1_hypers)  # we initialise the bounds to be the same in each case
 
     for i in range(0, num_iters):
 
@@ -112,7 +119,7 @@ def bo_fit_hetero_gp(xs, ys, noise, l_init, sigma_f_init, l_noise_init, sigma_f_
 
         if f_plot:
 
-            _ = plot_het_gp1(xs, ys, xs, noise, gp1_l_opt, gp1_sigma_f_opt)
+            _ = plot_het_gp1(xs, ys, plot_sample, noise, gp1_l_opt, gp1_sigma_f_opt)
 
         # We compute the posterior predictive at the test locations
 

@@ -287,7 +287,9 @@ def plot_het_gp1(xs, ys, xs_star, gp1_noise, gp1_l, gp1_sigma_f):
                                                              mean_func=zero_mean, kernel=scipy_kernel)
 
     gp1_plot_pred_var = np.diag(gp1_pred_var).reshape(-1, 1)  # Take the diagonal of the covariance matrix for plotting purposes
-    gp1_plot_pred_var = gp1_plot_pred_var + np.square(gp1_noise)
+    # TODO: ADD ALEATORIC NOISE
+    gp1_plot_pred_var = gp1_plot_pred_var # + np.square(gp1_noise) - commented out because it causes computational error. need a workaround
+    print(np.square(gp1_noise))
     plt.plot(xs, ys, '+', color='green', markersize='12', linewidth='8')
     plt.plot(xs_star, gp1_pred_mean, '-', color='red')
     upper = gp1_pred_mean + 2 * np.sqrt(gp1_plot_pred_var)

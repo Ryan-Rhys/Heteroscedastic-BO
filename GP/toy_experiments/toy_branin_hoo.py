@@ -1,7 +1,7 @@
-# Copyright Lee Group 2019
 # Author: Ryan-Rhys Griffiths
 """
-This module contains the code for benchmarking heteroscedastic Bayesian Optimisation on a number of toy functions.
+This module contains the code for benchmarking heteroscedastic Bayesian Optimisation on the 2D Branin-Hoo Function
+with heteroscedastic noise.
 """
 
 import matplotlib.pyplot as plt
@@ -11,16 +11,13 @@ from tensorflow import set_random_seed
 
 from acquisition_functions import heteroscedastic_expected_improvement, heteroscedastic_propose_location, \
     my_propose_location, my_expected_improvement, augmented_expected_improvement, heteroscedastic_augmented_expected_improvement
-from objective_functions import linear_sin_noise, max_sin_noise_objective
+from objective_functions import branin_function, min_branin_noise_function, heteroscedastic_branin
 
 
 if __name__ == '__main__':
 
-    modification = True  # Switches between sin(x) - False and sin(x) + 0.05x - True
-    coefficient = 0.2  # tunes the relative size of the maxima in the function (used when modification = True)
-
     # Number of iterations
-    bayes_opt_iters = 5
+    bayes_opt_iters = 10
 
     # We perform random trials of Bayesian Optimisation
 
@@ -53,26 +50,31 @@ if __name__ == '__main__':
         np.random.seed(numpy_seed)
         set_random_seed(tf_seed)
 
-        noise_coeff = 0.25  # noise coefficient will be noise(X) will be linear e.g. 0.2 * X
-        bounds = np.array([0, 10]).reshape(-1, 1)  # bounds of the Bayesian Optimisation problem.
+        noise_coeff = 0.2
+        bounds = np.array([[-5.0, 10.0], [0.0, 15.0]])  # bounds of the Bayesian Optimisation problem.
 
         #  Initial noisy data points sampled uniformly at random from the input space.
 
-        init_num_samples = 3  # all un-named plots were 33 initial samples
-        X_init = np.random.uniform(0, 10, init_num_samples).reshape(-1, 1)  # sample 7 points at random from the bounds to initialise with
-        plot_sample = np.linspace(0, 10, 50).reshape(-1, 1)  # samples for plotting purposes
+        grid_size = 3
 
-        Y_init = linear_sin_noise(X_init, noise_coeff, plot_sample, coefficient, modification, fplot=False)
+        x1 = np.random.uniform(-5.0, 10.0, size=(grid_size,))
+        x2 = np.random.uniform(0.0, 15.0, size=(grid_size,))
+        X_init = np.array(np.meshgrid(x1, x2)).T.reshape(-1, 2)
+        Y_init = heteroscedastic_branin(X_init[:, 0], X_init[:, 1])
+
+        x1_star = np.arange(-5.0, 10.0, 0.5)
+        x2_star = np.arange(0.0, 15.0, 0.5)
+        plot_sample = np.array(np.meshgrid(x1_star, x2_star)).T.reshape(-1, 2)  # Where 2 gives the dimensionality
 
         # Initialize samples
-        homo_X_sample = X_init.reshape(-1, 1)
-        homo_Y_sample = Y_init.reshape(-1, 1)
-        het_X_sample = X_init.reshape(-1, 1)
-        het_Y_sample = Y_init.reshape(-1, 1)
-        aug_X_sample = X_init.reshape(-1, 1)
-        aug_Y_sample = Y_init.reshape(-1, 1)
-        aug_het_X_sample = X_init.reshape(-1, 1)
-        aug_het_Y_sample = Y_init.reshape(-1, 1)
+        homo_X_sample = X_init
+        homo_Y_sample = Y_init
+        het_X_sample = X_init
+        het_Y_sample = Y_init
+        aug_X_sample = X_init
+        aug_Y_sample = Y_init
+        aug_het_X_sample = X_init
+        aug_het_Y_sample = Y_init
 
         # initial GP hypers
 
@@ -85,10 +87,10 @@ if __name__ == '__main__':
         num_iters = 10
         sample_size = 100
 
-        homo_best_so_far = -300  # value to beat
-        het_best_so_far = -300
-        aug_best_so_far = -300
-        aug_het_best_so_far = -300
+        homo_best_so_far = 300  # value to beat
+        het_best_so_far = 300
+        aug_best_so_far = 300
+        aug_het_best_so_far = 300
         homo_obj_val_list = []
         het_obj_val_list = []
         aug_obj_val_list = []
@@ -97,10 +99,14 @@ if __name__ == '__main__':
         het_noise_val_list = []
         aug_noise_val_list = []
         aug_het_noise_val_list = []
-        homo_collected_x = []
-        het_collected_x = []
-        aug_collected_x = []
-        aug_het_collected_x = []
+        homo_collected_x1 = []
+        homo_collected_x2 = []
+        het_collected_x1 = []
+        het_collected_x2 = []
+        aug_collected_x1 = []
+        aug_collected_x2 = []
+        aug_het_collected_x1 = []
+        aug_het_collected_x2 = []
 
         for i in range(bayes_opt_iters):
 
@@ -111,13 +117,14 @@ if __name__ == '__main__':
             homo_X_next = my_propose_location(my_expected_improvement, homo_X_sample, homo_Y_sample, noise, l_init, sigma_f_init,
                                               bounds, plot_sample, n_restarts=3, min_val=300)
 
-            homo_collected_x.append(homo_X_next)
+            homo_collected_x1.append(homo_X_next[:, 0])
+            homo_collected_x2.append(homo_X_next[:, 1])
 
             # Obtain next noisy sample from the objective function
-            homo_Y_next = linear_sin_noise(homo_X_next, noise_coeff, plot_sample, coefficient, modification, fplot=False)
-            homo_composite_obj_val, homo_noise_val = max_sin_noise_objective(homo_X_next, noise_coeff, coefficient, modification, fplot=False)
+            homo_Y_next = heteroscedastic_branin(homo_X_next[:, 0], homo_X_next[:, 1])
+            homo_composite_obj_val = min_branin_noise_function(homo_X_next[:, 0], homo_X_next[:, 1])
 
-            if homo_composite_obj_val > homo_best_so_far:
+            if homo_composite_obj_val < homo_best_so_far:
                 homo_best_so_far = homo_composite_obj_val
                 homo_obj_val_list.append(homo_composite_obj_val)
             else:
@@ -134,13 +141,14 @@ if __name__ == '__main__':
                                                           sigma_f_noise_init, gp2_noise, num_iters, sample_size, bounds,
                                                           plot_sample, n_restarts=3, min_val=300)
 
-            het_collected_x.append(het_X_next)
+            het_collected_x1.append(het_X_next[:, 0])
+            het_collected_x2.append(het_X_next[:, 1])
 
             # Obtain next noisy sample from the objective function
-            het_Y_next = linear_sin_noise(het_X_next, noise_coeff, plot_sample, coefficient, modification, fplot=False)
-            het_composite_obj_val, het_noise_val = max_sin_noise_objective(het_X_next, noise_coeff, coefficient, modification, fplot=False)
+            het_Y_next = heteroscedastic_branin(het_X_next[:, 0], het_X_next[:, 1])
+            het_composite_obj_val = min_branin_noise_function(het_X_next[:, 0], het_X_next[:, 1])
 
-            if het_composite_obj_val > het_best_so_far:
+            if het_composite_obj_val < het_best_so_far:
                 het_best_so_far = het_composite_obj_val
                 het_obj_val_list.append(het_composite_obj_val)
             else:
@@ -155,13 +163,14 @@ if __name__ == '__main__':
             aug_X_next = my_propose_location(augmented_expected_improvement, aug_X_sample, aug_Y_sample, noise, l_init, sigma_f_init,
                                              bounds, plot_sample, n_restarts=3, min_val=300)
 
-            aug_collected_x.append(aug_X_next)
+            aug_collected_x1.append(aug_X_next[:, 0])
+            aug_collected_x2.append(aug_X_next[:, 1])
 
             # Obtain next noisy sample from the objective function
-            aug_Y_next = linear_sin_noise(aug_X_next, noise_coeff, plot_sample, coefficient, modification, fplot=False)
-            aug_composite_obj_val, aug_noise_val = max_sin_noise_objective(aug_X_next, noise_coeff, coefficient, modification, fplot=False)
+            aug_Y_next = heteroscedastic_branin(aug_X_next[:, 0], aug_X_next[:, 1])
+            aug_composite_obj_val = min_branin_noise_function(aug_X_next[:, 0], aug_X_next[:, 1])
 
-            if aug_composite_obj_val > aug_best_so_far:
+            if aug_composite_obj_val < aug_best_so_far:
                 aug_best_so_far = aug_composite_obj_val
                 aug_obj_val_list.append(aug_composite_obj_val)
             else:
@@ -178,13 +187,14 @@ if __name__ == '__main__':
                                                           sigma_f_noise_init, gp2_noise, num_iters, sample_size, bounds,
                                                           plot_sample, n_restarts=3, min_val=300)
 
-            aug_het_collected_x.append(aug_het_X_next)
+            aug_het_collected_x1.append(aug_het_X_next[:, 0])
+            aug_het_collected_x2.append(aug_het_X_next[:, 1])
 
             # Obtain next noisy sample from the objective function
-            aug_het_Y_next = linear_sin_noise(aug_het_X_next, noise_coeff, plot_sample, coefficient, modification, fplot=False)
-            aug_het_composite_obj_val, aug_het_noise_val = max_sin_noise_objective(aug_het_X_next, noise_coeff, coefficient, modification, fplot=False)
+            aug_het_Y_next = heteroscedastic_branin(aug_het_X_next[:, 0], aug_het_X_next[:, 1])
+            aug_het_composite_obj_val = min_branin_noise_function(aug_het_X_next[:, 0], aug_het_X_next[:, 1])
 
-            if aug_het_composite_obj_val > aug_het_best_so_far:
+            if aug_het_composite_obj_val < aug_het_best_so_far:
                 aug_het_best_so_far = aug_het_composite_obj_val
                 aug_het_obj_val_list.append(aug_het_composite_obj_val)
             else:
@@ -194,14 +204,14 @@ if __name__ == '__main__':
             aug_het_X_sample = np.vstack((aug_het_X_sample, aug_het_X_next))
             aug_het_Y_sample = np.vstack((aug_het_Y_sample, aug_het_Y_next))
 
-        homo_running_sum += np.array(homo_obj_val_list)
-        homo_squares += np.array(homo_obj_val_list) ** 2
-        hetero_running_sum += np.array(het_obj_val_list)
-        hetero_squares += np.array(het_obj_val_list) ** 2
-        aug_running_sum += np.array(aug_obj_val_list)
-        aug_squares += np.array(aug_obj_val_list) ** 2
-        aug_het_running_sum += np.array(aug_het_obj_val_list)
-        aug_het_squares += np.array(aug_het_obj_val_list) ** 2
+        homo_running_sum += np.array(homo_obj_val_list, dtype=np.float64).flatten()
+        homo_squares += np.array(homo_obj_val_list, dtype=np.float64).flatten() ** 2
+        hetero_running_sum += np.array(het_obj_val_list, dtype=np.float64).flatten()
+        hetero_squares += np.array(het_obj_val_list).flatten() ** 2
+        aug_running_sum += np.array(aug_obj_val_list, dtype=np.float64).flatten()
+        aug_squares += np.array(aug_obj_val_list, dtype=np.float64).flatten() ** 2
+        aug_het_running_sum += np.array(aug_het_obj_val_list, dtype=np.float64).flatten()
+        aug_het_squares += np.array(aug_het_obj_val_list, dtype=np.float64).flatten() ** 2
 
         # homo_noise_running_sum += np.array(homo_noise_val_list)
         # homo_noise_squares += np.array(homo_noise_val_list) ** 2
@@ -210,12 +220,12 @@ if __name__ == '__main__':
 
     homo_means = homo_running_sum / random_trials
     hetero_means = hetero_running_sum / random_trials
-    homo_errs = np.sqrt(homo_squares / random_trials - homo_means ** 2)
-    hetero_errs = np.sqrt(hetero_squares / random_trials - hetero_means ** 2)
+    homo_errs = np.sqrt(homo_squares / random_trials - homo_means ** 2, dtype=np.float64)
+    hetero_errs = np.sqrt(hetero_squares / random_trials - hetero_means ** 2, dtype=np.float64)
     aug_means = aug_running_sum / random_trials
-    aug_errs = np.sqrt(aug_squares / random_trials - aug_means ** 2)
+    aug_errs = np.sqrt(aug_squares / random_trials - aug_means ** 2, dtype=np.float64)
     aug_het_means = aug_het_running_sum / random_trials
-    aug_het_errs = np.sqrt(aug_het_squares / random_trials - aug_het_means **2)
+    aug_het_errs = np.sqrt(aug_het_squares / random_trials - aug_het_means **2, dtype=np.float64)
 
     print('List of average homoscedastic values is: ' + str(homo_means))
     print('List of homoscedastic errors is: ' + str(homo_errs))
@@ -242,16 +252,16 @@ if __name__ == '__main__':
     upper_aei = np.array(aug_means) + np.array(aug_errs)
     lower_het_aei = np.array(aug_het_means) - np.array(aug_het_errs)
     upper_het_aei = np.array(aug_het_means) + np.array(aug_het_errs)
-    plt.fill_between(iter_x, lower_homo, upper_homo, color='r', label='Homoscedastic', alpha=0.1)
-    plt.fill_between(iter_x, lower_hetero, upper_hetero, color='b', label='Heteroscedastic ANPEI', alpha=0.1)
-    #plt.fill_between(iter_x, lower_aei, upper_aei, color='g', label='Homoscedastic AEI', alpha=0.1)
-    plt.fill_between(iter_x, lower_het_aei, upper_het_aei, color='c', label='Heteroscedastic AEI', alpha=0.1)
+    plt.fill_between(iter_x, lower_homo.flatten(), upper_homo.flatten(), color='r', label='Homoscedastic', alpha=0.1)
+    plt.fill_between(iter_x, lower_hetero.flatten(), upper_hetero.flatten(), color='b', label='Heteroscedastic ANPEI', alpha=0.1)
+    #plt.fill_between(iter_x, lower_aei.flatten(), upper_aei.flatten(), color='g', label='Homoscedastic AEI', alpha=0.1)
+    plt.fill_between(iter_x, lower_het_aei.flatten(), upper_het_aei.flatten(), color='c', label='Heteroscedastic AEI', alpha=0.1)
     plt.title('Best Objective Function Value Found so Far')
     plt.xlabel('Number of Function Evaluations')
     plt.ylabel('Objective Function Value - Noise')
-    plt.legend(loc=4)
-    plt.savefig('toy_figures/bayesopt_plot{}_iters_{}_random_trials_and_{}_coefficient_times_100_and_noise_coeff_times_'
-                '100_of_{}_init_num_samples_of_{}_and_seed_{}_with_het_aei_full_unc_mistake_corrected'.format(bayes_opt_iters, random_trials, int(coefficient*100), int(noise_coeff*100), init_num_samples, numpy_seed))
+    plt.legend(loc=1)
+    plt.savefig('toy_branin_figures/bayesopt_plot{}_iters_{}_random_trials_and_and_noise_coeff_times_'
+                '100_of_{}_grid_size_of_{}_and_seed_{}_with_het_aei_full_unc_new'.format(bayes_opt_iters, random_trials, int(noise_coeff*100), grid_size, numpy_seed))
 
     # plt.plot(np.array(collected_x1), np.array(collected_x2), '+', color='green', markersize='12', linewidth='8')
     # plt.xlabel('x1')
