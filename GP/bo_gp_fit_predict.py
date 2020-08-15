@@ -10,7 +10,7 @@ from matplotlib import pyplot as plt
 from scipy.optimize import minimize
 from sklearn.preprocessing import StandardScaler
 
-from exp_utils import plot_het_gp1, plot_het_gp2
+from utils import plot_het_gp1, plot_het_gp2
 from kernels import scipy_kernel
 from utils import posterior_predictive, zero_mean, nll_fn_het
 

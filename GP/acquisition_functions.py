@@ -431,4 +431,4 @@ def heteroscedastic_propose_location(acquisition, X_sample, Y_sample, noise, l_i
                 min_val = res.fun[0]
                 min_x = res.x
 
-    return min_x.reshape(-1, 1).T  # added the tranpose for (2,) cases. shouldn't affect (1,) cases.
+    return min_x.reshape(-1, 1).T  # added the transpose for (2,) cases. shouldn't affect (1,) cases.

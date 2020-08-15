@@ -4,6 +4,7 @@
 Functions from other open source GP libraries used for test purposes.
 """
 
+from matplotlib import pyplot as plt
 import numpy as np
 import scipy.stats
 from scipy.linalg import cholesky, inv, solve_triangular
@@ -283,6 +284,74 @@ def nlpd(pred_mean_vec, pred_var_vec, targets):
     nlpd /= n
 
     return nlpd
+
+def plot_het_gp1(xs, ys, xs_star, gp1_noise, gp1_l, gp1_sigma_f):
+    """
+    Plot GP1 from the heteroscedastic GP.
+
+    :param xs: input locations (m x d)
+    :param ys: y values (m x 1)
+    :param xs_star: test locations (n x d)
+    :param gp1_noise: aleatoric noise
+    :param gp1_l: kernel lengthscale
+    :param gp1_sigma_f: kernel signal amplitude
+    :return: None
+    """
+
+    gp1_pred_mean, gp1_pred_var, _, _ = posterior_predictive(xs, ys, xs_star, gp1_noise, gp1_l, gp1_sigma_f,
+                                                             mean_func=zero_mean, kernel=scipy_kernel)
+
+    gp1_plot_pred_var = np.diag(gp1_pred_var).reshape(-1, 1)  # Take the diagonal of the covariance matrix for plotting purposes
+    # TODO: ADD ALEATORIC NOISE
+    gp1_plot_pred_var = gp1_plot_pred_var # + np.square(gp1_noise) - commented out because it causes computational error. need a workaround
+    print(np.square(gp1_noise))
+    plt.plot(xs, ys, '+', color='green', markersize='12', linewidth='8')
+    plt.plot(xs_star, gp1_pred_mean, '-', color='red')
+    upper = gp1_pred_mean + 2 * np.sqrt(gp1_plot_pred_var)
+    lower = gp1_pred_mean - 2 * np.sqrt(gp1_plot_pred_var)
+    upper = upper.reshape(xs_star.shape)
+    lower = lower.reshape(xs_star.shape)
+    plt.fill_between(xs_star.reshape(len(xs_star), ), upper.reshape(len(xs_star), ), lower.reshape(len(xs_star), ),
+                     color='gray', alpha=0.2)
+    plt.xlabel('input, x')
+    plt.ylabel('f(x)')
+    plt.title('Heteroscedastic GP1 Posterior')
+    plt.show()
+
+    return None
+
+
+def plot_het_gp2(xs, variance_estimator, xs_star, gp2_noise, gp2_l, gp2_sigma_f):
+    """
+    Plot GP2 from the heteroscedastic GP.
+
+    :param xs: input locations (m x d)
+    :param variances: sampled noise (m x 1)
+    :param xs_star: test locations (n x d)
+    :param gp2_noise: fixed noise level
+    :param gp2_l: kernel lengthscale
+    :param gp2_sigma_f: kernel signal amplitude
+    :return: None
+    """
+
+    gp2_pred_mean, gp2_pred_var, _, _ = posterior_predictive(xs, variance_estimator, xs_star, gp2_noise, gp2_l, gp2_sigma_f,
+                                                             mean_func=zero_mean, kernel=scipy_kernel)
+
+    gp2_plot_pred_var = np.diag(gp2_pred_var).reshape(-1, 1)  # Take the diagonal of the covariance matrix for plotting purposes
+    plt.plot(xs, variance_estimator, '+', color='green', markersize='12', linewidth='8')
+    plt.plot(xs_star, gp2_pred_mean, '-', color='red')
+    upper = gp2_pred_mean + 2 * np.sqrt(gp2_plot_pred_var)
+    lower = gp2_pred_mean - 2 * np.sqrt(gp2_plot_pred_var)
+    upper = upper.reshape(xs_star.shape)
+    lower = lower.reshape(xs_star.shape)
+    plt.fill_between(xs_star.reshape(len(xs_star), ), upper.reshape(len(xs_star), ), lower.reshape(len(xs_star), ),
+                     color='gray', alpha=0.2)
+    plt.xlabel('input, x')
+    plt.ylabel('variance(x)')
+    plt.title('Heteroscedastic GP2 Posterior')
+    plt.show()
+
+    return None
 
 
 def one_d_train_test_split(xs, ys, split_ratio):

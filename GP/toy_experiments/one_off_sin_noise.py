@@ -8,7 +8,6 @@ disregarding noise on the toy sin wave function.
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 import numpy as np
-from tensorflow import set_random_seed
 
 from acquisition_functions import heteroscedastic_one_off_expected_improvement, heteroscedastic_propose_location, \
     my_propose_location, my_expected_improvement, augmented_expected_improvement, heteroscedastic_one_off_augmented_expected_improvement
@@ -52,7 +51,6 @@ if __name__ == '__main__':
         numpy_seed = i + 62
         tf_seed = i + 63
         np.random.seed(numpy_seed)
-        set_random_seed(tf_seed)
 
         noise_coeff = 0.25  # noise coefficient will be noise(X) will be linear e.g. 0.2 * X
         bounds = np.array([0, 10]).reshape(-1, 1)  # bounds of the Bayesian Optimisation problem.
