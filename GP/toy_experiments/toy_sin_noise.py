@@ -15,7 +15,7 @@ from objective_functions import linear_sin_noise, max_sin_noise_objective
 
 if __name__ == '__main__':
 
-    modification = True  # Switches between sin(x) - False and sin(x) + 0.05x - True
+    modification = True  # Switches between sin(x) - False and sin(x) - 0.05x - True
     coefficient = 0.2  # tunes the relative size of the maxima in the function (used when modification = True)
 
     # Number of iterations
