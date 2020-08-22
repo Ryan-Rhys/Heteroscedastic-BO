@@ -48,7 +48,6 @@ if __name__ == '__main__':
     for i in range(random_trials):
 
         numpy_seed = i + 62
-        tf_seed = i + 63
         np.random.seed(numpy_seed)
 
         noise_coeff = 0.25  # noise coefficient will be noise(X) will be linear e.g. 0.2 * X
@@ -57,7 +56,7 @@ if __name__ == '__main__':
         #  Initial noisy data points sampled uniformly at random from the input space.
 
         init_num_samples = 3  # all un-named plots were 33 initial samples
-        X_init = np.random.uniform(0, 10, init_num_samples).reshape(-1, 1)  # sample 7 points at random from the bounds to initialise with
+        X_init = np.random.uniform(0, 10, init_num_samples).reshape(-1, 1)  # sample points at random from the bounds to initialise with
         plot_sample = np.linspace(0, 10, 50).reshape(-1, 1)  # samples for plotting purposes
 
         Y_init = linear_sin_noise(X_init, noise_coeff, plot_sample, coefficient, modification, fplot=False)
