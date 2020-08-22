@@ -20,7 +20,7 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 # Adjust accordingly for your own file system
 
-FREESOLV_PATH = '~/ml_physics/het-bayesopt/Heteroscedastic-BO/BayesOpt/bayesopt_datasets/Freesolv.txt'
+FREESOLV_PATH = '../bayesopt_datasets/Freesolv/Freesolv.txt'
 task = 'FreeSolv'
 use_frag = True
 use_exp = True
@@ -275,4 +275,4 @@ if __name__ == '__main__':
     plt.xlabel('Number of Function Evaluations')
     plt.ylabel('Objective Function Value - Noise')
     plt.legend(loc=1)
-    plt.savefig('freesolv_figures/bayesopt_plot{}_iters_{}_random_trials_and_seed_{}_with_het_aei_full_unc_just_tw_robust'.format(bayes_opt_iters, random_trials, numpy_seed))
+    plt.savefig('real_datasets_figures/bayesopt_plot{}_iters_{}_random_trials_and_seed_{}_with_het_aei_full_unc_just_tw_robust'.format(bayes_opt_iters, random_trials, numpy_seed))
