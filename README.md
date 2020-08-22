@@ -13,3 +13,16 @@ conda activate hetbo
 conda install matplotlib numpy pytest scikit-learn
 conda install scipy==1.1.0
 ```
+
+## Citing
+
+If you find this code useful please consider citing the following paper https://arxiv.org/abs/1910.07779
+
+```
+@article{griffiths2019achieving,
+  title={Achieving Robustness to Aleatoric Uncertainty with Heteroscedastic Bayesian Optimisation},
+  author={Griffiths, Ryan-Rhys and Garcia-Ortegon, Miguel and Aldrick, Alexander A and Lee, Alpha A},
+  journal={arXiv preprint arXiv:1910.07779},
+  year={2019}
+}
+```
