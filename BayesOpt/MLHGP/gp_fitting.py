@@ -1,22 +1,22 @@
-# Copyright Lee Group 2019
+# Copyright Ryan-Rhys Griffiths 2019
 # Author: Ryan-Rhys Griffiths
 """
-This module contains BayesOpt-fitting procedures for the homoscedastic and heteroscedastic BayesOpt implementations.
+This module contains Gaussian Process-fitting procedures for the homoscedastic and heteroscedastic
+Gaussian Process implementations.
 """
 
 from matplotlib import pyplot as plt
 import numpy as np
 from scipy.optimize import minimize
-from scipy.optimize import fmin_l_bfgs_b
 
 from kernels import scipy_kernel
 from mean_functions import zero_mean
-from utils import neg_log_marg_lik_krasser, nll_fn, posterior_predictive_krasser, posterior_predictive, nll_fn_het
+from gp_utils import neg_log_marg_lik_krasser, posterior_predictive, nll_fn_het
 
 
 def fit_homo_gp(xs, ys, noise, xs_star, l_init, sigma_f_init, fplot=True):
     """
-    Fit a homoscedastic BayesOpt to data (xs, ys) and compute the negative log predictive density at new input locations
+    Fit a homoscedastic GP to data (xs, ys) and compute the negative log predictive density at new input locations
     xs_star.
 
     :param xs: input locations N x D
@@ -25,7 +25,7 @@ def fit_homo_gp(xs, ys, noise, xs_star, l_init, sigma_f_init, fplot=True):
     :param xs_star: test input locations
     :param l_init: lengthscale(s) to initialise the optimiser
     :param sigma_f_init: signal amplitude to initialise the optimiser
-    :param f_plot: bool indicating whether to plot the posterior predictive or not.
+    :param fplot: bool indicating whether to plot the posterior predictive or not.
     :return: negative log marginal likelihood value and negative log predictive density.
     """
 
@@ -55,7 +55,9 @@ def fit_homo_gp(xs, ys, noise, xs_star, l_init, sigma_f_init, fplot=True):
 
     if fplot:
         plot_xs_star = xs_star.reshape(len(xs_star), )
-        plot_pred_var = np.diag(pred_var).reshape(-1, 1)  # Take the diagonal of the covariance matrix for plotting purposes
+
+        # Take the diagonal of the covariance matrix for plotting purposes
+        plot_pred_var = np.diag(pred_var).reshape(-1, 1)
         plt.plot(xs, ys, '+', color='green', markersize='12', linewidth='8')
         plt.plot(plot_xs_star, pred_mean, '-', color='red')
         upper = pred_mean + 2 * np.sqrt(plot_pred_var)
@@ -63,15 +65,16 @@ def fit_homo_gp(xs, ys, noise, xs_star, l_init, sigma_f_init, fplot=True):
         upper = upper.reshape(plot_xs_star.shape)
         lower = lower.reshape(plot_xs_star.shape)
         plt.fill_between(plot_xs_star, upper, lower, color='gray', alpha=0.2)
-        plt.xlabel('Density (Dry Bulk)')
-        plt.ylabel('Standardised Phosphorus Fraction')
-        plt.title('Homoscedastic BayesOpt Posterior')
+        plt.xlabel('x')
+        plt.ylabel('y')
+        plt.title('Homoscedastic GP Posterior')
         plt.show()
 
     return pred_mean, pred_var, nlml
 
 
-def fit_hetero_gp(xs, ys, aleatoric_noise, xs_star, l_init, sigma_f_init, l_noise_init, sigma_f_noise_init, gp2_noise, num_iters, sample_size):
+def fit_hetero_gp(xs, ys, aleatoric_noise, xs_star, l_init, sigma_f_init, l_noise_init, sigma_f_noise_init, gp2_noise,
+                  num_iters, sample_size):
     """
     Fit a heteroscedastic BayesOpt to data (xs, ys) and compute the negative log predictive density at new input locations
     xs_star.
@@ -99,17 +102,6 @@ def fit_hetero_gp(xs, ys, aleatoric_noise, xs_star, l_init, sigma_f_init, l_nois
 
         # We fit GP1 to the data
 
-        # n_restarts = 25
-        # dim = len(gp1_hypers)
-        # min_x = None
-        # min_val = 100
-        #
-        # for x0 in np.random.uniform(np.array(bounds[0]), np.array(bounds[1]), size=(n_restarts, dim)):
-        #     gp1_res = minimize(nll_fn(xs, ys), x0=x0, bounds=bounds, method='L-BFGS-B')
-        #     if gp1_res.fun < min_val:
-        #         min_val = gp1_res.fun[0]
-        #         min_x = gp1_res.x
-
         gp1_res = minimize(nll_fn_het(xs, ys, aleatoric_noise), gp1_hypers, bounds=bounds, method='L-BFGS-B')
         #gp1_res = min_x
 
@@ -127,7 +119,7 @@ def fit_hetero_gp(xs, ys, aleatoric_noise, xs_star, l_init, sigma_f_init, l_nois
 
         f_print_diagnostics = True
 
-        if f_print_diagnostics and i>= 1:
+        if f_print_diagnostics and i >= 1:
 
             nlml = neg_log_marg_lik_krasser(xs, ys, aleatoric_noise, gp1_l_opt, gp1_sigma_f_opt)
             print('negative log marginal likelihood on iteration {} is: '.format(i) + str(nlml))
@@ -181,9 +173,9 @@ def fit_hetero_gp(xs, ys, aleatoric_noise, xs_star, l_init, sigma_f_init, l_nois
             upper = upper.reshape(xs_star.shape)
             lower = lower.reshape(xs_star.shape)
             plt.fill_between(xs_star.reshape(len(xs_star),), upper.reshape(len(xs_star),), lower.reshape(len(xs_star),), color='gray', alpha=0.2)
-            plt.xlabel('Density (Dry Bulk)')
-            plt.ylabel('Standardised Phosphorus Fraction')
-            plt.title('Heteroscedastic BayesOpt Posterior')
+            plt.xlabel('x')
+            plt.ylabel('y')
+            plt.title('Heteroscedastic GP Posterior')
             plt.show()
 
         # We construct the most likely heteroscedastic BayesOpt noise estimator

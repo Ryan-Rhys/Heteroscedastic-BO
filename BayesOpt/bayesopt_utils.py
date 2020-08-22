@@ -1,4 +1,4 @@
-# Copyright Lee Group 2019
+# Copyright Ryan-Rhys Griffiths 2019
 # Author: Ryan-Rhys Griffiths
 """
 This module contains BayesOpt fit and predict functions for use in Bayesian Optimisation. Compared to the gp_fitting module
@@ -10,9 +10,9 @@ from matplotlib import pyplot as plt
 from scipy.optimize import minimize
 from sklearn.preprocessing import StandardScaler
 
-from utils import plot_het_gp1, plot_het_gp2
+from gp_utils import plot_het_gp1, plot_het_gp2
 from kernels import scipy_kernel
-from utils import posterior_predictive, zero_mean, nll_fn_het
+from gp_utils import posterior_predictive, zero_mean, nll_fn_het
 
 
 def bo_fit_homo_gp(xs, ys, noise, l_init, sigma_f_init):

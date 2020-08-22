@@ -1,7 +1,7 @@
 # Copyright Ryan-Rhys Griffiths 2019
 # Author: Ryan-Rhys Griffiths
 """
-This module implements BayesOpt mean functions.
+This module implements Gaussian Process mean functions.
 """
 
 import numpy as np

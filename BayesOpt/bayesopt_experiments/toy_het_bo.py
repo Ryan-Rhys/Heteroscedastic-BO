@@ -1,4 +1,4 @@
-# Copyright Lee Group 2019
+# Copyright Ryan-Rhys Griffiths 2019
 # Author: Ryan-Rhys Griffiths
 """
 This module contains the code for benchmarking heteroscedastic Bayesian Optimisation on a number of toy functions.
@@ -6,7 +6,6 @@ This module contains the code for benchmarking heteroscedastic Bayesian Optimisa
 
 import matplotlib.pyplot as plt
 import numpy as np
-from tensorflow import set_random_seed
 
 from acquisition_functions import heteroscedastic_expected_improvement, heteroscedastic_propose_location, my_propose_location, my_expected_improvement
 from objective_functions import branin_function, min_branin_noise_function, heteroscedastic_branin, linear_sin_noise, max_sin_noise_objective
@@ -23,7 +22,6 @@ if __name__ == '__main__':
         numpy_seed = i + 50
         tf_seed = i + 51
         np.random.seed(numpy_seed)
-        set_random_seed(tf_seed)
 
         noise = 0.2
         bounds = np.array([[-5.0, 10.0], [0.0, 15.0]])  # bounds of the Bayesian Optimisation problem.

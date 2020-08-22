@@ -7,18 +7,17 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 import numpy as np
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from tensorflow import set_random_seed
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
-from acquisition_functions import heteroscedastic_one_off_expected_improvement, heteroscedastic_propose_location, \
-    my_propose_location, my_expected_improvement, augmented_one_off_expected_improvement, heteroscedastic_one_off_augmented_expected_improvement
-from datasets import soil_bo
+from acquisition_functions import heteroscedastic_expected_improvement, heteroscedastic_propose_location, \
+    my_propose_location, my_expected_improvement, augmented_expected_improvement, heteroscedastic_augmented_expected_improvement
+from bayesopt_datasets import soil_bo
 
 
 if __name__ == '__main__':
 
     # Number of iterations
-    bayes_opt_iters = 5
+    bayes_opt_iters = 10
 
     # We perform random trials of Bayesian Optimisation
 
@@ -56,7 +55,6 @@ if __name__ == '__main__':
         numpy_seed = i + 62
         tf_seed = i + 63
         np.random.seed(numpy_seed)
-        set_random_seed(tf_seed)
 
         bounds = np.array([0, 2]).reshape(-1, 1)  # bounds of the Bayesian Optimisation problem.
 
@@ -115,10 +113,10 @@ if __name__ == '__main__':
             homo_collected_x.append(homo_X_next)
 
             # Obtain next noisy sample from the objective function
-            homo_X_next = min(xs_train, key=lambda x: abs(x - homo_X_next))  # Closest point in the heldout set.
+            homo_X_next = min(xs_train, key=lambda x:abs(x-homo_X_next))
             homo_index = list(xs).index(homo_X_next)
             homo_Y_next = ys[homo_index]
-            homo_composite_obj_val = homo_Y_next - std[homo_index]
+            homo_composite_obj_val = homo_Y_next + std[homo_index]
 
             if homo_composite_obj_val < homo_best_so_far:
                 homo_best_so_far = homo_composite_obj_val
@@ -132,7 +130,7 @@ if __name__ == '__main__':
 
             # Obtain next sampling point from the het acquisition function (ANPEI)
 
-            het_X_next = heteroscedastic_propose_location(heteroscedastic_one_off_expected_improvement, het_X_sample,
+            het_X_next = heteroscedastic_propose_location(heteroscedastic_expected_improvement, het_X_sample,
                                                           het_Y_sample, noise, l_init, sigma_f_init, l_noise_init,
                                                           sigma_f_noise_init, gp2_noise, num_iters, sample_size, bounds,
                                                           plot_sample, n_restarts=3, min_val=300)
@@ -143,7 +141,7 @@ if __name__ == '__main__':
             het_X_next = min(xs_train, key=lambda x:abs(x-het_X_next))
             het_index = list(xs).index(het_X_next)
             het_Y_next = ys[het_index]
-            het_composite_obj_val = het_Y_next - std[het_index]
+            het_composite_obj_val = het_Y_next + std[het_index]
 
             if het_composite_obj_val < het_best_so_far:
                 het_best_so_far = het_composite_obj_val
@@ -157,16 +155,16 @@ if __name__ == '__main__':
 
             # Obtain next sampling point from the augmented expected improvement (AEI)
 
-            aug_X_next = my_propose_location(augmented_one_off_expected_improvement, aug_X_sample, aug_Y_sample, noise, l_init, sigma_f_init,
+            aug_X_next = my_propose_location(augmented_expected_improvement, aug_X_sample, aug_Y_sample, noise, l_init, sigma_f_init,
                                              bounds, plot_sample, n_restarts=3, min_val=300)
 
             aug_collected_x.append(aug_X_next)
 
             # Obtain next noisy sample from the objective function
-            aug_X_next = min(xs_train, key=lambda x: abs(x-aug_X_next))
+            aug_X_next = min(xs_train, key=lambda x:abs(x-aug_X_next))
             aug_index = list(xs).index(aug_X_next)
             aug_Y_next = ys[aug_index]
-            aug_composite_obj_val = aug_Y_next - std[aug_index]
+            aug_composite_obj_val = aug_Y_next + std[aug_index]
 
             if aug_composite_obj_val < aug_best_so_far:
                 aug_best_so_far = aug_composite_obj_val
@@ -180,7 +178,7 @@ if __name__ == '__main__':
 
             # Obtain next sampling point from the heteroscedastic augmented expected improvement (het-AEI)
 
-            aug_het_X_next = heteroscedastic_propose_location(heteroscedastic_one_off_augmented_expected_improvement, aug_het_X_sample,
+            aug_het_X_next = heteroscedastic_propose_location(heteroscedastic_augmented_expected_improvement, aug_het_X_sample,
                                                           aug_het_Y_sample, noise, l_init, sigma_f_init, l_noise_init,
                                                           sigma_f_noise_init, gp2_noise, num_iters, sample_size, bounds,
                                                           plot_sample, n_restarts=3, min_val=300)
@@ -191,7 +189,7 @@ if __name__ == '__main__':
             aug_het_X_next = min(xs_train, key=lambda x:abs(x-aug_het_X_next))
             aug_het_index = list(xs).index(aug_het_X_next)
             aug_het_Y_next = ys[aug_het_index]
-            aug_het_composite_obj_val = aug_het_Y_next - std[aug_het_index]
+            aug_het_composite_obj_val = aug_het_Y_next + std[aug_het_index]
 
             if aug_het_composite_obj_val < aug_het_best_so_far:
                 aug_het_best_so_far = aug_het_composite_obj_val
@@ -241,8 +239,8 @@ if __name__ == '__main__':
     ax.xaxis.set_major_locator(MaxNLocator(integer=True))
     plt.plot(iter_x, homo_means, color='r', label='Homoscedastic')
     plt.plot(iter_x, hetero_means, color='b', label='Heteroscedastic ANPEI')
-    #plt.plot(iter_x, aug_means, color='g', label='Homoscedastic AEI')
-    #plt.plot(iter_x, aug_het_means, color='c', label='Heteroscedastic AEI')
+    plt.plot(iter_x, aug_means, color='g', label='Homoscedastic AEI')
+    plt.plot(iter_x, aug_het_means, color='c', label='Heteroscedastic AEI')
     lower_homo = np.array(homo_means) - np.array(homo_errs)
     upper_homo = np.array(homo_means) + np.array(homo_errs)
     lower_hetero = np.array(hetero_means) - np.array(hetero_errs)
@@ -253,10 +251,10 @@ if __name__ == '__main__':
     upper_het_aei = np.array(aug_het_means) + np.array(aug_het_errs)
     plt.fill_between(iter_x, lower_homo, upper_homo, color='r', label='Homoscedastic', alpha=0.1)
     plt.fill_between(iter_x, lower_hetero, upper_hetero, color='b', label='Heteroscedastic ANPEI', alpha=0.1)
-    #plt.fill_between(iter_x, lower_aei, upper_aei, color='g', label='Homoscedastic AEI', alpha=0.1)
-    #plt.fill_between(iter_x, lower_het_aei, upper_het_aei, color='c', label='Heteroscedastic AEI', alpha=0.1)
+    plt.fill_between(iter_x, lower_aei, upper_aei, color='g', label='Homoscedastic AEI', alpha=0.1)
+    plt.fill_between(iter_x, lower_het_aei, upper_het_aei, color='c', label='Heteroscedastic AEI', alpha=0.1)
     plt.title('Best Objective Function Value Found so Far')
     plt.xlabel('Number of Function Evaluations')
     plt.ylabel('Objective Function Value + Noise')
     plt.legend(loc=1)
-    plt.savefig('one_off_soil_figures/bayesopt_plot{}_iters_{}_random_trials_and_seed_{}_with_het_aei_full_unc_just_two'.format(bayes_opt_iters, random_trials, numpy_seed))
+    plt.savefig('toy_soil_figures/bayesopt_plot{}_iters_{}_random_trials_and_seed_{}_with_het_aei_full_unc'.format(bayes_opt_iters, random_trials, numpy_seed))

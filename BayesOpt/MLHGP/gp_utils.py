@@ -1,7 +1,7 @@
 # Copyright Ryan-Rhys Griffiths 2019
 # Author: Ryan-Rhys Griffiths
 """
-Functions from other open source BayesOpt libraries used for test purposes.
+Functions from other open source Gaussian Process libraries used for test purposes.
 """
 
 from matplotlib import pyplot as plt

@@ -1,7 +1,7 @@
 # Copyright Ryan-Rhys Griffiths 2019
 # Author: Ryan-Rhys Griffiths
 """
-This script generates the heteroscedastic datasets found in Kersting et al. 2007
+This script generates the heteroscedastic bayesopt_datasets found in Kersting et al. 2007
 (http://people.csail.mit.edu/kersting/papers/kersting07icml_mlHetGP.pdf)
 
 Lidar dataset from the file lidar.txt found in the SemiPar package for R:

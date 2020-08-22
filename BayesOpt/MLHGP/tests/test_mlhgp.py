@@ -9,12 +9,11 @@ import numpy as np
 import pytest
 from scipy.optimize import minimize
 
-from datasets import williams_1996
-from gp_prior import compute_confidence_bounds
+from sample_gp_prior import compute_confidence_bounds
 from kernels import anisotropic_kernel, compute_kernel_matrix_sq_exp, kernel, sq_exp, scipy_kernel
 from mean_functions import zero_mean
 from objective_functions import branin_function, heteroscedastic_branin
-from utils import multivariate_normal, mvn_sample, neg_log_marg_lik_krasser, \
+from gp_utils import multivariate_normal, mvn_sample, neg_log_marg_lik_krasser, \
     posterior_predictive_krasser, nll_fn, neg_log_marg_lik, my_nll_fn, posterior_predictive, nlpd
 
 
@@ -337,16 +336,6 @@ def test_nlpd_unequal_std_and_variance(pred_mean_vec, pred_var_vec, targets):
     nlpd_val = nlpd(pred_mean_vec, pred_var_vec, targets)
 
     assert np.allclose(nlpd_val, 1.7370857)
-
-
-def test_williams_1996():
-    """
-    Tests that the Williams 1996 dataset is generated correctly
-    """
-
-    inputs, targets = williams_1996()
-
-    assert len(inputs) == len(targets)
 
 
 def test_heteroscedastic_branin():

@@ -1,6 +1,6 @@
 # Author: Ryan-Rhys Griffiths
 """
-Utility functions for parsing chemical datasets.
+Utility functions for parsing datasets.
 """
 
 import numpy as np
