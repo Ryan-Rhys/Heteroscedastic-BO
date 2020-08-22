@@ -42,7 +42,7 @@ def expected_improvement(X, X_sample, gpr, xi=0.01):
 
 def my_expected_improvement(X, X_sample, Y_sample, noise, l_opt, sigma_f_opt, mu_sample_opt):
     """
-    Computes the EI using a homoscedastic BayesOpt.
+    Computes the EI using a homoscedastic GP.
 
     :param X: Test locations (n x d)
     :param X_sample: Sample locations (m x d).
@@ -68,14 +68,14 @@ def my_expected_improvement(X, X_sample, Y_sample, noise, l_opt, sigma_f_opt, mu
 
 def augmented_expected_improvement(X, X_sample, Y_sample, noise, l_opt, sigma_f_opt, mu_sample_opt):
     """
-    Computes the AEI using a homoscedastic BayesOpt.
+    Computes the AEI using a homoscedastic GP.
 
     :param X: Test locations (n x d)
     :param X_sample: Sample locations (m x d).
     :param Y_sample:  Noise-corrupted values at the sample locations (m x 1).
     :param noise: noise level in the latent function.
-    :param l_opt: optimised lengthscale(s) of the BayesOpt kernel.
-    :param sigma_f_opt: optimised vertical lengthscale of the BayesOpt kernel.
+    :param l_opt: optimised lengthscale(s) of the GP kernel.
+    :param sigma_f_opt: optimised vertical lengthscale of the GP kernel.
     :param mu_sample_opt: incumbent eta
     :return: Expected improvements at points X.
     """
@@ -95,14 +95,14 @@ def augmented_expected_improvement(X, X_sample, Y_sample, noise, l_opt, sigma_f_
 
 def augmented_one_off_expected_improvement(X, X_sample, Y_sample, noise, l_opt, sigma_f_opt, mu_sample_opt):
     """
-    Computes the AEI using a homoscedastic BayesOpt with one-off noise-seeking behaviour.
+    Computes the AEI using a homoscedastic GP with one-off noise-seeking behaviour.
 
     :param X: Test locations (n x d)
     :param X_sample: Sample locations (m x d).
     :param Y_sample:  Noise-corrupted values at the sample locations (m x 1).
     :param noise: noise level in the latent function.
-    :param l_opt: optimised lengthscale(s) of the BayesOpt kernel.
-    :param sigma_f_opt: optimised vertical lengthscale of the BayesOpt kernel.
+    :param l_opt: optimised lengthscale(s) of the GP kernel.
+    :param sigma_f_opt: optimised vertical lengthscale of the GP kernel.
     :param mu_sample_opt: incumbent eta
     :return: Expected improvements at points X.
     """
@@ -124,7 +124,7 @@ def heteroscedastic_expected_improvement(X, X_sample, Y_sample, variance_estimat
                                          gp1_sigma_f_opt, gp2_l_opt, gp2_sigma_f_opt, gp2_noise, mu_sample_opt,
                                          hetero_ei=True):
     """
-    Computes the EI using a heteroscedastic BayesOpt.
+    Computes the EI using a heteroscedastic GP.
 
     :param X: Test locations (n x d)
     :param X_sample: Sample locations (m x d)
@@ -162,11 +162,12 @@ def heteroscedastic_expected_improvement(X, X_sample, Y_sample, variance_estimat
 
     return ei
 
+
 def heteroscedastic_one_off_expected_improvement(X, X_sample, Y_sample, variance_estimator, noise_func, gp1_l_opt,
                                          gp1_sigma_f_opt, gp2_l_opt, gp2_sigma_f_opt, gp2_noise, mu_sample_opt,
                                          hetero_ei=True):
     """
-    Computes the EI using a heteroscedastic BayesOpt.
+    Computes the EI using a heteroscedastic GP.
 
     :param X: Test locations (n x d)
     :param X_sample: Sample locations (m x d)
@@ -209,7 +210,7 @@ def heteroscedastic_augmented_expected_improvement(X, X_sample, Y_sample, varian
                                                    gp1_sigma_f_opt, gp2_l_opt, gp2_sigma_f_opt, gp2_noise, mu_sample_opt,
                                                    hetero_ei=True):
     """
-    Computes the AEI using a heteroscedastic BayesOpt.
+    Computes the AEI using a heteroscedastic GP.
 
     :param X: Test locations (n x d)
     :param X_sample: Sample locations (m x d)
@@ -260,7 +261,7 @@ def heteroscedastic_one_off_augmented_expected_improvement(X, X_sample, Y_sample
                                                    gp1_sigma_f_opt, gp2_l_opt, gp2_sigma_f_opt, gp2_noise, mu_sample_opt,
                                                    hetero_ei=True):
     """
-    Computes the AEI using a heteroscedastic BayesOpt.
+    Computes the AEI using a heteroscedastic GP.
 
     :param X: Test locations (n x d)
     :param X_sample: Sample locations (m x d)
