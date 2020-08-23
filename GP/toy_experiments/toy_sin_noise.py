@@ -14,9 +14,7 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 import numpy as np
 
-from acquisition_functions import heteroscedastic_expected_improvement, heteroscedastic_propose_location, \
-    my_propose_location, my_expected_improvement, augmented_expected_improvement, \
-    heteroscedastic_augmented_expected_improvement
+from acquisition_functions import heteroscedastic_expected_improvement, heteroscedastic_propose_location, my_propose_location, my_expected_improvement, augmented_expected_improvement, heteroscedastic_augmented_expected_improvement
 from objective_functions import linear_sin_noise, max_sin_noise_objective
 
 if __name__ == '__main__':
@@ -239,7 +237,7 @@ if __name__ == '__main__':
 
     iter_x = np.arange(1, bayes_opt_iters + 1)
 
-    # clear figure from previous fplot returns if fiddling with form of function
+    # clear figure from previous fplot=True
     plt.cla()
 
     ax = plt.gca()
