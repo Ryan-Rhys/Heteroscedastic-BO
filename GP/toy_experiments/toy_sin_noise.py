@@ -1,4 +1,4 @@
-# Copyright Lee Group 2019
+# Copyright Lee Group 2020
 # Author: Ryan-Rhys Griffiths (Modified by Alex Aldrick)
 """
 This module contains the code for benchmarking heteroscedastic Bayesian Optimisation on a 1D toy problem.
