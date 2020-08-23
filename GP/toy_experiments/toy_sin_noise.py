@@ -3,6 +3,12 @@
 """
 This module contains the code for benchmarking heteroscedastic Bayesian Optimisation on a 1D toy problem.
 """
+### allowing for import of modules from parent package 'GP' - editor agnostic.
+import sys
+from pathlib import Path # if you haven't already done so
+file = Path(__file__).resolve()
+parent, root = file.parent, file.parents[1]
+sys.path.append(str(root))
 
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
