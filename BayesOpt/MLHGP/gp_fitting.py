@@ -117,7 +117,7 @@ def fit_hetero_gp(xs, ys, aleatoric_noise, xs_star, l_init, sigma_f_init, l_nois
 
         gp1_pred_mean, gp1_pred_var, _, _ = posterior_predictive(xs, ys, xs_star, aleatoric_noise, gp1_l_opt, gp1_sigma_f_opt, mean_func=zero_mean, kernel=scipy_kernel)
 
-        f_print_diagnostics = True
+        f_print_diagnostics = False
 
         if f_print_diagnostics and i >= 1:
 
@@ -131,7 +131,7 @@ def fit_hetero_gp(xs, ys, aleatoric_noise, xs_star, l_init, sigma_f_init, l_nois
         f_gp1_plot_posterior = False
 
         if i == num_iters - 1 and dimensionality == 1:
-            f_gp1_plot_posterior = True
+            f_gp1_plot_posterior = False
 
         f_gp1_plot_posterior_2d = False
 

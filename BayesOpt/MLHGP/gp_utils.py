@@ -355,15 +355,18 @@ def plot_het_gp2(xs, variance_estimator, xs_star, gp2_noise, gp2_l, gp2_sigma_f)
     return None
 
 
-def one_d_train_test_split(xs, ys, split_ratio):
+def one_d_train_test_split(xs, ys, split_ratio, seed):
     """
     Splits a dataset of (xs, ys) into train and test sets of a given split ratio.
 
     :param xs: dataset inputs
     :param ys: dataset outputs
     :param split_ratio: The ratio in which to split train/test. 0 < split_ratio < 1. i.e. 0.9 will be 90/10 train/test.
+    :param seed: The random seed
     :return: xs_train, ys_train, xs_test, ys_test
     """
+
+    np.random.seed(seed)
 
     n = xs.shape[0]
     permutation = np.random.choice(n, n, replace=False)
