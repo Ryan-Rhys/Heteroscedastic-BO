@@ -20,7 +20,7 @@ from gp_utils import nlpd, one_d_train_test_split, posterior_predictive
 # Hyperparameter initialisation settings to reproduce the results of Kersting et al. 2007
 
 # lidar: {l_init: 50, sigma_f_init: 0.1, noise: 0.2, gp2_l_init: 0.1, gp2_sigma_f_init: 0.3, gp2_noise: 0.2}
-# williams: {l_init: , sigma_f_init: , noise: , gp2_l_init: , gp2_sigma_f_init: , gp2_noise: }
+# williams: {l_init: 0.5 , sigma_f_init: 1.2 , noise: 0.2 , gp2_l_init: 1, gp2_sigma_f_init: 2, gp2_noise: 0.5}
 # yuan: {l_init: , sigma_f_init: , noise: , gp2_l_init: , gp2_sigma_f_init: , gp2_noise: }
 # silverman: {l_init: , sigma_f_init: , noise: , gp2_l_init: , gp2_sigma_f_init: , gp2_noise: }
 # goldberg: {l_init: , sigma_f_init: , noise: , gp2_l_init: , gp2_sigma_f_init: , gp2_noise: }
@@ -57,11 +57,11 @@ def main(dataset, fplot, n_trials):
 
         # Fit the homoscedastic GP
 
-        l_init = 0.5  # lengthscale to initialise the optimiser with
-        sigma_f_init = 1.2  # signal amplitude to initialise the optimiser with
-        noise = 0.2  # noise to initialise the optimiser with. Same for both homoscedastic GP and GP1 of MLHGP
+        l_init = 0.1  # lengthscale to initialise the optimiser with
+        sigma_f_init = 3  # signal amplitude to initialise the optimiser with
+        noise = 0.1  # noise to initialise the optimiser with. Same for both homoscedastic GP and GP1 of MLHGP
 
-        pred_mean, pred_var, nlml = fit_homo_gp(xs_train, ys_train, noise, xs_test, l_init, sigma_f_init, fplot=False)
+        pred_mean, pred_var, nlml = fit_homo_gp(xs_train, ys_train, noise, xs_test, l_init, sigma_f_init, fplot=True)
 
         mse_val_hom = mean_squared_error(pred_mean, ys_test)
         #  will only work if pred_mean has been evaluated at the same positions as the target ys.
@@ -73,8 +73,8 @@ def main(dataset, fplot, n_trials):
         print(f'Homoscedastic GP MSE for trial {i}: {mse_val_hom}')
         print(f'Homoscedastic GP NLPD for trial {i}: {nlpd_val_hom}')
 
-        gp2_l_init = 1
-        gp2_sigma_f_init = 2
+        gp2_l_init = 0.3
+        gp2_sigma_f_init = 2.5
         gp2_noise = 0.5
         num_iters = 10
         sample_size = 100
@@ -136,7 +136,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('-d', '--dataset', type=str, default='williams',
+    parser.add_argument('-d', '--dataset', type=str, default='yuan',
                         help='Heteroscedastic dataset to generate. Choices are one of '
                              '[lidar, silverman, scallop, yuan, williams, goldberg]')
     parser.add_argument('-p', '--fplot', type=bool, default=False,
