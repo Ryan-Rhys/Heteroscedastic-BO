@@ -15,7 +15,7 @@ from matplotlib.ticker import MaxNLocator
 from acquisition_funcs.acquisition_functions import heteroscedastic_expected_improvement, heteroscedastic_propose_location, my_propose_location, my_expected_improvement, augmented_expected_improvement, heteroscedastic_augmented_expected_improvement
 from objective_funcs.objective_functions import max_sin_noise_objective
 import numpy as np
-1
+
 def linear_sin_noise(X, noise, plot_sample, coefficient, modification=False, fplot=True):
     """
     1D noise function defined where noise increases linearly in the input domain. Bounds for a bimodal function could be
@@ -98,10 +98,6 @@ def hetero_BO(noise_coeff):
 
         Y_init = linear_sin_noise(X_init, noise_coeff, plot_sample, coefficient, modification, fplot=False)
 
-        # Initialize samples
-        het_X_sample = X_init.reshape(-1, 1)
-        het_Y_sample = Y_init.reshape(-1, 1)
-
         # initial GP hypers
 
         l_init = 1.0
@@ -160,6 +156,7 @@ def hetero_BO(noise_coeff):
 
 if __name__ == "__main__":
 
+    # adding sin plot function to see all current forms of function.
     for i in range(3):
         modification=True
         coefficient=0.2
@@ -167,8 +164,16 @@ if __name__ == "__main__":
         init_num_samples = 3  # all un-named plots were 33 initial samples
         X_init = np.random.uniform(0, 10, init_num_samples).reshape(-1, 1)  # sample 7 points at random from the bounds to initialise with
         plot_sample = np.linspace(0, 10, 50).reshape(-1, 1)  # samples for plotting purposes
+        plot_sin_function = np.sin(plot_sample) + coefficient*plot_sample
 
-        Y_init = linear_sin_noise(X_init, noise_coeff, plot_sample, coefficient, modification, fplot=True)
+        plt.plot(plot_sample, plot_sin_function - noise_coeff*plot_sample, color='purple')# label='noise function')
+        plt.xlabel('x')
+        plt.ylabel('f(x)')
+        plt.title('Black-Box Objective')
+        plt.ylim(-2, 2)
+        plt.xlim(0, 10)
+
+    plt.savefig('toy_figures/black_box_tuned_multiple.png')
 
     plt.figure()
 
