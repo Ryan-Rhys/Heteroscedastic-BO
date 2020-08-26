@@ -53,17 +53,17 @@ def linear_sin_noise(X, noise, plot_sample, coefficient, modification=False, fpl
 
 def hetero_BO(noise_coeff):
     """
-    param noise_coeff: TODO
-    return: TODO
+    param noise_coeff: the noise coefficient used to determine the magnitude of the noise; for example
+                       if modification=True, sin(x) + 0.2x - noise_coeff*x.
+    return: hetero_means: the mean values of objective values across random trials
+            hetero_errs: the error associated with the objective values
+            lower_hetero: magnitude of lower error boundary
+            upper_hetero: magnitude of upper error boundary
+            bayes_opt_iters: number of iterations of Bayesian Optimisation
+            
     """
     modification = True  # Switches between sin(x) - False and sin(x) + 0.05x - True
     coefficient = 0.2  # tunes the relative size of the maxima in the function (used when modification = True)
-#    noise_coeff = 0.25  # noise coefficient will be noise(X) will be linear e.g. 0.2 * X
-#    init_num_samples = 3  # all un-named plots were 33 initial samples
-#    X_init = np.random.uniform(0, 10, init_num_samples).reshape(-1, 1)  # sample 7 points at random from the bounds to initialise with
-#    plot_sample = np.linspace(0, 10, 50).reshape(-1, 1)  # samples for plotting purposes
-#
-#    Y_init = linear_sin_noise(X_init, noise_coeff, plot_sample, coefficient, modification, fplot=True)
 
     # Number of iterations
     random_trials = 10
@@ -98,6 +98,8 @@ def hetero_BO(noise_coeff):
 
         Y_init = linear_sin_noise(X_init, noise_coeff, plot_sample, coefficient, modification, fplot=False)
 
+        het_X_sample = X_init.reshape(-1, 1)
+        het_Y_sample = Y_init.reshape(-1, 1)
         # initial GP hypers
 
         l_init = 1.0
@@ -158,18 +160,23 @@ if __name__ == "__main__":
 
     # adding sin plot function to see all current forms of function.
     for i in range(3):
+        noise_coeff = 0.25 + i*0.05
+        print ('checking we are in inner loop')
         modification=True
         coefficient=0.2
-        noise_coeff = 0.25  # noise coefficient will be noise(X) will be linear e.g. 0.2 *
+        # noise_coeff = 0.25  # noise coefficient will be noise(X) will be linear e.g. 0.2 *
         init_num_samples = 3  # all un-named plots were 33 initial samples
         X_init = np.random.uniform(0, 10, init_num_samples).reshape(-1, 1)  # sample 7 points at random from the bounds to initialise with
         plot_sample = np.linspace(0, 10, 50).reshape(-1, 1)  # samples for plotting purposes
         plot_sin_function = np.sin(plot_sample) + coefficient*plot_sample
 
-        plt.plot(plot_sample, plot_sin_function - noise_coeff*plot_sample, color='purple')# label='noise function')
+        random_colour = (np.random.uniform(0, 1), np.random.uniform(0, 1), np.random.uniform(0, 1))
+        label = 'sin(x) - ' + str(np.round((i+1)*0.05,2)) + 'x'
+        plt.plot(plot_sample, plot_sin_function - noise_coeff*plot_sample, color=random_colour, label=label)# label='noise function')
         plt.xlabel('x')
         plt.ylabel('f(x)')
-        plt.title('Black-Box Objective')
+        plt.legend(loc=4)
+        plt.title('Forms of 1D function being tested')
         plt.ylim(-2, 2)
         plt.xlim(0, 10)
 
