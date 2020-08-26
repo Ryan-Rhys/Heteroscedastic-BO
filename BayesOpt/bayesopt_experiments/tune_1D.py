@@ -12,10 +12,10 @@ sys.path.append(str(root))
 
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
-from acquisition_functions import heteroscedastic_expected_improvement, heteroscedastic_propose_location, my_propose_location, my_expected_improvement, augmented_expected_improvement, heteroscedastic_augmented_expected_improvement
-from objective_functions import max_sin_noise_objective
+from acquisition_funcs.acquisition_functions import heteroscedastic_expected_improvement, heteroscedastic_propose_location, my_propose_location, my_expected_improvement, augmented_expected_improvement, heteroscedastic_augmented_expected_improvement
+from objective_funcs.objective_functions import max_sin_noise_objective
 import numpy as np
-
+1
 def linear_sin_noise(X, noise, plot_sample, coefficient, modification=False, fplot=True):
     """
     1D noise function defined where noise increases linearly in the input domain. Bounds for a bimodal function could be

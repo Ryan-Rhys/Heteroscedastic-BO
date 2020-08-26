@@ -10,9 +10,9 @@ from matplotlib import pyplot as plt
 from scipy.optimize import minimize
 from sklearn.preprocessing import StandardScaler
 
-from gp_utils import plot_het_gp1, plot_het_gp2
-from kernels import scipy_kernel
-from gp_utils import posterior_predictive, zero_mean, nll_fn_het
+from MLHGP.gp_utils import plot_het_gp1, plot_het_gp2
+from MLHGP.kernels import scipy_kernel
+from MLHGP.gp_utils import posterior_predictive, zero_mean, nll_fn_het
 
 
 def bo_fit_homo_gp(xs, ys, noise, l_init, sigma_f_init):
