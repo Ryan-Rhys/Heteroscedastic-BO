@@ -159,9 +159,8 @@ def hetero_BO(noise_coeff):
 if __name__ == "__main__":
 
     # adding sin plot function to see all current forms of function.
-    for i in range(3):
-        noise_coeff = 0.25 + i*0.05
-        print ('checking we are in inner loop')
+    for i in range(5):
+        noise_coeff = 0.25 + i*0.05 # change this to fiddle with 1D function
         modification=True
         coefficient=0.2
         # noise_coeff = 0.25  # noise coefficient will be noise(X) will be linear e.g. 0.2 *
@@ -180,13 +179,14 @@ if __name__ == "__main__":
         plt.ylim(-2, 2)
         plt.xlim(0, 10)
 
+    print('Saving 1D functional forms in toy_figures/black_box_tuned_multiple.png')
     plt.savefig('toy_figures/black_box_tuned_multiple.png')
 
     plt.figure()
 
-    for i in range(3):
+    for i in range(5):
         print('Setting sin function as: sin(x) - ' + str(np.round((i+1)*0.05,2)) + 'x')
-        noise_coeff = 0.25 + i*0.05
+        noise_coeff = 0.25 + i*0.05 # change this to fiddle with 1D function
         hetero_means, hetero_errs, lower_hetero, upper_hetero, bayes_opt_iters = hetero_BO(noise_coeff)
 
         ax = plt.gca()
@@ -204,6 +204,7 @@ if __name__ == "__main__":
     plt.xlabel('Number of Function Evaluations')
     plt.ylabel('Objective Function Value - Noise')
     plt.legend(loc=4)
+    print('Saving performance test in toy_figures/tune_1D_looped.png')
     plt.savefig('toy_figures/tune_1D_looped.png')
 
 

@@ -14,8 +14,8 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 import numpy as np
 
-from acquisition_functions import heteroscedastic_expected_improvement, heteroscedastic_propose_location, my_propose_location, my_expected_improvement, augmented_expected_improvement, heteroscedastic_augmented_expected_improvement
-from objective_functions import linear_sin_noise, max_sin_noise_objective
+from acquisition_funcs.acquisition_functions import heteroscedastic_expected_improvement, heteroscedastic_propose_location, my_propose_location, my_expected_improvement, augmented_expected_improvement, heteroscedastic_augmented_expected_improvement
+from objective_funcs.objective_functions import linear_sin_noise, max_sin_noise_objective
 
 if __name__ == '__main__':
 
@@ -53,10 +53,10 @@ if __name__ == '__main__':
 
     for i in range(random_trials):  # random trials to get average across x number of trials
 
-        numpy_seed = i + 62
-        np.random.seed(numpy_seed)
+        # numpy_seed = i + 62
+        # np.random.seed(numpy_seed)
 
-        noise_coeff = 0.25  # noise coefficient will be noise(X) will be linear e.g. 0.2 * X
+        noise_coeff = 0.3  # noise coefficient will be noise(X) will be linear e.g. 0.2 * X
         bounds = np.array([0, 10]).reshape(-1, 1)  # bounds of the Bayesian Optimisation problem.
 
         #  Initial noisy data points sampled uniformly at random from the input space.
