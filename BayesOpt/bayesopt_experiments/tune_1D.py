@@ -67,7 +67,7 @@ def homo_BO(noise_coeff):
 
     # Number of iterations
     random_trials = 10
-    bayes_opt_iters = 5
+    bayes_opt_iters = 10
 
     # We perform random trials of Bayesian Optimisation
 
@@ -87,7 +87,7 @@ def homo_BO(noise_coeff):
 
         #  Initial noisy data points sampled uniformly at random from the input space.
 
-        init_num_samples = 33  # all un-named plots were 33 initial samples
+        init_num_samples = 3  # all un-named plots were 3 initial samples
         X_init = np.random.uniform(-8, 3, init_num_samples).reshape(-1,
                                                                     1)  # sample 7 points at random from the bounds to initialise with
         plot_sample = np.linspace(-8, 3, 50).reshape(-1, 1)  # samples for plotting purposes
@@ -161,7 +161,7 @@ def hetero_BO(noise_coeff):
 
     # Number of iterations
     random_trials = 10
-    bayes_opt_iters = 5
+    bayes_opt_iters = 10
 
     # We perform random trials of Bayesian Optimisation
 
@@ -185,7 +185,7 @@ def hetero_BO(noise_coeff):
 
         #  Initial noisy data points sampled uniformly at random from the input space.
 
-        init_num_samples = 33  # all un-named plots were 33 initial samples
+        init_num_samples = 3  # all un-named plots were 3 nitial samples
         X_init = np.random.uniform(-8, 3, init_num_samples).reshape(-1,
                                                                     1)  # sample 7 points at random from the bounds to initialise with
         plot_sample = np.linspace(-8, 3, 50).reshape(-1, 1)  # samples for plotting purposes
