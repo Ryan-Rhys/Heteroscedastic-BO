@@ -31,39 +31,28 @@ def linear_sin_noise(X, noise, plot_sample, coefficient, modification=False, fpl
     """
 
     if modification:
-        linear_sin_noise = np.sin(X) + coefficient*X + (noise * np.random.randn(*X.shape) * X)
-        plot_sin_function = np.sin(plot_sample)/plot_sample + np.cos(plot_sample) + 5 +coefficient*plot_sample - noise_coeff*plot_sample
+        # form of function
+        linear_sin_noise = np.sin(8*X) - np.cos(3*X) + 2 + coefficient*X + (noise * np.random.randn(*X.shape) * X)
+        plot_sin_function = np.sin(plot_sample) + np.cos(plot_sample) + 5 +coefficient*plot_sample - noise_coeff*plot_sample
     else:
         linear_sin_noise = np.sin(X) + (noise * np.random.randn(*X.shape) * X)
         plot_sin_function = np.sin(plot_sample)
 
-    if fplot:
-        #plt.plot(X, linear_sin_noise, '+', color='green', markersize='12', linewidth='8', label='samples with Gaussian noise')
-        #plt.plot(plot_sample, plot_sin_function, color='blue', label='mean of generative process')
-        plt.plot(plot_sample, plot_sin_function - noise*plot_sample, color='purple')#, label='noise function')
-        plt.xlabel('x')
-        plt.ylabel('f(x)')
-        plt.title('Black-Box Objective')
-        #plt.legend()
-        plt.ylim(-2, 2)
-        plt.xlim(0, 10)
-        plt.savefig('toy_figures/black_box_tuned_multiple.png')
-
     return linear_sin_noise
 
-def homo_BO(noise_coeff):
+def homo_BO(noise_coeff, coefficient, x_lower_bound, x_upper_bound):
     """
-    param noise_coeff: the noise coefficient used to determine the magnitude of the noise; for example
-                       if modification=True, sin(x) + 0.2x - noise_coeff*x.
+    param noise_coeff: the noise coefficient used to determine the magnitude of the noise; for example, if modification=True, sin(x) + 0.2x - noise_coeff*x
+    param coefficient: coefficient of x i.e. 0.2 in the line above
+    param x_lower_bound: lower bound of x to consider for BO and for plotting
+    param x_upper_bound: upper bound of x to consider for BO and for plotting
     return: homo_means: the mean values of objective values across random trials
             homo_errs: the error associated with the objective values
             lower_homo: magnitude of lower error boundary
             upper_homo: magnitude of upper error boundary
-            bayes_opt_iters: number of iterations of Bayesian Optimisation
-
     """
     modification = True  # Switches between sin(x) - False and sin(x) + 0.05x - True
-    coefficient = 0.2  # tunes the relative size of the maxima in the function (used when modification = True)
+    #coefficient = 0  # tunes the relative size of the maxima in the function (used when modification = True)
 
     # Number of iterations
     random_trials = 10
@@ -82,15 +71,14 @@ def homo_BO(noise_coeff):
         #numpy_seed = i + 62
         #np.random.seed(numpy_seed)
 
-        noise_coeff = 0.5  # noise coefficient will be noise(X) will be linear e.g. 0.2 * X
-        bounds = np.array([-8, 3]).reshape(-1, 1)  # bounds of the Bayesian Optimisation problem.
+        #noise_coeff = -2.5  # noise coefficient will be noise(X) will be linear e.g. 0.2 * X
+        bounds = np.array([x_lower_bound, x_upper_bound]).reshape(-1, 1)  # bounds of the Bayesian Optimisation problem.
 
         #  Initial noisy data points sampled uniformly at random from the input space.
 
         init_num_samples = 3  # all un-named plots were 3 initial samples
-        X_init = np.random.uniform(-8, 3, init_num_samples).reshape(-1,
-                                                                    1)  # sample 7 points at random from the bounds to initialise with
-        plot_sample = np.linspace(-8, 3, 50).reshape(-1, 1)  # samples for plotting purposes
+        X_init = np.random.uniform(x_lower_bound, x_upper_bound, init_num_samples).reshape(-1,1)  # sample 7 points at random from the bounds to initialise with
+        plot_sample = np.linspace(x_lower_bound, x_upper_bound, 50).reshape(-1, 1)  # samples for plotting purposes
 
         Y_init = linear_sin_noise(X_init, noise_coeff, plot_sample, coefficient, modification, fplot=False)
 
@@ -113,7 +101,9 @@ def homo_BO(noise_coeff):
 
         for i in range(bayes_opt_iters):
 
-            homo_X_next = my_propose_location(my_expected_improvement, homo_X_sample, homo_Y_sample, noise, l_init, sigma_f_init, bounds, plot_sample, n_restarts=3, min_val=300)
+            current_iter = i
+
+            homo_X_next = my_propose_location(my_expected_improvement, homo_X_sample, homo_Y_sample, noise, l_init, sigma_f_init, bounds, plot_sample, current_iter, n_restarts=3, min_val=300)
             homo_Y_next = linear_sin_noise(homo_X_next, noise_coeff, plot_sample, coefficient, modification, fplot=False)
             homo_composite_obj_val, homo_noise_val = max_sin_noise_objective(homo_X_next, noise_coeff, coefficient,
                                                                              modification, fplot=False)
@@ -145,19 +135,19 @@ def homo_BO(noise_coeff):
     return homo_means, homo_errs, lower_homo, upper_hetero, bayes_opt_iters
 
 
-def hetero_BO(noise_coeff):
+def hetero_BO(noise_coeff, coefficient, x_lower_bound, x_upper_bound):
     """
-    param noise_coeff: the noise coefficient used to determine the magnitude of the noise; for example
-                       if modification=True, sin(x) + 0.2x - noise_coeff*x.
+    param noise_coeff: the noise coefficient used to determine the magnitude of the noise; for example, if modification=True, sin(x) + 0.2x - noise_coeff*x
+    param coefficient: coefficient of x i.e. 0.2 in the line above
+    param x_lower_bound: lower bound of x to consider for BO and for plotting
+    param x_upper_bound: upper bound of x to consider for BO and for plotting
     return: hetero_means: the mean values of objective values across random trials
             hetero_errs: the error associated with the objective values
             lower_hetero: magnitude of lower error boundary
             upper_hetero: magnitude of upper error boundary
-            bayes_opt_iters: number of iterations of Bayesian Optimisation
-
     """
     modification = True  # Switches between sin(x) - False and sin(x) + 0.05x - True
-    coefficient = 0.2  # tunes the relative size of the maxima in the function (used when modification = True)
+    #coefficient = 0  # tunes the relative size of the maxima in the function (used when modification = True)
 
     # Number of iterations
     random_trials = 10
@@ -180,15 +170,14 @@ def hetero_BO(noise_coeff):
         #numpy_seed = i + 62
         #np.random.seed(numpy_seed)
 
-        noise_coeff = 0.5  # noise coefficient will be noise(X) will be linear e.g. 0.2 * X
-        bounds = np.array([-8, 3]).reshape(-1, 1)  # bounds of the Bayesian Optimisation problem.
+        #noise_coeff = -2.5  # noise coefficient will be noise(X) will be linear e.g. 0.2 * X
+        bounds = np.array([x_lower_bound, x_upper_bound]).reshape(-1, 1)  # bounds of the Bayesian Optimisation problem.
 
         #  Initial noisy data points sampled uniformly at random from the input space.
 
         init_num_samples = 3  # all un-named plots were 3 nitial samples
-        X_init = np.random.uniform(-8, 3, init_num_samples).reshape(-1,
-                                                                    1)  # sample 7 points at random from the bounds to initialise with
-        plot_sample = np.linspace(-8, 3, 50).reshape(-1, 1)  # samples for plotting purposes
+        X_init = np.random.uniform(x_lower_bound, x_upper_bound, init_num_samples).reshape(-1, 1)  # sample 7 points at random from the bounds to initialise with
+        plot_sample = np.linspace(x_lower_bound, x_upper_bound, 50).reshape(-1, 1)  # samples for plotting purposes
 
         Y_init = linear_sin_noise(X_init, noise_coeff, plot_sample, coefficient, modification, fplot=False)
 
@@ -250,29 +239,112 @@ def hetero_BO(noise_coeff):
 
     return hetero_means, hetero_errs, lower_hetero, upper_hetero, bayes_opt_iters
 
+def random_sampling(noise_coeff, coefficient, x_lower_bound, x_upper_bound):
+    """
+    param noise_coeff: the noise coefficient used to determine the magnitude of the noise; for example, if modification=True, sin(x) + 0.2x - noise_coeff*x
+    param coefficient: coefficient of x i.e. 0.2 in the line above
+    param x_lower_bound: lower bound of x to consider for BO and for plotting
+    param x_upper_bound: upper bound of x to consider for BO and for plotting
+    return: rand_means: the mean values of objective values across random trials
+            rand_errs: the error associated with the objective values
+            lower_rand: magnitude of lower error boundary
+            upper_rand: magnitude of upper error boundary
+    """
+    modification = True  # Switches between sin(x) - False and sin(x) + 0.05x - True
+
+    # Number of iterations
+    random_trials = 10
+    rand_iters = 10
+
+    # We perform random trials of Bayesian Optimisation
+
+    rand_running_sum = np.zeros(rand_iters)
+    rand_squares = np.zeros(rand_iters)
+
+    for i in range(random_trials):
+        # loading bar
+        print("Progress: {:2.1%}".format(i / 10), end="\r")
+
+        bounds = np.array([x_lower_bound, x_upper_bound]).reshape(-1, 1)  # bounds of the Bayesian Optimisation problem.
+
+        #  Initial noisy data points sampled uniformly at random from the input space.
+
+        init_num_samples = 3  # all un-named plots were 3 nitial samples
+        X_init = np.random.uniform(x_lower_bound, x_upper_bound, init_num_samples).reshape(-1,
+                                                                    1)  # sample 7 points at random from the bounds to initialise with
+        plot_sample = np.linspace(x_lower_bound, x_upper_bound, 50).reshape(-1, 1)  # samples for plotting purposes
+
+        Y_init = linear_sin_noise(X_init, noise_coeff, plot_sample, coefficient, modification, fplot=False)
+
+        rand_X_sample = X_init.reshape(-1, 1)
+        rand_Y_sample = Y_init.reshape(-1, 1)
+        # initial GP hypers
+
+        l_init = 1.0
+        sigma_f_init = 1.0
+        noise = 1.0  # need to be careful about how we set this because it's not currently being optimised in the code (see reviewer comment)
+        l_noise_init = 1.0
+        sigma_f_noise_init = 1.0
+        gp2_noise = 1.0
+        num_iters = 10
+        sample_size = 100
+
+        rand_best_so_far = -300
+        rand_obj_val_list = []
+        rand_noise_val_list = []
+
+        for i in range(rand_iters):
+            # number of BO iterations i.e. number of times sampled from black-box function using the acquisition function.
+            rand_X_next = np.random.uniform(0, 10)  # this just takes X not the sin function itself
+            # check if random point's Y value is better than best so far
+            rand_composite_obj_val, rand_noise_val = max_sin_noise_objective(rand_X_next, noise_coeff, coefficient, modification, fplot=False)
+            if rand_composite_obj_val > rand_best_so_far:
+                rand_best_so_far = rand_composite_obj_val
+                rand_obj_val_list.append(rand_composite_obj_val)
+            else:
+                rand_obj_val_list.append(rand_best_so_far)
+            # if yes, save it, if no, save best so far into list of best y-value per iteration in rand_composite_obj_val
+
+        rand_running_sum += np.array(rand_obj_val_list)  # just the way to average out across all random trials
+        rand_squares += np.array(rand_obj_val_list) ** 2  # likewise for errors
+
+    rand_means = rand_running_sum / random_trials
+    rand_errs = np.sqrt(rand_squares / random_trials - rand_means ** 2)
+
+    return rand_means, rand_errs, x_lower_bound, x_upper_bound, rand_iters
+
 if __name__ == "__main__":
 
     no_of_tests = 1  # number of noise_coeffs to cycle through and plot
     # adding sin plot function to see all current forms of function.
+    x_lower_bound = 0
+    x_upper_bound = 1.5
+    coefficient = 0
+    noise_coeff = 4
+
     for i in range(no_of_tests):
-        noise_coeff = 0.5 + i*0.05 # change this to fiddle with 1D function
-        modification=True
-        coefficient=0.2
-        plot_sample = np.linspace(-8, 3, 50).reshape(-1, 1)  # samples for plotting purposes
+        noise_coeff += i*0.05  # change this to fiddle with 1D function
+        modification = True
+        plot_sample = np.linspace(x_lower_bound, x_upper_bound, 50).reshape(-1, 1)  # samples for plotting purposes
+        plot_sin_function = np.sin(8*plot_sample) - np.cos(3*plot_sample) + 2 +coefficient*plot_sample
         #plot_sin_function = np.sin(plot_sample) + coefficient*plot_sample
-        plot_sin_function = np.sin(plot_sample) + np.cos(plot_sample) + 5 +coefficient*plot_sample
+        plot_sin_function_noise = plot_sin_function - noise_coeff*plot_sample
 
         #random_colour = (np.random.uniform(0, 1), np.random.uniform(0, 1), np.random.uniform(0, 1))
-        label='sin(x) + cos(x) + 5 + 0.2x'
-        plt.plot(plot_sample, plot_sin_function, color='b', label=label)
-        label = 'sin(x) + cos(x) + 5 + 0.2x - ' + str(np.round((i+10)*0.05,2)) + 'x'
-        plt.plot(plot_sample, plot_sin_function - noise_coeff*plot_sample, color='r', label=label)
+        label='sin(8x) - cos(3x) + 2'
+        plt.plot(plot_sample, plot_sin_function, color='r', label=label)
+        label='sin(8x) - cos(3x) + 2 - 4x'
+        plt.plot(plot_sample, plot_sin_function_noise, color='b', label=label)
+        #plt.plot(plot_sample, -2.5*plot_sample, color='g', label = '-2.5x')
+#        label = 'sin(x) + cos(x) + 5 + 0.2x - ' + str(np.round((i+10)*0.05,2)) + 'x'
+#        plt.plot(plot_sample, plot_sin_function - noise_coeff*plot_sample, color='r', label=label)
         plt.xlabel('x')
         plt.ylabel('f(x)')
         plt.legend(loc=4)
         plt.title('Forms of 1D function being tested')
-        plt.ylim(0, 10)
-        plt.xlim(-8, 3)
+        plt.autoscale(enable=True, axis='y')
+        #plt.ylim(0, 11)
+        plt.xlim(x_lower_bound, x_upper_bound)
 
     print('Saving 1D functional forms in toy_figures/black_box_tuned_multiple.png')
     #plt.autoscale(enable=True)
@@ -283,11 +355,14 @@ if __name__ == "__main__":
     plt.figure()
 
     for i in range(no_of_tests):
-        print('Setting sin function as: sin(x) + cos(x) + 5 + 0.2x - ' + str(np.round((i+10)*0.05,2)) + 'x')
-        noise_coeff = 0.5 + i*0.05 # change this to fiddle with 1D function
-        hetero_means, hetero_errs, lower_hetero, upper_hetero, bayes_opt_iters = hetero_BO(noise_coeff)
+        print('i is:' + str(i))
+        noise_coeff += i*0.05  # change this to fiddle with 1D function
 
-        homo_means, homo_errs, lower_homo, upper_homo, bayes_opt_iters = homo_BO(noise_coeff)
+        hetero_means, hetero_errs, lower_hetero, upper_hetero, bayes_opt_iters = hetero_BO(noise_coeff, coefficient, x_lower_bound, x_upper_bound)
+
+        homo_means, homo_errs, lower_homo, upper_homo, bayes_opt_iters = homo_BO(noise_coeff, coefficient, x_lower_bound, x_upper_bound)
+
+        rand_means, rand_errs, lower_rand, upper_rand, rand_iters = random_sampling(noise_coeff, coefficient, x_lower_bound, x_upper_bound)
 
         ax = plt.gca()
         ax.xaxis.set_major_locator(MaxNLocator(integer=True))
@@ -306,6 +381,12 @@ if __name__ == "__main__":
         lower_hetero = np.array(hetero_means) - np.array(hetero_errs)
         upper_hetero = np.array(hetero_means) + np.array(hetero_errs)
         plt.fill_between(iter_x, lower_hetero, upper_hetero, color=random_colour, alpha=0.1)
+        iter_rand_x = np.arange(1, rand_iters + 1)
+        random_colour = (np.random.uniform(0, 1), np.random.uniform(0, 1), np.random.uniform(0, 1))
+        plt.plot(iter_rand_x, rand_means, color=random_colour, label='Random Sampling')
+        lower_rand = np.array(rand_means) - np.array(rand_errs)
+        upper_rand = np.array(rand_means) + np.array(rand_errs)
+        plt.fill_between(iter_rand_x, lower_rand, upper_rand, color=random_colour, alpha=0.1)
 
     ax.title.set_fontsize(10)
     plt.title('Tuning the 1D sin function')
@@ -314,6 +395,3 @@ if __name__ == "__main__":
     plt.legend(loc=4)
     print('Saving performance test in toy_figures/tune_1D_looped.png')
     plt.savefig('toy_figures/tune_1D_looped.png')
-
-
-

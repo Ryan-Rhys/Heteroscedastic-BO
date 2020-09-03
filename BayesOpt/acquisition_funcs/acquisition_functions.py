@@ -305,7 +305,7 @@ def heteroscedastic_one_off_augmented_expected_improvement(X, X_sample, Y_sample
         return ei
 
 
-def my_propose_location(acquisition, X_sample, Y_sample, noise, l_init, sigma_f_init, bounds, plot_sample, n_restarts=1,
+def my_propose_location(acquisition, X_sample, Y_sample, noise, l_init, sigma_f_init, bounds, plot_sample, current_iter=0, n_restarts=1,
                         min_val=1):
     """
     Proposes the next sampling point by optimising the acquisition function.
@@ -320,6 +320,7 @@ def my_propose_location(acquisition, X_sample, Y_sample, noise, l_init, sigma_f_
     :param plot_sample: for plotting the predictive mean and variance. Same for as X_sample but usually bigger.
     :param n_restarts: number of restarts for the optimiser.
     :param min_val: minimum value to do better than (will likely change depending on the problem).
+    :param current_iter: current bayes opt iteration
     :return: Location of the acquisition function maximum.
     """
 
@@ -331,7 +332,7 @@ def my_propose_location(acquisition, X_sample, Y_sample, noise, l_init, sigma_f_
 
     # Purpose of this line is just to plot.
 
-    _, _ = bo_predict_homo_gp(X_sample, Y_sample, plot_sample, noise, l_opt, sigma_f_opt, f_plot=False)  # predictive mean at test locations (uniformly spaced in the bounds.
+    _, _ = bo_predict_homo_gp(X_sample, Y_sample, plot_sample, noise, l_opt, sigma_f_opt, current_iter, f_plot=True)  # predictive mean at test locations (uniformly spaced in the bounds.
 
     mu_sample, _ = bo_predict_homo_gp(X_sample, Y_sample, X_sample, noise, l_opt, sigma_f_opt)  # predictive mean for sample locations
     mu_sample_opt = np.max(mu_sample)

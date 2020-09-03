@@ -9,8 +9,8 @@ import numpy as np
 import scipy.stats
 from scipy.linalg import cholesky, inv, solve_triangular
 
-from .kernels import kernel, anisotropic_kernel, scipy_kernel
-from .mean_functions import zero_mean
+from kernels import kernel, anisotropic_kernel, scipy_kernel
+from mean_functions import zero_mean
 
 
 def posterior_predictive(xs, y, xs_star, noise, l, sigma_f, mean_func=zero_mean, kernel=anisotropic_kernel, full_cov=True):

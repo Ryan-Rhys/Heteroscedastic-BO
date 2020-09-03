@@ -5,7 +5,9 @@ This module contains BayesOpt fit and predict functions for use in Bayesian Opti
 the fitting and predict functions have been separated.
 """
 
+import os  # for file writing
 import numpy as np
+import datetime as dt  # for datetime saving of folders and plots
 from matplotlib import pyplot as plt
 from scipy.optimize import minimize
 from sklearn.preprocessing import StandardScaler
@@ -48,7 +50,7 @@ def bo_fit_homo_gp(xs, ys, noise, l_init, sigma_f_init):
     #return l_opt, sigma_f_opt
 
 
-def bo_predict_homo_gp(xs, ys, xs_star, noise, l_opt, sigma_f_opt, f_plot=False):
+def bo_predict_homo_gp(xs, ys, xs_star, noise, l_opt, sigma_f_opt, current_iter=0, f_plot=False):
     """
     Compute predictions at new test locations xs_star for the homoscedastic BayesOpt.
 
@@ -59,6 +61,7 @@ def bo_predict_homo_gp(xs, ys, xs_star, noise, l_opt, sigma_f_opt, f_plot=False)
     :param l_opt: optimised kernel lengthscale
     :param sigma_f_opt: optimised kernel signal amplitude
     :param f_plot: Whether to plot the BayesOpt fit
+    :param current_iter: current bayes opt iteration
     :return: predictive mean and variance
     """
 
@@ -77,7 +80,10 @@ def bo_predict_homo_gp(xs, ys, xs_star, noise, l_opt, sigma_f_opt, f_plot=False)
         plt.xlabel('input, x')
         plt.ylabel('f(x)')
         plt.title('Homoscedastic BayesOpt Posterior')
-        plt.show()
+        now = dt.datetime.now()
+        folder_name = now.strftime("%Y-%m-%d %H-%M-%S")
+        plt.savefig('toy_figures/GP_plot_' + str(current_iter) + '.png')
+        plt.clf()  # line added to help clear GP plot from figures after calling BO scheme.
 
     return pred_mean, pred_var
 

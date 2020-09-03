@@ -5,13 +5,20 @@ This script benchmarks homoscedastic and heteroscedastic GPs on the datasets fro
 their negative log predictive density (NLPD) on heldout test points.
 """
 
+# getting imports to work
+import sys
+from pathlib import Path # if you haven't already done so
+file = Path(__file__).resolve()
+parent, root = file.parent, file.parents[1]
+sys.path.append(str(root))
+
 import argparse
 
 import numpy as np
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
 
-from dataset_loaders import DatasetLoader
+from heteroscedastic_datasets.dataset_loaders import DatasetLoader
 from gp_fitting import fit_hetero_gp, fit_homo_gp
 from kernels import scipy_kernel
 from mean_functions import zero_mean
