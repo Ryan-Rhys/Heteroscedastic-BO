@@ -1,0 +1,9 @@
+#!/bin/zsh
+
+ffmpeg -f image2 -i GP_plot_%d.png -vf scale=900:-1:sws_dither=ed,palettegen palette.png
+
+ffmpeg -f image2 -framerate 1.2 -i image%d.jpg video.flv
+
+ffmpeg -i video.flv -i palette.png -filter_complex "fps=1.2,scale=900:-1:flags=lanczos[x];[x][1:v]paletteuse" video.gif
+
+rm video.flv
