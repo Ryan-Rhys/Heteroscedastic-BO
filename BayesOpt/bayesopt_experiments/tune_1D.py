@@ -16,7 +16,7 @@ from acquisition_funcs.acquisition_functions import heteroscedastic_expected_imp
 from objective_funcs.objective_functions import max_sin_noise_objective
 import numpy as np
 
-def linear_sin_noise(X, noise, plot_sample, coefficient, modification=False, fplot=True):
+def linear_quint_noise(X, noise_coeff, coefficient, modification=False):
     """
     1D noise function defined where noise increases linearly in the input domain. Bounds for a bimodal function could be
     [0, 3*pi]
@@ -32,13 +32,12 @@ def linear_sin_noise(X, noise, plot_sample, coefficient, modification=False, fpl
 
     if modification:
         # form of function
-        linear_sin_noise = np.sin(8*X) - np.cos(3*X) + 2 + coefficient*X + (noise * np.random.randn(*X.shape) * X)
-        plot_sin_function = np.sin(plot_sample) + np.cos(plot_sample) + 5 +coefficient*plot_sample - noise_coeff*plot_sample
+        linear_quint_noise = -1*np.power(X, 5) + -1.3*np.power(X, 4) + 6.2*np.power(X, 3) + 5.8*np.power(X, 2) + -3*X + 0.3 +
+        #linear_quint_noise = np.sin(8*X) + np.cos(4*X) + coefficient*X + (noise_coeff * np.random.randn(*X.shape) * X)
     else:
-        linear_sin_noise = np.sin(X) + (noise * np.random.randn(*X.shape) * X)
-        plot_sin_function = np.sin(plot_sample)
+        linear_quint_noise = np.sin(8*X) + np.cos(4*X) + (noise_coeff * np.random.randn(*X.shape) * X)
 
-    return linear_sin_noise
+    return linear_quint_noise
 
 def homo_BO(noise_coeff, coefficient, x_lower_bound, x_upper_bound):
     """
@@ -80,7 +79,7 @@ def homo_BO(noise_coeff, coefficient, x_lower_bound, x_upper_bound):
         X_init = np.random.uniform(x_lower_bound, x_upper_bound, init_num_samples).reshape(-1,1)  # sample 7 points at random from the bounds to initialise with
         plot_sample = np.linspace(x_lower_bound, x_upper_bound, 50).reshape(-1, 1)  # samples for plotting purposes
 
-        Y_init = linear_sin_noise(X_init, noise_coeff, plot_sample, coefficient, modification, fplot=False)
+        Y_init = linear_quint_noise(X_init, noise_coeff, coefficient, modification)
 
         homo_X_sample = X_init.reshape(-1, 1)
         homo_Y_sample = Y_init.reshape(-1, 1)
@@ -97,14 +96,13 @@ def homo_BO(noise_coeff, coefficient, x_lower_bound, x_upper_bound):
 
         homo_best_so_far = -300
         homo_obj_val_list = []
-        homo_noise_val_list = []
 
         for i in range(bayes_opt_iters):
 
             current_iter = i
 
             homo_X_next = my_propose_location(my_expected_improvement, homo_X_sample, homo_Y_sample, noise, l_init, sigma_f_init, bounds, plot_sample, current_iter, n_restarts=3, min_val=300)
-            homo_Y_next = linear_sin_noise(homo_X_next, noise_coeff, plot_sample, coefficient, modification, fplot=False)
+            homo_Y_next = linear_quint_noise(homo_X_next, noise_coeff, coefficient, modification)
             homo_composite_obj_val, homo_noise_val = max_sin_noise_objective(homo_X_next, noise_coeff, coefficient,
                                                                              modification, fplot=False)
             # if the new Y-value is better than our best so far, save it as best so far and append it to best Y-values list in *_composite_obj_val
@@ -132,7 +130,7 @@ def homo_BO(noise_coeff, coefficient, x_lower_bound, x_upper_bound):
     print('List of average homoscedastic values is ' + str(homo_means))
     print('List of homoscedastic errors is: ' + str(homo_errs))
 
-    return homo_means, homo_errs, lower_homo, upper_hetero, bayes_opt_iters
+    return homo_means, homo_errs, lower_homo, upper_homo, bayes_opt_iters
 
 
 def hetero_BO(noise_coeff, coefficient, x_lower_bound, x_upper_bound):
@@ -160,9 +158,6 @@ def hetero_BO(noise_coeff, coefficient, x_lower_bound, x_upper_bound):
 
     # We compute the objective corresponding to aleatoric noise only
 
-    hetero_noise_running_sum = np.zeros(bayes_opt_iters)
-    hetero_noise_squares = np.zeros(bayes_opt_iters)
-
     for i in range(random_trials):  # random trials to get average across x number of trials
         # loading bar
         print("Progress: {:2.1%}".format(i / 10), end="\r")
@@ -179,7 +174,7 @@ def hetero_BO(noise_coeff, coefficient, x_lower_bound, x_upper_bound):
         X_init = np.random.uniform(x_lower_bound, x_upper_bound, init_num_samples).reshape(-1, 1)  # sample 7 points at random from the bounds to initialise with
         plot_sample = np.linspace(x_lower_bound, x_upper_bound, 50).reshape(-1, 1)  # samples for plotting purposes
 
-        Y_init = linear_sin_noise(X_init, noise_coeff, plot_sample, coefficient, modification, fplot=False)
+        Y_init = linear_quint_noise(X_init, noise_coeff, coefficient, modification)
 
         het_X_sample = X_init.reshape(-1, 1)
         het_Y_sample = Y_init.reshape(-1, 1)
@@ -196,9 +191,10 @@ def hetero_BO(noise_coeff, coefficient, x_lower_bound, x_upper_bound):
 
         het_best_so_far = -300
         het_obj_val_list = []
-        het_noise_val_list = []
 
         for i in range(bayes_opt_iters):
+
+            current_iter = i
             # number of BO iterations i.e. number of times sampled from black-box function using the acquisition function.
 
             # Obtain next sampling point from the het acquisition function (ANPEI)
@@ -206,10 +202,10 @@ def hetero_BO(noise_coeff, coefficient, x_lower_bound, x_upper_bound):
             het_X_next = heteroscedastic_propose_location(heteroscedastic_expected_improvement, het_X_sample,
                                                           het_Y_sample, noise, l_init, sigma_f_init, l_noise_init,
                                                           sigma_f_noise_init, gp2_noise, num_iters, sample_size, bounds,
-                                                          plot_sample, n_restarts=3, min_val=300)
+                                                          plot_sample, current_iter, n_restarts=3, min_val=300)
 
             # Obtain next noisy sample from the objective function
-            het_Y_next = linear_sin_noise(het_X_next, noise_coeff, plot_sample, coefficient, modification, fplot=False)
+            het_Y_next = linear_quint_noise(het_X_next, noise_coeff, coefficient, modification)
             het_composite_obj_val, het_noise_val = max_sin_noise_objective(het_X_next, noise_coeff, coefficient,
                                                                            modification, fplot=False)
 
@@ -274,7 +270,7 @@ def random_sampling(noise_coeff, coefficient, x_lower_bound, x_upper_bound):
                                                                     1)  # sample 7 points at random from the bounds to initialise with
         plot_sample = np.linspace(x_lower_bound, x_upper_bound, 50).reshape(-1, 1)  # samples for plotting purposes
 
-        Y_init = linear_sin_noise(X_init, noise_coeff, plot_sample, coefficient, modification, fplot=False)
+        Y_init = linear_quint_noise(X_init, noise_coeff, coefficient, modification)
 
         rand_X_sample = X_init.reshape(-1, 1)
         rand_Y_sample = Y_init.reshape(-1, 1)
@@ -318,22 +314,22 @@ if __name__ == "__main__":
     no_of_tests = 1  # number of noise_coeffs to cycle through and plot
     # adding sin plot function to see all current forms of function.
     x_lower_bound = 0
-    x_upper_bound = 1.5
-    coefficient = 0
+    x_upper_bound = 1.2
+    coefficient = -1
     noise_coeff = 4
 
-    for i in range(no_of_tests):
+    for i in range(no_of_tests):  # plotter for fiddled 1D functions
         noise_coeff += i*0.05  # change this to fiddle with 1D function
         modification = True
         plot_sample = np.linspace(x_lower_bound, x_upper_bound, 50).reshape(-1, 1)  # samples for plotting purposes
-        plot_sin_function = np.sin(8*plot_sample) - np.cos(3*plot_sample) + 2 +coefficient*plot_sample
+        plot_sin_function = np.sin(8*plot_sample) + np.cos(4*plot_sample) + coefficient*plot_sample
         #plot_sin_function = np.sin(plot_sample) + coefficient*plot_sample
-        plot_sin_function_noise = plot_sin_function - noise_coeff*plot_sample
+        plot_sin_function_noise = plot_sin_function + noise_coeff*plot_sample
 
         #random_colour = (np.random.uniform(0, 1), np.random.uniform(0, 1), np.random.uniform(0, 1))
-        label='sin(8x) - cos(3x) + 2'
+        label='sin(8x) + cos(4x) - x'
         plt.plot(plot_sample, plot_sin_function, color='r', label=label)
-        label='sin(8x) - cos(3x) + 2 - 4x'
+        label='sin(8x) - cos(4x) - x + 3x'
         plt.plot(plot_sample, plot_sin_function_noise, color='b', label=label)
         #plt.plot(plot_sample, -2.5*plot_sample, color='g', label = '-2.5x')
 #        label = 'sin(x) + cos(x) + 5 + 0.2x - ' + str(np.round((i+10)*0.05,2)) + 'x'
