@@ -20,12 +20,11 @@ def objective(X, noise_coeff):
     """
     1D noise function defined where noise increases linearly in the input domain.
     :param X: input dimension
-    :param noise: noise level coefficient for linearly increasing noise
-    :param plot_sample: Sample for plotting purposes (points in the input domain)
+    :param noise_coeff: noise level coefficient for linearly increasing noise
     :return: f(X) + sampling_noise(X)
     """
 
-    objective = -1*np.power(X, 5) + -1.3*np.power(X, 4) + 6.2*np.power(X, 3) + 5.8*np.power(X, 2) + -3*X + (noise_coeff * np.random.randn(*X.shape) * X) + 0.3
+    objective = -1*np.power(X, 5) + -1.3*np.power(X, 4) + 6.2*np.power(X, 3) + 5.8*np.power(X, 2) + -3*X - (noise_coeff * np.random.randn(*X.shape) * X) + 0.3
 
     return objective
 
@@ -42,7 +41,7 @@ def max_objective(X, noise_coeff):
 
     noise_value = noise_coeff * X  # value of the heteroscedastic noise at the point(s) X
     objective_value = -1*np.power(X, 5) + -1.3*np.power(X, 4) + 6.2*np.power(X, 3) + 5.8*np.power(X, 2) + -3*X + 0.3
-    composite_objective = objective_value + noise_value
+    composite_objective = objective_value - noise_value
 
     composite_objective = float(composite_objective)
     noise_value = float(noise_value)
@@ -60,6 +59,9 @@ def homo_BO(noise_coeff, x_lower_bound, x_upper_bound):
             homo_errs: the error associated with the objective values
             lower_homo: magnitude of lower error boundary
             upper_homo: magnitude of upper error boundary
+            homo_X_sample: list of X values sampled
+            homo_Y_sample: list of corresponding Y values at points in homo_X_sample
+            bayes_opt_iters: number of bayes optimisation iterations
     """
 
     # Number of iterations
@@ -134,7 +136,7 @@ def homo_BO(noise_coeff, x_lower_bound, x_upper_bound):
     print('List of average homoscedastic values is ' + str(homo_means))
     print('List of homoscedastic errors is: ' + str(homo_errs))
 
-    return homo_means, homo_errs, lower_homo, upper_homo, bayes_opt_iters
+    return homo_means, homo_errs, lower_homo, upper_homo, homo_X_sample, homo_Y_sample, bayes_opt_iters
 
 
 def hetero_BO(noise_coeff, x_lower_bound, x_upper_bound):
@@ -146,6 +148,9 @@ def hetero_BO(noise_coeff, x_lower_bound, x_upper_bound):
             hetero_errs: the error associated with the objective values
             lower_hetero: magnitude of lower error boundary
             upper_hetero: magnitude of upper error boundary
+            het_X_sample: list of X values sampled
+            het_Y_sample: list of corresponding Y values at points in het_X_sample
+            bayes_opt_iters: number of bayes optimisation iterations
     """
     # Number of iterations
     random_trials = 10
@@ -228,7 +233,8 @@ def hetero_BO(noise_coeff, x_lower_bound, x_upper_bound):
     print('List of average heteroscedastic values is ' + str(hetero_means))
     print('List of heteroscedastic errors is: ' + str(hetero_errs))
 
-    return hetero_means, hetero_errs, lower_hetero, upper_hetero, bayes_opt_iters
+    return hetero_means, hetero_errs, lower_hetero, upper_hetero, het_X_sample, het_Y_sample, bayes_opt_iters
+
 
 def random_sampling(noise_coeff, x_lower_bound, x_upper_bound):
     """
@@ -283,7 +289,7 @@ def random_sampling(noise_coeff, x_lower_bound, x_upper_bound):
 
         for i in range(rand_iters):
             # number of BO iterations i.e. number of times sampled from black-box function using the acquisition function.
-            rand_X_next = np.random.uniform(0, 10)  # this just takes X not the sin function itself
+            rand_X_next = np.random.uniform(x_lower_bound, x_upper_bound)  # this just takes X not the sin function itself
             # check if random point's Y value is better than best so far
             rand_composite_obj_val, rand_noise_val = max_objective(rand_X_next, noise_coeff)
             if rand_composite_obj_val > rand_best_so_far:
@@ -307,13 +313,13 @@ if __name__ == "__main__":
     # adding sin plot function to see all current forms of function.
     x_lower_bound = -2
     x_upper_bound = 2
-    noise_coeff = -10.6  #have to make negative here to subtract the noise rate function!1
+    noise_coeff = 10.6  #have to make negative here to subtract the noise rate function!1
 
     for i in range(no_of_tests):  # plotter for fiddled 1D functions
         noise_coeff += i*0.05  # change this to fiddle with 1D function
         plot_sample = np.linspace(x_lower_bound, x_upper_bound, 50).reshape(-1, 1)  # samples for plotting purposes
         plot_sin_function = -1*np.power(plot_sample, 5) + -1.3*np.power(plot_sample, 4) + 6.2*np.power(plot_sample, 3) + 5.8*np.power(plot_sample, 2) + -3*plot_sample + 0.3
-        plot_sin_function_noise = plot_sin_function + noise_coeff*plot_sample
+        plot_sin_function_noise = plot_sin_function - noise_coeff*plot_sample
 
         #random_colour = (np.random.uniform(0, 1), np.random.uniform(0, 1), np.random.uniform(0, 1))
         label='-1*X^5 + -1.3*X^4 + 6.2*X^3 + 5.8*X^2 + -3*X + 0.3'
@@ -340,11 +346,11 @@ if __name__ == "__main__":
         print('i is:' + str(i))
         noise_coeff += i*0.05  # change this to fiddle with 1D function
 
-        hetero_means, hetero_errs, lower_hetero, upper_hetero, bayes_opt_iters = hetero_BO(noise_coeff, x_lower_bound, x_upper_bound)
+        hetero_means, hetero_errs, lower_hetero, upper_hetero, het_X_sample, het_Y_sample, bayes_opt_iters = hetero_BO(noise_coeff, x_lower_bound, x_upper_bound)
 
-        homo_means, homo_errs, lower_homo, upper_homo, bayes_opt_iters = homo_BO(noise_coeff, x_lower_bound, x_upper_bound)
+        homo_means, homo_errs, lower_homo, upper_homo, homo_X_sample, homo_Y_sample, bayes_opt_iters = homo_BO(noise_coeff, x_lower_bound, x_upper_bound)
 
-        rand_means, rand_errs, lower_rand, upper_rand, rand_iters = random_sampling(noise_coeff, x_lower_bound, x_upper_bound)
+        #rand_means, rand_errs, lower_rand, upper_rand, rand_iters = random_sampling(noise_coeff, x_lower_bound, x_upper_bound)
 
         ax = plt.gca()
         ax.xaxis.set_major_locator(MaxNLocator(integer=True))
@@ -361,12 +367,12 @@ if __name__ == "__main__":
         lower_hetero = np.array(hetero_means) - np.array(hetero_errs)
         upper_hetero = np.array(hetero_means) + np.array(hetero_errs)
         plt.fill_between(iter_x, lower_hetero, upper_hetero, color=random_colour, alpha=0.1)
-        iter_rand_x = np.arange(1, rand_iters + 1)
-        random_colour = (np.random.uniform(0, 1), np.random.uniform(0, 1), np.random.uniform(0, 1))
-        plt.plot(iter_rand_x, rand_means, color=random_colour, label='Random Sampling')
-        lower_rand = np.array(rand_means) - np.array(rand_errs)
-        upper_rand = np.array(rand_means) + np.array(rand_errs)
-        plt.fill_between(iter_rand_x, lower_rand, upper_rand, color=random_colour, alpha=0.1)
+#        iter_rand_x = np.arange(1, rand_iters + 1)
+#        random_colour = (np.random.uniform(0, 1), np.random.uniform(0, 1), np.random.uniform(0, 1))
+#        plt.plot(iter_rand_x, rand_means, color=random_colour, label='Random Sampling')
+#        lower_rand = np.array(rand_means) - np.array(rand_errs)
+#        upper_rand = np.array(rand_means) + np.array(rand_errs)
+#        plt.fill_between(iter_rand_x, lower_rand, upper_rand, color=random_colour, alpha=0.1)
 
     ax.title.set_fontsize(10)
     plt.title('Tuning the 1D sin function')
