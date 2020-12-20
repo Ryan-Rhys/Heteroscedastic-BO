@@ -32,6 +32,8 @@ if __name__ == '__main__':
 
     xs, ys, std = parse_dataset(task, FREESOLV_PATH, use_frag, use_exp)
 
+    # test in this instane is the initialisation set for Bayesian Optimisation and train is the heldout set.
+
     xs_train, xs_test, ys_train, ys_test = train_test_split(xs, ys, test_size=0.2, random_state=42, shuffle=False)
     _, _, std_train, std_test = train_test_split(xs, std, test_size=0.2, random_state=42, shuffle=False)
     xs_train, xs_test, ys_train, ys_test, y_scaler = transform_data(xs_train, xs_test, ys_train, ys_test, n_components)
@@ -134,7 +136,7 @@ if __name__ == '__main__':
             homo_X_next = min(xs_train, key=lambda x: np.linalg.norm(x - homo_X_next))  # Closest point in the heldout set.
             homo_index = list(xs_train[:, 0]).index(homo_X_next[0])  # index by first dimension
             homo_Y_next = ys_train[homo_index]
-            homo_composite_obj_val = homo_Y_next + std_train[homo_index]
+            homo_composite_obj_val = homo_Y_next - std_train[homo_index]
 
             if homo_composite_obj_val < homo_best_so_far:
                 homo_best_so_far = homo_composite_obj_val
@@ -248,7 +250,7 @@ if __name__ == '__main__':
     print('List of heteroscedastic errors is: ' + str(hetero_errs))
     print('List of average AEI values is: ' + str(aug_means))
     print('List of AEI errors is: ' + str(aug_errs))
-    print('List of average het-AEI values is: ' + str(aug_het_errs))
+    print('List of average het-AEI values is: ' + str(aug_het_means))
     print('List of het-AEI errors is: ' + str(aug_het_errs))
 
     iter_x = np.arange(1, bayes_opt_iters + 1)
@@ -275,4 +277,4 @@ if __name__ == '__main__':
     plt.xlabel('Number of Function Evaluations')
     plt.ylabel('Objective Function Value - Noise')
     plt.legend(loc=1)
-    plt.savefig('real_datasets_figures/bayesopt_plot{}_iters_{}_random_trials_and_seed_{}_with_het_aei_full_unc_just_tw_robust'.format(bayes_opt_iters, random_trials, numpy_seed))
+    plt.savefig('real_datasets_figures/bayesopt_plot{}_iters_{}_random_trials_and_seed_{}_with_het_aei_full_unc_just_tw_robust_new'.format(bayes_opt_iters, random_trials, numpy_seed))

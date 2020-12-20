@@ -120,10 +120,10 @@ def min_branin_noise_function(x1, x2):
 
     :param x1: first input dimension
     :param x2: second input dimension
-    :return: value of the black-box objective that penalises aleatoric noise.
+    :return: value of the black-box objective that penalises aleatoric noise, aleatoric noise itself
     """
 
-    return branin_plot_function(x1, x2) + noise_plot_function(x1, x2)
+    return branin_plot_function(x1, x2) + noise_plot_function(x1, x2), noise_plot_function(x1, x2)
 
 
 def one_off_min_branin_noise_function(x1, x2):
@@ -132,10 +132,10 @@ def one_off_min_branin_noise_function(x1, x2):
 
     :param x1: first input dimension
     :param x2: second input dimension
-    :return: value of the black-box objective that penalises aleatoric noise.
+    :return: value of the black-box objective that penalises aleatoric noise, aleatoric noise itself
     """
 
-    return branin_plot_function(x1, x2) - noise_plot_function(x1, x2)
+    return branin_plot_function(x1, x2) - noise_plot_function(x1, x2), noise_plot_function(x1, x2)
 
 
 def branin_function(x1, x2, noise=0.0):
@@ -196,7 +196,7 @@ def noise_plot_function(x1, x2):
     :return: value of the noise_function(x1, x2).
     """
 
-    return 1.4*x1**2 + 0.3*x2
+    return 0.2*x1 + 0.2*x2
 
 
 def heteroscedastic_branin(x1, x2):
@@ -211,14 +211,15 @@ def heteroscedastic_branin(x1, x2):
 
     def noise(x1, x2):
         """
-        noise function.
+        noise function. 1.4x1^2 and 0.3*x2 are original coefficients of x1 and x2 respectively. NB this must match the
+        definition in noise_plot function.
 
         :param x1: numpy array of points along the first dimension
         :param x2: numpy array of points along the second dimension
         :return: heteroscedastic noise as a function of x1 and x2.
         """
 
-        return 1.4*x1**2 + 0.3*x2
+        return 0.2*x1 + 0.2*x2
 
     # Parameters of the function
 
