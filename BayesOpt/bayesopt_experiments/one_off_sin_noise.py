@@ -17,8 +17,10 @@ from objective_functions import linear_sin_noise, max_one_off_sin_noise_objectiv
 if __name__ == '__main__':
 
     fill = True  # Whether to fill errorbars or not
-    modification = True  # Switches between sin(x) - False and sin(x) + modification*x - True
     coefficient = 0.2  # tunes the relative size of the maxima in the function (used when modification = True). Should be negative in the case that we're antifragile and looking for noise.
+    penalty = 1
+    aleatoric_penalty = 1
+    noise_coeff = 0.15  # noise coefficient will be noise(X) will be linear e.g. 0.2 * X
 
     # Number of iterations
     random_trials = 10
@@ -50,12 +52,12 @@ if __name__ == '__main__':
     aug_het_noise_running_sum = np.zeros(bayes_opt_iters)
     aug_het_noise_squares = np.zeros(bayes_opt_iters)
 
+    fplot = True  # plot data
+
     for i in range(random_trials):
 
         numpy_seed = i + 40
         np.random.seed(numpy_seed)
-
-        noise_coeff = 0.25  # noise coefficient will be noise(X) will be linear e.g. 0.2 * X
         bounds = np.array([0, 10]).reshape(-1, 1)  # bounds of the Bayesian Optimisation problem.
 
         #  Initial noisy data points sampled uniformly at random from the input space.
@@ -64,7 +66,10 @@ if __name__ == '__main__':
         X_init = np.random.uniform(0, 10, init_num_samples).reshape(-1, 1)  # sample 10 points at random from the bounds to initialise with
         plot_sample = np.linspace(0, 10, 50).reshape(-1, 1)  # samples for plotting purposes
 
-        Y_init = linear_sin_noise(X_init, noise_coeff, plot_sample, coefficient, modification, fplot=False)
+        if i > 0:
+            fplot = False
+
+        Y_init = linear_sin_noise(X_init, noise_coeff, plot_sample, coefficient, fplot=fplot)
 
         # Initialize samples
         homo_X_sample = X_init.reshape(-1, 1)
@@ -121,7 +126,7 @@ if __name__ == '__main__':
             rand_X_next = np.random.uniform(0, 10)  # this just takes X not the sin function itself
             rand_collected_x.append(rand_X_next)
             # check if random point's Y value is better than best so far
-            rand_composite_obj_val, rand_noise_val = max_one_off_sin_noise_objective(rand_X_next, noise_coeff, coefficient, modification, fplot=False)
+            rand_composite_obj_val, rand_noise_val = max_one_off_sin_noise_objective(rand_X_next, noise_coeff, coefficient, fplot=False, penalty=penalty)
             if rand_composite_obj_val > rand_best_so_far:
                 rand_best_so_far = rand_composite_obj_val
                 rand_obj_val_list.append(rand_composite_obj_val)
@@ -143,8 +148,8 @@ if __name__ == '__main__':
             homo_collected_x.append(homo_X_next)
 
             # Obtain next noisy sample from the objective function
-            homo_Y_next = linear_sin_noise(homo_X_next, noise_coeff, plot_sample, coefficient, modification, fplot=False)
-            homo_composite_obj_val, homo_noise_val = max_one_off_sin_noise_objective(homo_X_next, noise_coeff, coefficient, modification, fplot=False)
+            homo_Y_next = linear_sin_noise(homo_X_next, noise_coeff, plot_sample, coefficient, fplot=False)
+            homo_composite_obj_val, homo_noise_val = max_one_off_sin_noise_objective(homo_X_next, noise_coeff, coefficient, fplot=False, penalty=penalty)
 
             if homo_composite_obj_val > homo_best_so_far:
                 homo_best_so_far = homo_composite_obj_val
@@ -167,13 +172,13 @@ if __name__ == '__main__':
             het_X_next = heteroscedastic_propose_location(heteroscedastic_one_off_expected_improvement, het_X_sample,
                                                           het_Y_sample, noise, l_init, sigma_f_init, l_noise_init,
                                                           sigma_f_noise_init, gp2_noise, num_iters, sample_size, bounds,
-                                                          plot_sample, n_restarts=3, min_val=300)
+                                                          plot_sample, n_restarts=3, min_val=300, aleatoric_weight=aleatoric_penalty)
 
             het_collected_x.append(het_X_next)
 
             # Obtain next noisy sample from the objective function
-            het_Y_next = linear_sin_noise(het_X_next, noise_coeff, plot_sample, coefficient, modification, fplot=False)
-            het_composite_obj_val, het_noise_val = max_one_off_sin_noise_objective(het_X_next, noise_coeff, coefficient, modification, fplot=False)
+            het_Y_next = linear_sin_noise(het_X_next, noise_coeff, plot_sample, coefficient, fplot=False)
+            het_composite_obj_val, het_noise_val = max_one_off_sin_noise_objective(het_X_next, noise_coeff, coefficient, fplot=False, penalty=penalty)
 
             if het_composite_obj_val > het_best_so_far:
                 het_best_so_far = het_composite_obj_val
@@ -199,8 +204,8 @@ if __name__ == '__main__':
             aug_collected_x.append(aug_X_next)
 
             # Obtain next noisy sample from the objective function
-            aug_Y_next = linear_sin_noise(aug_X_next, noise_coeff, plot_sample, coefficient, modification, fplot=False)
-            aug_composite_obj_val, aug_noise_val = max_one_off_sin_noise_objective(aug_X_next, noise_coeff, coefficient, modification, fplot=False)
+            aug_Y_next = linear_sin_noise(aug_X_next, noise_coeff, plot_sample, coefficient, fplot=False)
+            aug_composite_obj_val, aug_noise_val = max_one_off_sin_noise_objective(aug_X_next, noise_coeff, coefficient, fplot=False, penalty=penalty)
 
             if aug_composite_obj_val > aug_best_so_far:
                 aug_best_so_far = aug_composite_obj_val
@@ -223,13 +228,14 @@ if __name__ == '__main__':
             aug_het_X_next = heteroscedastic_propose_location(heteroscedastic_one_off_augmented_expected_improvement, aug_het_X_sample,
                                                           aug_het_Y_sample, noise, l_init, sigma_f_init, l_noise_init,
                                                           sigma_f_noise_init, gp2_noise, num_iters, sample_size, bounds,
-                                                          plot_sample, n_restarts=3, min_val=300)
+                                                          plot_sample, n_restarts=3, min_val=300, aleatoric_weight=aleatoric_penalty)
 
             aug_het_collected_x.append(aug_het_X_next)
 
             # Obtain next noisy sample from the objective function
-            aug_het_Y_next = linear_sin_noise(aug_het_X_next, noise_coeff, plot_sample, coefficient, modification, fplot=False)
-            aug_het_composite_obj_val, aug_het_noise_val = max_one_off_sin_noise_objective(aug_het_X_next, noise_coeff, coefficient, modification, fplot=False)
+            aug_het_Y_next = linear_sin_noise(aug_het_X_next, noise_coeff, plot_sample, coefficient, fplot=False)
+            aug_het_composite_obj_val, aug_het_noise_val = max_one_off_sin_noise_objective(aug_het_X_next, noise_coeff,
+                                                                                           coefficient, fplot=False, penalty=penalty)
 
             if aug_het_composite_obj_val > aug_het_best_so_far:
                 aug_het_best_so_far = aug_het_composite_obj_val
@@ -270,26 +276,26 @@ if __name__ == '__main__':
         aug_het_noise_squares += np.array(aug_het_noise_val_list) ** 2
 
     rand_means = rand_running_sum / random_trials
-    rand_errs = np.sqrt(rand_squares / random_trials - rand_means **2)
+    rand_errs = (np.sqrt(rand_squares / random_trials - rand_means **2))/np.sqrt(random_trials)
     homo_means = homo_running_sum / random_trials
     hetero_means = hetero_running_sum / random_trials
-    homo_errs = np.sqrt(homo_squares / random_trials - homo_means ** 2)
-    hetero_errs = np.sqrt(hetero_squares / random_trials - hetero_means ** 2)
+    homo_errs = (np.sqrt(homo_squares / random_trials - homo_means ** 2))/np.sqrt(random_trials)
+    hetero_errs = (np.sqrt(hetero_squares / random_trials - hetero_means ** 2))/np.sqrt(random_trials)
     aug_means = aug_running_sum / random_trials
-    aug_errs = np.sqrt(aug_squares / random_trials - aug_means ** 2)
+    aug_errs = (np.sqrt(aug_squares / random_trials - aug_means ** 2))/np.sqrt(random_trials)
     aug_het_means = aug_het_running_sum / random_trials
-    aug_het_errs = np.sqrt(aug_het_squares / random_trials - aug_het_means **2)
+    aug_het_errs = (np.sqrt(aug_het_squares / random_trials - aug_het_means **2))/np.sqrt(random_trials)
 
     rand_noise_means = rand_noise_running_sum / random_trials
     homo_noise_means = homo_noise_running_sum / random_trials
     hetero_noise_means = hetero_noise_running_sum / random_trials
-    rand_noise_errs = np.sqrt(rand_noise_squares / random_trials - rand_noise_means ** 2)
-    homo_noise_errs = np.sqrt(homo_noise_squares / random_trials - homo_noise_means ** 2)
-    hetero_noise_errs = np.sqrt(hetero_noise_squares / random_trials - hetero_noise_means ** 2)
+    rand_noise_errs = (np.sqrt(rand_noise_squares / random_trials - rand_noise_means ** 2))/np.sqrt(random_trials)
+    homo_noise_errs = (np.sqrt(homo_noise_squares / random_trials - homo_noise_means ** 2))/np.sqrt(random_trials)
+    hetero_noise_errs = (np.sqrt(hetero_noise_squares / random_trials - hetero_noise_means ** 2))/np.sqrt(random_trials)
     aug_noise_means = aug_noise_running_sum / random_trials
-    aug_noise_errs = np.sqrt(aug_noise_squares / random_trials - aug_noise_means ** 2)
+    aug_noise_errs = (np.sqrt(aug_noise_squares / random_trials - aug_noise_means ** 2))/np.sqrt(random_trials)
     aug_het_noise_means = aug_het_noise_running_sum / random_trials
-    aug_het_noise_errs = np.sqrt(aug_het_noise_squares / random_trials - aug_het_noise_means ** 2)
+    aug_het_noise_errs = (np.sqrt(aug_het_noise_squares / random_trials - aug_het_noise_means ** 2))/np.sqrt(random_trials)
 
     print('List of average homoscedastic values is: ' + str(homo_means))
     print('List of homoscedastic errors is: ' + str(homo_errs))
@@ -339,11 +345,12 @@ if __name__ == '__main__':
     plt.title('Best Objective Function Value Found so Far')
     plt.xlabel('Number of Function Evaluations')
     plt.ylabel('Objective Function Value + Noise')
+    plt.tick_params(labelsize=14)
     plt.legend(loc=4)
     plt.savefig('toy_one_off_figures/bayesopt_plot{}_iters_{}_random_trials_and_{}_coefficient_times_100_and_noise_coeff_times_'
-               '100_of_{}_init_num_samples_of_{}_and_seed_{}_new'.format(bayes_opt_iters, random_trials,
+               '100_of_{}_init_num_samples_of_{}_and_seed_{}_newpenalty_is_{}_aleatoric_weight_is_{}'.format(bayes_opt_iters, random_trials,
                                                                          int(coefficient * 100), int(noise_coeff * 100),
-                                                                         init_num_samples, numpy_seed))
+                                                                         init_num_samples, numpy_seed, penalty, aleatoric_penalty))
 
     plt.close()
 
@@ -369,11 +376,11 @@ if __name__ == '__main__':
         plt.plot(iter_x, hetero_noise_means, color='tab:green', label='Heteroscedastic ANPEI')
         plt.plot(iter_x, aug_noise_means, color='tab:red', label='Homoscedastic AEI')
         plt.plot(iter_x, aug_het_noise_means, color='tab:purple', label='Heteroscedastic AEI')
-        plt.fill_between(iter_x, lower_noise_rand, upper_noise_rand, color='tab:orange', label='Random Sampling', alpha=0.1)
-        plt.fill_between(iter_x, lower_noise_homo, upper_noise_homo, color='tab:blue', label='Homoscedastic', alpha=0.1)
-        plt.fill_between(iter_x, lower_noise_hetero, upper_noise_hetero, color='tab:green', label='Heteroscedastic ANPEI', alpha=0.1)
-        plt.fill_between(iter_x, lower_noise_aei, upper_noise_aei, color='tab:red', label='Homoscedastic AEI', alpha=0.1)
-        plt.fill_between(iter_x, lower_noise_het_aei, upper_noise_het_aei, color='tab:purple', label='Heteroscedastic AEI', alpha=0.1)
+        plt.fill_between(iter_x, lower_noise_rand, upper_noise_rand, color='tab:orange', alpha=0.1)
+        plt.fill_between(iter_x, lower_noise_homo, upper_noise_homo, color='tab:blue', alpha=0.1)
+        plt.fill_between(iter_x, lower_noise_hetero, upper_noise_hetero, color='tab:green', alpha=0.1)
+        plt.fill_between(iter_x, lower_noise_aei, upper_noise_aei, color='tab:red', alpha=0.1)
+        plt.fill_between(iter_x, lower_noise_het_aei, upper_noise_het_aei, color='tab:purple', alpha=0.1)
     else:
         plt.errorbar(iter_x, homo_noise_means, yerr=np.concatenate((homo_noise_means - lower_noise_homo, upper_noise_homo - homo_noise_means)).reshape((2,5)), color='r', label='Homoscedastic', capsize=5)
         plt.errorbar(iter_x, hetero_noise_means, yerr=np.concatenate((hetero_noise_means - lower_noise_hetero, upper_noise_hetero - hetero_noise_means)).reshape((2,5)), color='b', label='Heteroscedastic ANPEI', capsize=5)
@@ -384,11 +391,12 @@ if __name__ == '__main__':
     plt.title('Highest Aleatoric Noise Found so Far')
     plt.xlabel('Number of Function Evaluations')
     plt.ylabel('Aleatoric Noise')
+    plt.tick_params(labelsize=14)
     plt.legend(loc=1, fontsize=8)
     plt.savefig('toy_one_off_figures/bayesopt_plot{}_iters_{}_random_trials_and_{}_coefficient_times_100_and_noise_coeff_times_'
-               '100_of_{}_init_num_samples_of_{}_and_seed_{}_noise_only'.format(bayes_opt_iters, random_trials,
+               '100_of_{}_init_num_samples_of_{}_and_seed_{}_noise_only_penalty_is_{}_aleatoric_weight_is_{}'.format(bayes_opt_iters, random_trials,
                                                                          int(coefficient * 100), int(noise_coeff * 100),
-                                                                         init_num_samples, numpy_seed))
+                                                                         init_num_samples, numpy_seed, penalty, aleatoric_penalty))
 
     # plt.plot(np.array(collected_x1), np.array(collected_x2), '+', color='green', markersize='12', linewidth='8')
     # plt.xlabel('x1')

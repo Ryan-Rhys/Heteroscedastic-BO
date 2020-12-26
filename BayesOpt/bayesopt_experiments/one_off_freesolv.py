@@ -23,14 +23,14 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 FREESOLV_PATH = '../bayesopt_datasets/Freesolv/Freesolv.txt'
 task = 'FreeSolv'
 use_frag = True
-use_exp = True
+use_exp = True  # Use experimental values
 
 if __name__ == '__main__':
 
     fill = True
-    penalty = 1
-    aleatoric_weight = 1
-    n_components = 2
+    penalty = 10
+    aleatoric_weight = 50
+    n_components = 10
 
     warnings.filterwarnings('ignore')
 
@@ -66,29 +66,31 @@ if __name__ == '__main__':
 
     for i in range(random_trials):
 
+        numpy_seed = i + 50
+        np.random.seed(numpy_seed)
+
         xs, ys, std = parse_dataset(task, FREESOLV_PATH, use_frag, use_exp)
 
         # test in this instance is the initialisation set for Bayesian Optimisation and train is the heldout set.
 
-        xs_train, xs_test, ys_train, ys_test = train_test_split(xs, ys, test_size=0.2, random_state=i, shuffle=False)
+        xs_train, xs_test, ys_train, ys_test = train_test_split(xs, ys, test_size=0.2, random_state=numpy_seed, shuffle=True)
 
-        _, _, std_train, std_test = train_test_split(xs, std, test_size=0.2, random_state=i, shuffle=False)
+        _, _, std_train, std_test = train_test_split(xs, std, test_size=0.2, random_state=numpy_seed, shuffle=True)
 
         xs_train, xs_test, ys_train, ys_test, y_scaler = transform_data(xs_train, xs_test, ys_train, ys_test, n_components)
 
         init_num_samples = len(ys_test)
 
-        numpy_seed = i + 63
-        np.random.seed(numpy_seed)
-
         bounds = np.array([np.array([np.min(xs_train[:, i]), np.max(xs_train[:, i])]) for i in range(xs_train.shape[1])])
 
-        if n_components == 2:
+        # Can only plot in 2D
 
+        if n_components == 2:
             x1_star = np.arange(np.min(xs_train[:, 0]), np.max(xs_train[:, 0]), 0.2)
             x2_star = np.arange(np.min(xs_train[:, 1]), np.max(xs_train[:, 1]), 0.2)
-
-        plot_sample = np.array(np.meshgrid(x1_star, x2_star)).T.reshape(-1, 2)  # Where 2 gives the dimensionality
+            plot_sample = np.array(np.meshgrid(x1_star, x2_star)).T.reshape(-1, 2)  # Where 2 gives the dimensionality
+        else:
+            plot_sample = None
 
         X_init = xs_test
         Y_init = ys_test
@@ -107,7 +109,7 @@ if __name__ == '__main__':
 
         l_init = 1.0
         sigma_f_init = 1.0
-        noise = 1.0  # need to be careful about how we set this because it's not currently being optimised in the code (see reviewer comment)
+        noise = 1.0
         l_noise_init = 1.0
         sigma_f_noise_init = 1.0
         gp2_noise = 1.0
@@ -319,26 +321,26 @@ if __name__ == '__main__':
         aug_het_noise_squares += np.array(aug_het_noise_val_list, dtype=np.float64).flatten() ** 2
 
     rand_means = rand_running_sum / random_trials
-    rand_errs = np.sqrt(rand_squares / random_trials - rand_means **2)
+    rand_errs = (np.sqrt(rand_squares / random_trials - rand_means **2))/np.sqrt(random_trials)
     homo_means = homo_running_sum / random_trials
     hetero_means = hetero_running_sum / random_trials
-    homo_errs = np.sqrt(homo_squares / random_trials - homo_means ** 2, dtype=np.float64)
-    hetero_errs = np.sqrt(hetero_squares / random_trials - hetero_means ** 2, dtype=np.float64)
+    homo_errs = (np.sqrt(homo_squares / random_trials - homo_means ** 2, dtype=np.float64))/np.sqrt(random_trials)
+    hetero_errs = (np.sqrt(hetero_squares / random_trials - hetero_means ** 2, dtype=np.float64))/np.sqrt(random_trials)
     aug_means = aug_running_sum / random_trials
-    aug_errs = np.sqrt(aug_squares / random_trials - aug_means ** 2, dtype=np.float64)
+    aug_errs = (np.sqrt(aug_squares / random_trials - aug_means ** 2, dtype=np.float64))/np.sqrt(random_trials)
     aug_het_means = aug_het_running_sum / random_trials
-    aug_het_errs = np.sqrt(aug_het_squares / random_trials - aug_het_means **2, dtype=np.float64)
+    aug_het_errs = (np.sqrt(aug_het_squares / random_trials - aug_het_means **2, dtype=np.float64))/np.sqrt(random_trials)
 
     rand_noise_means = rand_noise_running_sum / random_trials
     homo_noise_means = homo_noise_running_sum / random_trials
     hetero_noise_means = hetero_noise_running_sum / random_trials
-    rand_noise_errs = np.sqrt(rand_noise_squares / random_trials - rand_noise_means ** 2)
-    homo_noise_errs = np.sqrt(homo_noise_squares / random_trials - homo_noise_means ** 2)
-    hetero_noise_errs = np.sqrt(hetero_noise_squares / random_trials - hetero_noise_means ** 2)
+    rand_noise_errs = (np.sqrt(rand_noise_squares / random_trials - rand_noise_means ** 2))/np.sqrt(random_trials)
+    homo_noise_errs = (np.sqrt(homo_noise_squares / random_trials - homo_noise_means ** 2))/np.sqrt(random_trials)
+    hetero_noise_errs = (np.sqrt(hetero_noise_squares / random_trials - hetero_noise_means ** 2))/np.sqrt(random_trials)
     aug_noise_means = aug_noise_running_sum / random_trials
-    aug_noise_errs = np.sqrt(aug_noise_squares / random_trials - aug_noise_means ** 2)
+    aug_noise_errs = (np.sqrt(aug_noise_squares / random_trials - aug_noise_means ** 2))/np.sqrt(random_trials)
     aug_het_noise_means = aug_het_noise_running_sum / random_trials
-    aug_het_noise_errs = np.sqrt(aug_het_noise_squares / random_trials - aug_het_noise_means ** 2)
+    aug_het_noise_errs = (np.sqrt(aug_het_noise_squares / random_trials - aug_het_noise_means ** 2))/np.sqrt(random_trials)
 
     print('List of average homoscedastic values is: ' + str(homo_means))
     print('List of homoscedastic errors is: ' + str(homo_errs))
@@ -388,9 +390,10 @@ if __name__ == '__main__':
     plt.title('Best Objective Function Value Found so Far')
     plt.xlabel('Number of Function Evaluations')
     plt.ylabel('Objective Function Value - Noise')
+    plt.tick_params(labelsize=14)
     plt.legend(loc=1)
-    plt.savefig('one_off_freesolv_figures/bayesopt_plot{}_iters_{}_random_trials_and_init_num_samples_of_{}_and_seed_{}_new_acq_penalty_is_{}'.
-                format(bayes_opt_iters, random_trials, init_num_samples, numpy_seed, penalty))
+    plt.savefig('one_off_freesolv_figures/bayesopt_plot{}_iters_{}_random_trials_and_init_num_samples_of_{}_and_seed_{}_new_acq_penalty_is_{}_aleatoric_weight_is_{}_n_components_is_{}'.
+                format(bayes_opt_iters, random_trials, init_num_samples, numpy_seed, penalty, aleatoric_weight, n_components))
 
     plt.close()
 
@@ -431,6 +434,7 @@ if __name__ == '__main__':
     plt.title('Highest Aleatoric Noise Found so Far')
     plt.xlabel('Number of Function Evaluations')
     plt.ylabel('Aleatoric Noise')
+    plt.tick_params(labelsize=14)
     plt.legend(loc=4)
-    plt.savefig('one_off_freesolv_figures/bayesopt_plot{}_iters_{}_random_trials_and_init_num_samples_of_{}_and_seed_{}_noise_only_new_acq_penalty_is_{}'.
-                format(bayes_opt_iters, random_trials, init_num_samples, numpy_seed, penalty))
+    plt.savefig('one_off_freesolv_figures/bayesopt_plot{}_iters_{}_random_trials_and_init_num_samples_of_{}_and_seed_{}_noise_only_new_acq_penalty_is_{}_aleatoric_weight_is_{}_n_components_is_{}'.
+                format(bayes_opt_iters, random_trials, init_num_samples, numpy_seed, penalty, aleatoric_weight, n_components))

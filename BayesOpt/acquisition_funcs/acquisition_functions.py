@@ -307,7 +307,7 @@ def heteroscedastic_one_off_augmented_expected_improvement(X, X_sample, Y_sample
 
 
 def my_propose_location(acquisition, X_sample, Y_sample, noise, l_init, sigma_f_init, bounds, plot_sample, n_restarts=1,
-                        min_val=1):
+                        min_val=1, f_plot=False):
     """
     Proposes the next sampling point by optimising the acquisition function.
 
@@ -332,7 +332,9 @@ def my_propose_location(acquisition, X_sample, Y_sample, noise, l_init, sigma_f_
 
     # Purpose of this line is just to plot.
 
-    _, _ = bo_predict_homo_gp(X_sample, Y_sample, plot_sample, noise, l_opt, sigma_f_opt, f_plot=False)  # predictive mean at test locations (uniformly spaced in the bounds.
+    if f_plot:
+
+        _, _ = bo_predict_homo_gp(X_sample, Y_sample, plot_sample, noise, l_opt, sigma_f_opt, f_plot=False)  # predictive mean at test locations (uniformly spaced in the bounds.
 
     mu_sample, _ = bo_predict_homo_gp(X_sample, Y_sample, X_sample, noise, l_opt, sigma_f_opt)  # predictive mean for sample locations
     mu_sample_opt = np.max(mu_sample)
@@ -369,7 +371,7 @@ def my_propose_location(acquisition, X_sample, Y_sample, noise, l_init, sigma_f_
 
 def heteroscedastic_propose_location(acquisition, X_sample, Y_sample, noise, l_init, sigma_f_init,
                                      l_noise_init, sigma_f_noise_init, gp2_noise, num_iters, sample_size,
-                                     bounds, plot_sample, n_restarts=25, min_val=600, aleatoric_weight=1):
+                                     bounds, plot_sample, n_restarts=25, min_val=600, aleatoric_weight=1, f_plot=False):
     """
     Proposes the next sampling point by optimising the acquisition function.
 
@@ -401,7 +403,9 @@ def heteroscedastic_propose_location(acquisition, X_sample, Y_sample, noise, l_i
 
     # Purpose of this line is for plotting.
 
-    _, _, _ = bo_predict_hetero_gp(X_sample, Y_sample, variance_estimator, X_sample, noise_func, gp1_l_opt, gp1_sigma_f_opt, gp2_noise, gp2_l_opt, gp2_sigma_f_opt, f_plot=False, f_plot2=False)
+    if f_plot:
+
+        _, _, _ = bo_predict_hetero_gp(X_sample, Y_sample, variance_estimator, X_sample, noise_func, gp1_l_opt, gp1_sigma_f_opt, gp2_noise, gp2_l_opt, gp2_sigma_f_opt, f_plot=False, f_plot2=False)
 
     mu_sample, _, _ = bo_predict_hetero_gp(X_sample, Y_sample, variance_estimator, X_sample, noise_func, gp1_l_opt, gp1_sigma_f_opt, gp2_noise, gp2_l_opt, gp2_sigma_f_opt)
     mu_sample_opt = np.max(mu_sample)

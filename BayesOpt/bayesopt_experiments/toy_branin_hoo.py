@@ -19,6 +19,7 @@ if __name__ == '__main__':
     fill = True  # Whether to plot errorbars as fill or not.
     plot_collected = True  # Whether to plot collected data points
     penalty = 1  # penalty for aleatoric noise
+    aleatoric_weight = 1
 
     # Number of iterations
     bayes_opt_iters = 10
@@ -62,7 +63,7 @@ if __name__ == '__main__':
 
         #  Initial noisy data points sampled uniformly at random from the input space.
 
-        grid_size = 4
+        grid_size = 4  # initialise with 16 points on the grid.
 
         if standardised:
             x1 = np.random.uniform(0, 1, size=(grid_size,))
@@ -307,26 +308,26 @@ if __name__ == '__main__':
         aug_het_noise_squares += np.array(aug_het_noise_val_list, dtype=np.float64).flatten() ** 2
 
     rand_means = rand_running_sum / random_trials
-    rand_errs = np.sqrt(rand_squares / random_trials - rand_means **2, dtype=np.float64)
+    rand_errs = (np.sqrt(rand_squares / random_trials - rand_means **2, dtype=np.float64))/np.sqrt(random_trials)
     homo_means = homo_running_sum / random_trials
     hetero_means = hetero_running_sum / random_trials
-    homo_errs = np.sqrt(homo_squares / random_trials - homo_means ** 2, dtype=np.float64)
-    hetero_errs = np.sqrt(hetero_squares / random_trials - hetero_means ** 2, dtype=np.float64)
+    homo_errs = (np.sqrt(homo_squares / random_trials - homo_means ** 2, dtype=np.float64))/np.sqrt(random_trials)
+    hetero_errs = (np.sqrt(hetero_squares / random_trials - hetero_means ** 2, dtype=np.float64))/np.sqrt(random_trials)
     aug_means = aug_running_sum / random_trials
-    aug_errs = np.sqrt(aug_squares / random_trials - aug_means ** 2, dtype=np.float64)
+    aug_errs = (np.sqrt(aug_squares / random_trials - aug_means ** 2, dtype=np.float64))/np.sqrt(random_trials)
     aug_het_means = aug_het_running_sum / random_trials
-    aug_het_errs = np.sqrt(aug_het_squares / random_trials - aug_het_means **2, dtype=np.float64)
+    aug_het_errs = (np.sqrt(aug_het_squares / random_trials - aug_het_means **2, dtype=np.float64))/np.sqrt(random_trials)
 
     rand_noise_means = rand_noise_running_sum / random_trials
     homo_noise_means = homo_noise_running_sum / random_trials
     hetero_noise_means = hetero_noise_running_sum / random_trials
-    rand_noise_errs = np.sqrt(rand_noise_squares / random_trials - rand_noise_means ** 2)
-    homo_noise_errs = np.sqrt(homo_noise_squares / random_trials - homo_noise_means ** 2)
-    hetero_noise_errs = np.sqrt(hetero_noise_squares / random_trials - hetero_noise_means ** 2)
+    rand_noise_errs = (np.sqrt(rand_noise_squares / random_trials - rand_noise_means ** 2))/np.sqrt(random_trials)
+    homo_noise_errs = (np.sqrt(homo_noise_squares / random_trials - homo_noise_means ** 2))/np.sqrt(random_trials)
+    hetero_noise_errs = (np.sqrt(hetero_noise_squares / random_trials - hetero_noise_means ** 2))/np.sqrt(random_trials)
     aug_noise_means = aug_noise_running_sum / random_trials
-    aug_noise_errs = np.sqrt(aug_noise_squares / random_trials - aug_noise_means ** 2)
+    aug_noise_errs = (np.sqrt(aug_noise_squares / random_trials - aug_noise_means ** 2))/np.sqrt(random_trials)
     aug_het_noise_means = aug_het_noise_running_sum / random_trials
-    aug_het_noise_errs = np.sqrt(aug_het_noise_squares / random_trials - aug_het_noise_means ** 2)
+    aug_het_noise_errs = (np.sqrt(aug_het_noise_squares / random_trials - aug_het_noise_means ** 2))/np.sqrt(random_trials)
 
     print('List of average random values is: ' + str(rand_means))
     print('List of random errors is: ' + str(rand_errs))
@@ -378,6 +379,7 @@ if __name__ == '__main__':
     plt.title('Best Objective Function Value Found so Far')
     plt.xlabel('Number of Function Evaluations')
     plt.ylabel('Objective Function Value + Noise')
+    plt.tick_params(labelsize=14)
     plt.legend(loc=1, fontsize=10)
     plt.savefig('toy_branin_figures/bayesopt_plot{}_iters_{}_random_trials_and_grid_size_of_{}_and_seed_{}_new_standardised_is_{}'.
                 format(bayes_opt_iters, random_trials, grid_size, numpy_seed, standardised))
@@ -424,6 +426,7 @@ if __name__ == '__main__':
     plt.title('Lowest Aleatoric Noise Found so Far')
     plt.xlabel('Number of Function Evaluations')
     plt.ylabel('Aleatoric Noise')
+    plt.tick_params(labelsize=14)
     plt.legend(loc=1, fontsize=8)
     plt.savefig('toy_branin_figures/bayesopt_plot{}_iters_{}_random_trials_and_grid_size_of_{}_and_seed_{}_noise_only_standardised_is_{}'.
                 format(bayes_opt_iters, random_trials, grid_size, numpy_seed, standardised))

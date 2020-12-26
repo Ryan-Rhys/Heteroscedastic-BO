@@ -9,7 +9,7 @@ import numpy as np
 from scipy.optimize import minimize
 
 
-def linear_sin_noise(X, noise, plot_sample, coefficient, modification=False, fplot=True):
+def linear_sin_noise(X, noise, plot_sample, coefficient, fplot=True, one_off=False):
     """
     1D noise function defined where noise increases linearly in the input domain. Bounds for a bimodal function could be
     [0, 3*pi]
@@ -18,34 +18,79 @@ def linear_sin_noise(X, noise, plot_sample, coefficient, modification=False, fpl
     :param noise: noise level coefficient for linearly increasing noise
     :param plot_sample: Sample for plotting purposes (points in the input domain)
     :param coefficient: Has the effect of making the maximum with larger noise larger
-    :param modification: Whether to modify the function to have one maxima lower than the other
     :param fplot: Boolean indicating whether to plot the objective, samples and noise function
     :return: f(X) + noise(X)
     """
 
-    if modification:
-        linear_sin_noise = np.sin(X) + coefficient*X + (noise * np.random.randn(*X.shape) * X)
-        plot_sin_function = np.sin(plot_sample) + coefficient*plot_sample
-    else:
-        linear_sin_noise = np.sin(X) + (noise * np.random.randn(*X.shape) * X)
-        plot_sin_function = np.sin(plot_sample)
+    noise_function = noise * plot_sample
+    linear_sin_noise = np.sin(X) + coefficient*X + 3 + (noise * np.random.randn(*X.shape) * X)
+    plot_sin_function = np.sin(plot_sample) + coefficient*plot_sample + 3
 
     if fplot:
-        #plt.plot(X, linear_sin_noise, '+', color='green', markersize='12', linewidth='8', label='samples with Gaussian noise')
-        #plt.plot(plot_sample, plot_sin_function, color='blue', label='mean of generative process')
-        plt.plot(plot_sample, plot_sin_function - noise*plot_sample, color='purple')#, label='noise function')
-        plt.xlabel('x')
-        plt.ylabel('f(x)')
-        plt.title('Black-Box Objective')
-        #plt.legend()
-        plt.ylim(-2, 2)
+        plt.plot(plot_sample, noise_function, color='green', label='Noise Function', linewidth=4)
+        plt.xlabel('x', fontsize=16)
+        plt.ylabel('g(x)', fontsize=16)
+        #plt.title('Noise Function', fontsize=18)
+        plt.tick_params(labelsize=14)
+        plt.ylim(-3, 9)
         plt.xlim(0, 10)
-        plt.show()
+        plt.savefig('toy_figures/noise_function.png')
+        plt.savefig('toy_one_off_figures/noise_function.png')
+        plt.close()
+        plt.cla()
+
+        plt.plot(plot_sample, plot_sin_function, color='blue', label='latent function', linewidth=4)
+        plt.plot(X, linear_sin_noise, '+', color='green', markersize='12', linewidth='8', label='samples with heteroscedastic noise')
+        plt.xlabel('x', fontsize=16)
+        plt.ylabel('y', fontsize=16)
+        plt.title('Noisy Samples', fontsize=18)
+        plt.tick_params(labelsize=14)
+        plt.ylim(-3, 9)
+        plt.xlim(0, 10)
+        plt.legend(loc=3)
+
+        if not one_off:
+            plt.savefig('toy_figures/samples.png')
+        else:
+            plt.savefig('toy_one_off_figures/samples.png')
+        plt.close()
+        plt.cla()
+
+        plt.plot(plot_sample, plot_sin_function, color='blue', label='latent function', linewidth=4)
+        plt.xlabel('x', fontsize=16)
+        plt.ylabel('f(x)', fontsize=16)
+        #plt.title('Latent Function', fontsize=18)
+        plt.tick_params(labelsize=14)
+        plt.ylim(-3, 9)
+        plt.xlim(0, 10)
+
+        if not one_off:
+            plt.savefig('toy_figures/latent_func.png')
+        else:
+            plt.savefig('toy_one_off_figures/latent_func.png')
+        plt.close()
+        plt.cla()
+
+        if not one_off:
+            plt.plot(plot_sample, plot_sin_function - noise*plot_sample, color='purple', label='black box', linewidth=4)
+            plt.ylabel('f(x) - g(x)', fontsize=16)
+        else:
+            plt.plot(plot_sample, plot_sin_function + noise*plot_sample, color='purple', label='black box', linewidth=4)
+            plt.ylabel('f(x) + g(x)', fontsize=16)
+        plt.xlabel('x', fontsize=16)
+        #plt.title('Black-Box Objective', fontsize=18)
+        plt.tick_params(labelsize=14)
+        plt.ylim(-3, 9)
+        plt.xlim(0, 10)
+        if not one_off:
+            plt.savefig('toy_figures/black_box.png')
+        else:
+            plt.savefig('toy_one_off_figures/black_box.png')
 
     return linear_sin_noise
 
 
-def max_sin_noise_objective(X, noise, coefficient, modification=False, fplot=True):
+def max_sin_noise_objective(X, noise, coefficient, fplot=True, penalty=1):
     """
     Objective function for maximising objective - aleatoric noise for the sin wave with linear noise. Used for
     monitoring the best value in the optimisation obtained so far.
@@ -55,15 +100,13 @@ def max_sin_noise_objective(X, noise, coefficient, modification=False, fplot=Tru
     :param coefficient: Has the effect of making the maximum with larger noise larger
     :param modification: Whether to modify the function to have one maxima lower than the other
     :param fplot: Boolean indicating whether to plot the black-box objective
+    :param penalty: weight penalty for noise
     :return: value of the black-box objective that penalises aleatoric noise, value of the noise at X
     """
 
     noise_value = noise * X  # value of the heteroscedastic noise at the point(s) X
-    if modification:
-        objective_value = np.sin(X) + coefficient*X
-    else:
-        objective_value = np.sin(X)  # value of the objective at the point(s) X
-    composite_objective = objective_value - noise_value
+    objective_value = np.sin(X) + coefficient*X + 3
+    composite_objective = objective_value - penalty*noise_value + 3
 
     if fplot:
         plt.plot(X, composite_objective, color='purple', label='objective - aleatoric noise')
@@ -80,7 +123,7 @@ def max_sin_noise_objective(X, noise, coefficient, modification=False, fplot=Tru
     return composite_objective, noise_value
 
 
-def max_one_off_sin_noise_objective(X, noise, coefficient, modification=False, fplot=True):
+def max_one_off_sin_noise_objective(X, noise, coefficient, fplot=True, penalty=1):
     """
     Objective function for maximising objective + aleatoric noise (a one-off good value!) for the sin wave with linear
     noise. Used for monitoring the best value in the optimisation obtained so far.
@@ -88,17 +131,14 @@ def max_one_off_sin_noise_objective(X, noise, coefficient, modification=False, f
     :param X: input to evaluate objective; can be an array of values
     :param noise: noise level coefficient
     :param coefficient: Has the effect of making the maximum with larger noise larger
-    :param modification: Whether to modify the function to have one maxima lower than the other
     :param fplot: Boolean indicating whether to plot the black-box objective
+    :param penalty: penalty for noise.
     :return: value of the black-box objective that penalises aleatoric noise, value of the noise at X
     """
 
     noise_value = noise * X  # value of the heteroscedastic noise at the point(s) X
-    if modification:
-        objective_value = np.sin(X) + coefficient*X
-    else:
-        objective_value = np.sin(X)  # value of the objective at the point(s) X
-    composite_objective = objective_value + noise_value
+    objective_value = np.sin(X) + coefficient*X
+    composite_objective = objective_value + penalty*noise_value
 
     if fplot:
         plt.plot(X, composite_objective, color='purple', label='objective + aleatoric noise')

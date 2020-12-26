@@ -1,7 +1,7 @@
 # Copyright Ryan-Rhys Griffiths 2019
 # Author: Ryan-Rhys Griffiths
 """
-This module contains BayesOpt fit and predict functions for use in Bayesian Optimisation. Compared to the gp_fitting module
+This module contains GP fit and predict functions for use in Bayesian Optimisation. Compared to the gp_fitting module
 the fitting and predict functions have been separated.
 """
 
@@ -11,13 +11,13 @@ from scipy.optimize import minimize
 from sklearn.preprocessing import StandardScaler
 
 from gp_utils import plot_het_gp1, plot_het_gp2
-from kernels import scipy_kernel
+from kernels import scipy_kernel, tanimoto_kernel
 from gp_utils import posterior_predictive, zero_mean, nll_fn_het
 
 
 def bo_fit_homo_gp(xs, ys, noise, l_init, sigma_f_init):
     """
-    Fit a homoscedastic BayesOpt to data (xs, ys) and return the optimised hypers.
+    Fit a homoscedastic GP to data (xs, ys) and return the optimised hypers.
 
     :param xs: sample locations N x D
     :param ys: sample labels
@@ -48,9 +48,9 @@ def bo_fit_homo_gp(xs, ys, noise, l_init, sigma_f_init):
     #return l_opt, sigma_f_opt
 
 
-def bo_predict_homo_gp(xs, ys, xs_star, noise, l_opt, sigma_f_opt, f_plot=False):
+def bo_predict_homo_gp(xs, ys, xs_star, noise, l_opt, sigma_f_opt, f_plot=False, kernel=scipy_kernel):
     """
-    Compute predictions at new test locations xs_star for the homoscedastic BayesOpt.
+    Compute predictions at new test locations xs_star for the homoscedastic GP.
 
     :param xs: sample locations (m x d)
     :param ys: sample labels (m x 1)
@@ -58,11 +58,11 @@ def bo_predict_homo_gp(xs, ys, xs_star, noise, l_opt, sigma_f_opt, f_plot=False)
     :param noise: fixed noise level or noise function
     :param l_opt: optimised kernel lengthscale
     :param sigma_f_opt: optimised kernel signal amplitude
-    :param f_plot: Whether to plot the BayesOpt fit
+    :param f_plot: Whether to plot the GP fit
     :return: predictive mean and variance
     """
 
-    pred_mean, pred_var, _, _ = posterior_predictive(xs, ys, xs_star, noise, l_opt, sigma_f_opt, mean_func=zero_mean, kernel=scipy_kernel)
+    pred_mean, pred_var, _, _ = posterior_predictive(xs, ys, xs_star, noise, l_opt, sigma_f_opt, mean_func=zero_mean, kernel=kernel)
 
     if f_plot:
         gp1_plot_pred_var = np.diag(pred_var).reshape(-1, 1)  # Take the diagonal of the covariance matrix for plotting purposes
@@ -76,15 +76,16 @@ def bo_predict_homo_gp(xs, ys, xs_star, noise, l_opt, sigma_f_opt, f_plot=False)
                          color='gray', alpha=0.2)
         plt.xlabel('input, x')
         plt.ylabel('f(x)')
-        plt.title('Homoscedastic BayesOpt Posterior')
+        plt.title('Homoscedastic GP Posterior')
         plt.show()
 
     return pred_mean, pred_var
 
 
-def bo_fit_hetero_gp(xs, ys, noise, l_init, sigma_f_init, l_noise_init, sigma_f_noise_init, gp2_noise, num_iters, sample_size, plot_sample, f_plot=False):
+def bo_fit_hetero_gp(xs, ys, noise, l_init, sigma_f_init, l_noise_init, sigma_f_noise_init, gp2_noise,
+                     num_iters, sample_size, plot_sample, f_plot=False):
     """
-    Fit a heteroscedastic BayesOpt to data (xs, ys).
+    Fit a heteroscedastic GP to data (xs, ys).
 
     :param xs: sample locations (m x d)
     :param ys: sample labels (m x 1)
@@ -93,9 +94,9 @@ def bo_fit_hetero_gp(xs, ys, noise, l_init, sigma_f_init, l_noise_init, sigma_f_
     :param sigma_f_init: signal amplitude to initialise the optimiser
     :param l_noise_init: lengthscale(s) to initialise the optimiser for the noise
     :param sigma_f_noise_init: signal amplitude to initialise the optimiser for the noise
-    :param gp2_noise: the noise level for the second BayesOpt modelling the noise (noise of the noise)
-    :param num_iters: number of iterations to run the most likely heteroscedastic BayesOpt algorithm.
-    :param sample_size: the number of samples for the heteroscedastic BayesOpt algorithm.
+    :param gp2_noise: the noise level for the second GP modelling the noise (noise of the noise)
+    :param num_iters: number of iterations to run the most likely heteroscedastic GP algorithm.
+    :param sample_size: the number of samples for the heteroscedastic GP algorithm.
     :param plot_sample: Sample for plotting.
     :param f_plot: Boolean indicating whether to plot or not
     :return: The noise function, variance estimator and GP1 and GP2 hypers.
@@ -125,7 +126,7 @@ def bo_fit_hetero_gp(xs, ys, noise, l_init, sigma_f_init, l_noise_init, sigma_f_
 
         gp1_pred_mean, gp1_pred_var = bo_predict_homo_gp(xs, ys, xs, noise, gp1_l_opt, gp1_sigma_f_opt)
 
-        # We construct the most likely heteroscedastic BayesOpt noise estimator
+        # We construct the most likely heteroscedastic GP noise estimator
 
         sample_matrix = np.zeros((len(ys), sample_size))
         for j in range(0, sample_size):
@@ -140,7 +141,7 @@ def bo_fit_hetero_gp(xs, ys, noise, l_init, sigma_f_init, l_noise_init, sigma_f_
         Y_scaler = StandardScaler().fit(variance_estimator)
         variance_estimator = Y_scaler.transform(variance_estimator)
 
-        # We fit a second BayesOpt to the auxiliary dataset z = (xs, variance_estimator)
+        # We fit a second GP to the auxiliary dataset z = (xs, variance_estimator)
 
         gp2_res = minimize(nll_fn_het(xs, variance_estimator, gp2_noise), gp2_hypers, bounds=bounds, method='L-BFGS-B')
         gp2_l_opt = np.array(gp2_res.x[:-1]).reshape(-1, 1)
@@ -163,7 +164,7 @@ def bo_fit_hetero_gp(xs, ys, noise, l_init, sigma_f_init, l_noise_init, sigma_f_
 
 def bo_predict_hetero_gp(xs, ys, variance_estimator, xs_star, noise_func, gp1_l_opt, gp1_sigma_f_opt, gp2_noise, gp2_l_opt, gp2_sigma_f_opt, f_plot=False, f_plot2=False):
     """
-    Compute predictions at the test locations using the heteroscedastic BayesOpt.
+    Compute predictions at the test locations using the heteroscedastic GP.
 
     :param xs: sample locations (m x d)
     :param ys: sample labels (m x 1)
@@ -177,7 +178,7 @@ def bo_predict_hetero_gp(xs, ys, variance_estimator, xs_star, noise_func, gp1_l_
     :param gp2_sigma_f_opt: optimised signal amplitude of GP2
     :param f_plot: Whether to plot the GP1 fit
     :param f_plot2: Whether to plot the GP2 fit
-    :return: predictive mean and variance of the heteroscedastic BayesOpt at the test locations xs_star.
+    :return: predictive mean and variance of the heteroscedastic GP at the test locations xs_star.
     """
 
     pred_mean_het, pred_var_het, _, _ = posterior_predictive(xs, ys, xs_star, noise_func, gp1_l_opt, gp1_sigma_f_opt)
@@ -201,7 +202,7 @@ def bo_predict_hetero_gp(xs, ys, variance_estimator, xs_star, noise_func, gp1_l_
                          color='gray', alpha=0.2)
         plt.xlabel('input, x')
         plt.ylabel('f(x)')
-        plt.title('Heteroscedastic BayesOpt Posterior')
+        plt.title('Heteroscedastic GP Posterior')
         plt.show()
 
     if f_plot2:
