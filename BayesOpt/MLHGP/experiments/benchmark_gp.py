@@ -1,4 +1,3 @@
-# Copyright Ryan-Rhys Griffiths 2019
 # Author: Ryan-Rhys Griffiths
 """
 This script benchmarks homoscedastic and heteroscedastic GPs on the datasets from Kersting et al. in terms of

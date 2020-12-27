@@ -1,4 +1,3 @@
-# Copyright Lee Group 2019
 # Author: Ryan-Rhys Griffiths
 """
 This module contains the code for benchmarking heteroscedastic Bayesian Optimisation on the task of finding a maximum

@@ -152,8 +152,14 @@ if __name__ == '__main__':
             rand_collected_x1.append(random_x1_next)
             rand_collected_x2.append(random_x2_next)
 
-            random_Y_next = heteroscedastic_branin(random_x1_next, random_x2_next, standardised)
+            f_plot = True
+            if i > 0:
+                f_plot=False
+
+            random_Y_next = heteroscedastic_branin(random_x1_next, random_x2_next, standardised=standardised, f_plot=f_plot)
             random_composite_obj_val, rand_noise_val = one_off_min_branin_noise_function(random_x1_next, random_x2_next, standardised, penalty)
+
+            f_plot = False
 
             if random_composite_obj_val < rand_best_so_far:
                 rand_best_so_far = random_composite_obj_val
@@ -176,7 +182,7 @@ if __name__ == '__main__':
             homo_collected_x2.append(homo_X_next[:, 1])
 
             # Obtain next noisy sample from the objective function
-            homo_Y_next = heteroscedastic_branin(homo_X_next[:, 0], homo_X_next[:, 1], standardised)
+            homo_Y_next = heteroscedastic_branin(homo_X_next[:, 0], homo_X_next[:, 1], standardised=standardised, f_plot=f_plot, penalty=penalty)
             homo_composite_obj_val, homo_noise_val = one_off_min_branin_noise_function(homo_X_next[:, 0], homo_X_next[:, 1], standardised, penalty)
 
             if homo_composite_obj_val < homo_best_so_far:
@@ -206,7 +212,7 @@ if __name__ == '__main__':
             het_collected_x2.append(het_X_next[:, 1])
 
             # Obtain next noisy sample from the objective function
-            het_Y_next = heteroscedastic_branin(het_X_next[:, 0], het_X_next[:, 1], standardised)
+            het_Y_next = heteroscedastic_branin(het_X_next[:, 0], het_X_next[:, 1], standardised=standardised, f_plot=f_plot, penalty=penalty)
             het_composite_obj_val, het_noise_val = one_off_min_branin_noise_function(het_X_next[:, 0], het_X_next[:, 1], standardised, penalty)
 
             if het_composite_obj_val < het_best_so_far:
@@ -234,7 +240,7 @@ if __name__ == '__main__':
             aug_collected_x2.append(aug_X_next[:, 1])
 
             # Obtain next noisy sample from the objective function
-            aug_Y_next = heteroscedastic_branin(aug_X_next[:, 0], aug_X_next[:, 1], standardised)
+            aug_Y_next = heteroscedastic_branin(aug_X_next[:, 0], aug_X_next[:, 1], standardised=standardised, f_plot=f_plot, penalty=penalty)
             aug_composite_obj_val, aug_noise_val = one_off_min_branin_noise_function(aug_X_next[:, 0], aug_X_next[:, 1], standardised, penalty)
 
             if aug_composite_obj_val < aug_best_so_far:
@@ -264,7 +270,7 @@ if __name__ == '__main__':
             aug_het_collected_x2.append(aug_het_X_next[:, 1])
 
             # Obtain next noisy sample from the objective function
-            aug_het_Y_next = heteroscedastic_branin(aug_het_X_next[:, 0], aug_het_X_next[:, 1], standardised)
+            aug_het_Y_next = heteroscedastic_branin(aug_het_X_next[:, 0], aug_het_X_next[:, 1], standardised=standardised, f_plot=f_plot, penalty=penalty)
             aug_het_composite_obj_val, aug_het_noise_val = one_off_min_branin_noise_function(aug_het_X_next[:, 0], aug_het_X_next[:, 1], standardised, penalty)
 
             if aug_het_composite_obj_val < aug_het_best_so_far:

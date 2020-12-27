@@ -16,12 +16,13 @@ from bayesopt_datasets.data_loader import soil_bo
 
 if __name__ == '__main__':
 
-    penalty = 20
     fill = True
+    penalty = 5
+    aleatoric_weight = 5
 
     # Number of iterations
-    bayes_opt_iters = 10
-    random_trials = 10
+    bayes_opt_iters = 5
+    random_trials = 50
 
     # We perform random trials of Bayesian Optimisation
 
@@ -57,10 +58,10 @@ if __name__ == '__main__':
 
     for i in range(random_trials):
 
-        numpy_seed = i + 75
+        numpy_seed = i
         np.random.seed(numpy_seed)
 
-        xs_train, xs_test, ys_train, ys_test = train_test_split(xs, ys, test_size=0.1, shuffle=True, random_state=numpy_seed)  # use (xs_test, ys_test) to initialise
+        xs_train, xs_test, ys_train, ys_test = train_test_split(xs, ys, test_size=0.3, shuffle=True, random_state=numpy_seed)  # use (xs_test, ys_test) to initialise
         init_num_samples = len(ys_test)
 
         bounds = np.array([0, 2]).reshape(-1, 1)  # bounds of the Bayesian Optimisation problem.
@@ -180,7 +181,7 @@ if __name__ == '__main__':
             het_X_next = heteroscedastic_propose_location(heteroscedastic_expected_improvement, het_X_sample,
                                                           het_Y_sample, noise, l_init, sigma_f_init, l_noise_init,
                                                           sigma_f_noise_init, gp2_noise, num_iters, sample_size, bounds,
-                                                          plot_sample, n_restarts=3, min_val=300)
+                                                          plot_sample, n_restarts=3, min_val=300, aleatoric_weight=aleatoric_weight)
 
             het_collected_x.append(het_X_next)
 
@@ -242,7 +243,7 @@ if __name__ == '__main__':
             aug_het_X_next = heteroscedastic_propose_location(heteroscedastic_augmented_expected_improvement, aug_het_X_sample,
                                                           aug_het_Y_sample, noise, l_init, sigma_f_init, l_noise_init,
                                                           sigma_f_noise_init, gp2_noise, num_iters, sample_size, bounds,
-                                                          plot_sample, n_restarts=3, min_val=300)
+                                                          plot_sample, n_restarts=3, min_val=300, aleatoric_weight=aleatoric_weight)
 
             aug_het_collected_x.append(aug_het_X_next)
 
@@ -351,6 +352,7 @@ if __name__ == '__main__':
         plt.fill_between(iter_x, lower_hetero, upper_hetero, color='tab:green', alpha=0.1)
         plt.fill_between(iter_x, lower_aei, upper_aei, color='tab:red', alpha=0.1)
         plt.fill_between(iter_x, lower_het_aei, upper_het_aei, color='tab:purple', alpha=0.1)
+        plt.yticks([75, 150, 225])
     else:
         plt.errorbar(iter_x, homo_means,
                      yerr=np.concatenate((homo_means - lower_homo, upper_homo - homo_means)).reshape((2, 5)), color='r',
@@ -368,13 +370,13 @@ if __name__ == '__main__':
                      yerr=np.concatenate((aug_het_means - lower_het_aei, upper_het_aei - aug_het_means)).reshape(
                          (2, 5)), color='m', label='Heteroscedastic AEI', capsize=5)
 
-    plt.title('Best Objective Function Value Found so Far')
-    plt.xlabel('Number of Function Evaluations')
-    plt.ylabel('Objective Function Value + Noise')
+    plt.title('Best Objective Function Value Found so Far', fontsize=16)
+    plt.xlabel('Function Evaluations', fontsize=14)
+    plt.ylabel('Phosphorous Fraction + 5*Noise', fontsize=14)
     plt.tick_params(labelsize=14)
-    plt.legend(loc=4)
-    plt.savefig('soil_figures/bayesopt_plot{}_iters_{}_random_trials_and_init_num_samples_of_{}_and_seed_{}_new'.
-        format(bayes_opt_iters, random_trials, init_num_samples, numpy_seed))
+    plt.legend(loc=1, fontsize=12)
+    plt.savefig('soil_figures/bayesopt_plot{}_iters_{}_random_trials_and_init_num_samples_of_{}_and_seed_{}_new_penalty_is_{}_aleatoric_weight_is_{}'.
+        format(bayes_opt_iters, random_trials, init_num_samples, numpy_seed, penalty, aleatoric_weight))
 
     plt.close()
 
@@ -422,16 +424,10 @@ if __name__ == '__main__':
             (aug_het_noise_means - lower_noise_het_aei, upper_noise_het_aei - aug_het_noise_means)).reshape((2, 5)),
                      color='m', label='Heteroscedastic AEI', capsize=5)
 
-    plt.title('Lowest Aleatoric Noise Found so Far')
-    plt.xlabel('Number of Function Evaluations')
-    plt.ylabel('Aleatoric Noise')
+    plt.title('Lowest Aleatoric Noise Found so Far', fontsize=16)
+    plt.xlabel('Function Evaluations', fontsize=14)
+    plt.ylabel('Aleatoric Noise', fontsize=14)
     plt.tick_params(labelsize=14)
-    plt.legend(loc=1, fontsize=8)
-    plt.savefig('soil_figures/bayesopt_plot{}_iters_{}_random_trials_and_init_num_samples_of_{}_and_seed_{}_noise_only'.
-        format(bayes_opt_iters, random_trials, init_num_samples, numpy_seed))
-
-    # plt.plot(np.array(collected_x1), np.array(collected_x2), '+', color='green', markersize='12', linewidth='8')
-    # plt.xlabel('x1')
-    # plt.ylabel('x2')
-    # plt.title('Collected Data Points')
-    # plt.show()
+    plt.legend(loc=1, fontsize=12)
+    plt.savefig('soil_figures/bayesopt_plot{}_iters_{}_random_trials_and_init_num_samples_of_{}_and_seed_{}_noise_only_penalty_is_{}_aleatoric_weight_is_{}'.
+        format(bayes_opt_iters, random_trials, init_num_samples, numpy_seed, penalty, aleatoric_weight))

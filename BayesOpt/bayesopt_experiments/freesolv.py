@@ -1,4 +1,3 @@
-# Copyright Lee Group 2019
 # Author: Ryan-Rhys Griffiths
 """
 This module contains the code for heteroscedastic Bayesian Optimisation on the Freesolv dataset.
@@ -28,14 +27,16 @@ use_exp = True  # use experimental values.
 if __name__ == '__main__':
 
     fill = True
-    penalty = 1
-    aleatoric_weight = 1
-    n_components = 2
+    penalty = 10
+    aleatoric_weight = 50
+    n_components = 10
+
+    xs, ys, std = parse_dataset(task, FREESOLV_PATH, use_frag, use_exp)
 
     warnings.filterwarnings('ignore')
 
     # Number of iterations
-    bayes_opt_iters = 20
+    bayes_opt_iters = 10
     random_trials = 5
 
     # We perform random trials of Bayesian Optimisation
@@ -66,10 +67,8 @@ if __name__ == '__main__':
 
     for i in range(random_trials):
 
-        numpy_seed = i + 50
+        numpy_seed = i
         np.random.seed(numpy_seed)
-
-        xs, ys, std = parse_dataset(task, FREESOLV_PATH, use_frag, use_exp)
 
         # test in this instance is the initialisation set for Bayesian Optimisation and train is the heldout set.
 
@@ -387,9 +386,9 @@ if __name__ == '__main__':
         plt.errorbar(iter_x, aug_means, yerr=np.concatenate((aug_means - lower_aei, upper_aei - aug_means)).reshape((2,5)), color='c', label='Homoscedastic AEI', capsize=5)
         plt.errorbar(iter_x, aug_het_means, yerr=np.concatenate((aug_het_means - lower_het_aei, upper_het_aei - aug_het_means)).reshape((2,5)), color='m', label='Heteroscedastic AEI', capsize=5)
 
-    plt.title('Best Objective Function Value Found so Far')
-    plt.xlabel('Number of Function Evaluations')
-    plt.ylabel('Objective Function Value - Noise')
+    plt.title('Best Objective Function Value Found so Far', fontsize=16)
+    plt.xlabel('Function Evaluations', fontsize=14)
+    plt.ylabel('Hydration Free Energy (kcal/mol) - Noise', fontsize=14)
     plt.tick_params(labelsize=14)
     plt.legend(loc=4)
     plt.savefig('freesolv_figures/bayesopt_plot{}_iters_{}_random_trials_and_init_num_samples_of_{}_and_seed_{}_new_acq_penalty_is_{}_aleatoric_weight_is_{}_n_components_is_{}'.
@@ -422,8 +421,8 @@ if __name__ == '__main__':
         plt.fill_between(iter_x, lower_noise_rand, upper_noise_rand, color='tab:orange', alpha=0.1)
         plt.fill_between(iter_x, lower_noise_homo, upper_noise_homo, color='tab:blue', alpha=0.1)
         plt.fill_between(iter_x, lower_noise_hetero, upper_noise_hetero, color='tab:green', alpha=0.1)
-        plt.fill_between(iter_x, lower_noise_aei, upper_noise_aei, color='tab:red',  alpha=0.1)
-        plt.fill_between(iter_x, lower_noise_het_aei, upper_noise_het_aei, color='tab:purple',  alpha=0.1)
+        plt.fill_between(iter_x, lower_noise_aei, upper_noise_aei, color='tab:red', alpha=0.1)
+        plt.fill_between(iter_x, lower_noise_het_aei, upper_noise_het_aei, color='tab:purple', alpha=0.1)
     else:
         plt.errorbar(iter_x, homo_noise_means, yerr=np.concatenate((homo_noise_means - lower_noise_homo, upper_noise_homo - homo_noise_means)).reshape((2,5)), color='r', label='Homoscedastic', capsize=5)
         plt.errorbar(iter_x, hetero_noise_means, yerr=np.concatenate((hetero_noise_means - lower_noise_hetero, upper_noise_hetero - hetero_noise_means)).reshape((2,5)), color='b', label='Heteroscedastic ANPEI', capsize=5)
@@ -431,9 +430,9 @@ if __name__ == '__main__':
         plt.errorbar(iter_x, aug_noise_means, yerr=np.concatenate((aug_noise_means - lower_noise_aei, upper_noise_aei - aug_noise_means)).reshape((2,5)), color='c', label='Homoscedastic AEI', capsize=5)
         plt.errorbar(iter_x, aug_het_noise_means, yerr=np.concatenate((aug_het_noise_means - lower_noise_het_aei, upper_noise_het_aei - aug_het_noise_means)).reshape((2,5)), color='m', label='Heteroscedastic AEI', capsize=5)
 
-    plt.title('Lowest Aleatoric Noise Found so Far')
-    plt.xlabel('Number of Function Evaluations')
-    plt.ylabel('Aleatoric Noise')
+    plt.title('Lowest Aleatoric Noise Found so Far', fontsize=16)
+    plt.xlabel('Function Evaluations', fontsize=14)
+    plt.ylabel('Aleatoric Noise', fontsize=14)
     plt.tick_params(labelsize=14)
     plt.legend(loc=1)
     plt.savefig('freesolv_figures/bayesopt_plot{}_iters_{}_random_trials_and_init_num_samples_of_{}_and_seed_{}_noise_only_new_acq_penalty_is_{}_aleatoric_weight_is_{}_n_components_is_{}'.

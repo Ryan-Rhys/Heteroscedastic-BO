@@ -5,6 +5,7 @@ This module contains objective functions for Bayesian Optimisation.
 """
 
 from matplotlib import pyplot as plt
+import matplotlib.cm as cm
 import numpy as np
 from scipy.optimize import minimize
 
@@ -265,7 +266,7 @@ def noise_plot_function(x1, x2, standardised=False):
     location = np.array([x1, x2])
 
     if standardised:
-        return 2*x1 + x2
+        return 15 - (2.8*x1**2 + 4.8*x2**2)
 
     else:
         # TODO construct Gaussian basis noise for non-standardised example.
@@ -288,10 +289,10 @@ def noise_plot_function(x1, x2, standardised=False):
         # basis_func_two = amp*np.exp(-np.linalg.norm(min_two_dist, axis=0)**2/(2*bandwidth))
         # basis_func_three = amp*np.exp(-np.linalg.norm(min_three_dist, axis=0)**2/(2*bandwidth))
 
-        return 2*x1 + x2
+        return 15 - (2.8*x1**2 + 4.8*x2**2)
 
 
-def heteroscedastic_branin(x1, x2, standardised=False):
+def heteroscedastic_branin(x1, x2, standardised=False, f_plot=False, penalty=1):
     """
     Definition of a branin function with heteroscedastic noise
 
@@ -327,6 +328,50 @@ def heteroscedastic_branin(x1, x2, standardised=False):
     f += noise_plot_function(x1, x2, standardised).reshape(-1, 1) * np.random.randn(*x1.shape)  # Add noise to the Branin function f.
 
     # -f makes the problem into a maximisation problem (consistent with the sin function experiment.
+
+    if f_plot:
+        if standardised:
+            x1_star = np.arange(0, 1, 0.02)
+            x2_star = np.arange(0, 1, 0.02)
+        else:
+            x1_star = np.arange(-5.0, 10.0, 0.5)
+            x2_star = np.arange(0.0, 15.0, 0.5)
+
+        X, Y = np.meshgrid(x1_star, x2_star)
+        latent = branin_plot_function(X, Y, standardised=standardised)
+        noise_obj = noise_plot_function(X, Y, standardised=standardised)  # using this for plotting at the moment.
+        comp_obj = latent + penalty*noise_obj
+
+        plt.cla()
+        CS = plt.contourf(X, Y, latent, cmap=cm.inferno)
+        CB = plt.colorbar(CS, shrink=0.8, extend='both')
+        plt.xlabel('x1', fontsize=14)
+        plt.ylabel('x2', fontsize=14)
+        plt.tick_params(labelsize=14)
+        #plt.title('Latent Function', fontsize=16)
+        plt.savefig('toy_branin_figures/branin_latent.png')
+        plt.close()
+
+        plt.cla()
+        CS = plt.contourf(X, Y, noise_obj, cmap=cm.inferno)
+        CB = plt.colorbar(CS, shrink=0.8, extend='both')
+        plt.xlabel('x1', fontsize=14)
+        plt.ylabel('x2', fontsize=14)
+        plt.tick_params(labelsize=14)
+        #plt.title('Noise Function', fontsize=16)
+        plt.savefig('toy_branin_figures/branin_noise.png')
+        plt.close()
+
+        plt.cla()
+        CS = plt.contourf(X, Y, comp_obj, cmap=cm.inferno)
+        CB = plt.colorbar(CS, shrink=0.8, extend='both')
+        plt.xlabel('x1', fontsize=14)
+        plt.ylabel('x2', fontsize=14)
+        plt.tick_params(labelsize=14)
+        #plt.title('Noise Function', fontsize=16)
+        plt.savefig('toy_branin_figures/branin_black_box.png')
+
+        plt.close()
 
     return f
 
