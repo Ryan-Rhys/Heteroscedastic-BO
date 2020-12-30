@@ -3,7 +3,7 @@
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 Heteroscedastic Bayesian Optimisation uisng the most likely heteroscedatic Gaussian Process as the surrogate model.
-Experiment scripts may be found in the BayesOpt/toy_experiments directory.
+Experiment scripts may be found in the BayesOpt/bayesopt_experiments directory.
 
 <p align="center">
   <img src="heteroscedastic_gp.gif" width="500" title="logo">
