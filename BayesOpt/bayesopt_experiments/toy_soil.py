@@ -123,7 +123,7 @@ if __name__ == '__main__':
             print(i)
 
             # take random point from uniform distribution
-            rand_X_next = np.random.uniform(0, 2)  # this just takes X not the sin function itself
+            rand_X_next = np.random.uniform(0, 2)
             # Obtain next noisy sample from the objective function
             rand_X_next = min(xs_train, key=lambda x: abs(x - rand_X_next))  # Closest point in the heldout set.
             rand_index = list(xs).index(rand_X_next)
@@ -211,7 +211,7 @@ if __name__ == '__main__':
             # Obtain next sampling point from the augmented expected improvement (AEI)
 
             aug_X_next = my_propose_location(augmented_expected_improvement, aug_X_sample, aug_Y_sample, noise, l_init, sigma_f_init,
-                                             bounds, plot_sample, n_restarts=3, min_val=300)
+                                             bounds, plot_sample, n_restarts=3, min_val=300, aleatoric_weight=aleatoric_weight, aei=True)
 
             aug_collected_x.append(aug_X_next)
 
@@ -375,7 +375,8 @@ if __name__ == '__main__':
     plt.ylabel('Phosphorous Fraction + 5*Noise', fontsize=14)
     plt.tick_params(labelsize=14)
     plt.legend(loc=1, fontsize=12)
-    plt.savefig('soil_figures/bayesopt_plot{}_iters_{}_random_trials_and_init_num_samples_of_{}_and_seed_{}_new_penalty_is_{}_aleatoric_weight_is_{}'.
+    plt.savefig('soil_figures/bayesopt_plot{}_iters_{}_random_trials_and_init_num_samples_of_{}'
+                '_and_seed_{}_new_penalty_is_{}_aleatoric_weight_is_{}_new_aei'.
         format(bayes_opt_iters, random_trials, init_num_samples, numpy_seed, penalty, aleatoric_weight))
 
     plt.close()
@@ -402,6 +403,7 @@ if __name__ == '__main__':
         plt.plot(iter_x, hetero_noise_means, color='tab:green', label='Heteroscedastic ANPEI')
         plt.plot(iter_x, aug_noise_means, color='tab:red', label='Homoscedastic AEI')
         plt.plot(iter_x, aug_het_noise_means, color='tab:purple', label='Heteroscedastic AEI')
+        plt.yticks([10, 20, 30, 40])
         plt.fill_between(iter_x, lower_noise_rand, upper_noise_rand, color='tab:orange', alpha=0.1)
         plt.fill_between(iter_x, lower_noise_homo, upper_noise_homo, color='tab:blue', alpha=0.1)
         plt.fill_between(iter_x, lower_noise_hetero, upper_noise_hetero, color='tab:green', alpha=0.1)
@@ -429,5 +431,6 @@ if __name__ == '__main__':
     plt.ylabel('Aleatoric Noise', fontsize=14)
     plt.tick_params(labelsize=14)
     plt.legend(loc=1, fontsize=12)
-    plt.savefig('soil_figures/bayesopt_plot{}_iters_{}_random_trials_and_init_num_samples_of_{}_and_seed_{}_noise_only_penalty_is_{}_aleatoric_weight_is_{}'.
+    plt.savefig('soil_figures/bayesopt_plot{}_iters_{}_random_trials_and_init_num_samples_of_{}_and_seed_{}_'
+                'noise_only_penalty_is_{}_aleatoric_weight_is_{}_new_aei'.
         format(bayes_opt_iters, random_trials, init_num_samples, numpy_seed, penalty, aleatoric_weight))

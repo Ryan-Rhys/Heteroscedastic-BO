@@ -65,9 +65,12 @@ def fit_homo_gp(xs, ys, noise, xs_star, l_init, sigma_f_init, fplot=True):
         upper = upper.reshape(plot_xs_star.shape)
         lower = lower.reshape(plot_xs_star.shape)
         plt.fill_between(plot_xs_star, upper, lower, color='gray', alpha=0.2)
-        plt.xlabel('x')
-        plt.ylabel('y')
-        plt.title('Homoscedastic GP Posterior')
+        plt.xlabel('Density, dry bulk ($g/cm^3$)', fontsize=13)
+        plt.ylabel('Standardised Phosphorus', fontsize=13)
+        plt.xticks([0, 0.5, 1, 1.5])
+        plt.yticks([0, 2, 4])
+        plt.tick_params(labelsize=12)
+        #plt.title('Homoscedastic GP Posterior')
         plt.show()
 
     return pred_mean, pred_var, nlml
@@ -173,9 +176,12 @@ def fit_hetero_gp(xs, ys, aleatoric_noise, xs_star, l_init, sigma_f_init, l_nois
             upper = upper.reshape(xs_star.shape)
             lower = lower.reshape(xs_star.shape)
             plt.fill_between(xs_star.reshape(len(xs_star),), upper.reshape(len(xs_star),), lower.reshape(len(xs_star),), color='gray', alpha=0.2)
-            plt.xlabel('x')
-            plt.ylabel('y')
-            plt.title('Heteroscedastic GP Posterior')
+            plt.xlabel('Density, dry bulk ($g/cm^3$)', fontsize=13)
+            plt.ylabel('Standardised Phosphorus', fontsize=13)
+            #plt.title('Heteroscedastic GP Posterior')
+            plt.xticks([0, 0.5, 1, 1.5])
+            plt.yticks([0, 2, 4])
+            plt.tick_params(labelsize=12)
             plt.show()
 
         # We construct the most likely heteroscedastic BayesOpt noise estimator

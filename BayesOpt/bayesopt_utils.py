@@ -55,7 +55,7 @@ def bo_predict_homo_gp(xs, ys, xs_star, noise, l_opt, sigma_f_opt, f_plot=False,
     :param xs: sample locations (m x d)
     :param ys: sample labels (m x 1)
     :param xs_star: test locations (n x d)
-    :param noise: fixed noise level or noise function
+    :param noise: optimised noise level or noise function
     :param l_opt: optimised kernel lengthscale
     :param sigma_f_opt: optimised kernel signal amplitude
     :param f_plot: Whether to plot the GP fit
@@ -187,7 +187,7 @@ def bo_predict_hetero_gp(xs, ys, variance_estimator, xs_star, noise_func, gp1_l_
     pred_mean_noise = np.sqrt(pred_mean_noise).reshape(len(pred_mean_noise))  # taking the standard deviation
 
     pred_mean = pred_mean_het
-    pred_var = np.diag(pred_var_het) + pred_mean_noise
+    pred_var = np.diag(pred_var_het) # + pred_mean_noise**2
 
     if f_plot:
 

@@ -18,7 +18,7 @@ if __name__ == '__main__':
     fill = True  # Whether to fill errorbars or not
     coefficient = 0.2  # tunes the relative size of the maxima in the function (used when modification = True)
     penalty = 1
-    aleatoric_penalty = 5
+    aleatoric_penalty = 1
     noise_coeff = 0.5  # noise coefficient will be noise(X) will be linear e.g. 0.2 * X
 
     # Number of iterations
@@ -85,7 +85,7 @@ if __name__ == '__main__':
 
         l_init = 1.0
         sigma_f_init = 1.0
-        noise = 1.0  # need to be careful about how we set this because it's not currently being optimised in the code (see reviewer comment)
+        noise = 1.0
         l_noise_init = 1.0
         sigma_f_noise_init = 1.0
         gp2_noise = 1.0
@@ -194,7 +194,8 @@ if __name__ == '__main__':
 
             # Obtain next sampling point from the augmented expected improvement (AEI)
 
-            aug_X_next = my_propose_location(augmented_expected_improvement, aug_X_sample, aug_Y_sample, noise,l_init, sigma_f_init, bounds, plot_sample, n_restarts=3, min_val=300)
+            aug_X_next = my_propose_location(augmented_expected_improvement, aug_X_sample, aug_Y_sample, noise,l_init,
+                                             sigma_f_init, bounds, plot_sample, n_restarts=3, min_val=300, aleatoric_weight=aleatoric_penalty, aei=True)
 
             # Obtain next noisy sample from the objective function
             aug_Y_next = linear_sin_noise(aug_X_next, noise_coeff, plot_sample, coefficient, fplot=False)
@@ -337,12 +338,15 @@ if __name__ == '__main__':
 
     plt.title('Best Objective Function Value Found so Far', fontsize=16)
     plt.xlabel('Function Evaluations', fontsize=14)
-    plt.ylabel('f(x) - g(x)', fontsize=14)
+    if penalty > 1:
+        plt.ylabel(f'f(x) - {penalty}*g(x)', fontsize=14)
+    else:
+        plt.ylabel('f(x) - g(x)', fontsize=14)
     plt.yticks([3, 4, 5, 6, 7])
     plt.tick_params(labelsize=14)
     plt.legend(loc=4, fontsize=12)
     plt.savefig('toy_figures/bayesopt_plot{}_iters_{}_random_trials_and_{}_coefficient_times_100_and_noise_coeff_times_'
-               '100_of_{}_init_num_samples_of_{}_and_seed_{}_new_penalty_is_{}_aleatoric_weight_is_{}'.format(bayes_opt_iters, random_trials,
+               '100_of_{}_init_num_samples_of_{}_and_seed_{}_new_penalty_is_{}_aleatoric_weight_is_{}_new_aei'.format(bayes_opt_iters, random_trials,
                                                                          int(coefficient * 100), int(noise_coeff * 100),
                                                                          init_num_samples, numpy_seed, penalty, aleatoric_penalty))
 
@@ -389,6 +393,6 @@ if __name__ == '__main__':
     plt.yticks([0.5, 1.5, 2.5, 3.5])
     plt.legend(loc=1, fontsize=12)
     plt.savefig('toy_figures/bayesopt_plot{}_iters_{}_random_trials_and_{}_coefficient_times_100_and_noise_coeff_times_'
-               '100_of_{}_init_num_samples_of_{}_and_seed_{}_noise_only_penalty_is_{}_aleatoric_weight_is_{}'.format(bayes_opt_iters, random_trials,
+               '100_of_{}_init_num_samples_of_{}_and_seed_{}_noise_only_penalty_is_{}_aleatoric_weight_is_{}_new_aei'.format(bayes_opt_iters, random_trials,
                                                                          int(coefficient * 100), int(noise_coeff * 100),
                                                                          init_num_samples, numpy_seed, penalty, aleatoric_penalty))

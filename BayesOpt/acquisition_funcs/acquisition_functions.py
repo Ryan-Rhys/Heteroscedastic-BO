@@ -54,7 +54,7 @@ def my_expected_improvement(X, X_sample, Y_sample, noise, l_opt, sigma_f_opt, mu
     :return: Expected improvements at points X.
     """
 
-    mu, var = bo_predict_homo_gp(X_sample, Y_sample, X, noise, l_opt, sigma_f_opt)
+    mu, var = bo_predict_homo_gp(X_sample, Y_sample, X, noise, l_opt, sigma_f_opt)  # returns the epistemic variance only
     std = np.sqrt(np.diag(var))
 
     with np.errstate(divide='warn'):
@@ -66,7 +66,7 @@ def my_expected_improvement(X, X_sample, Y_sample, noise, l_opt, sigma_f_opt, mu
     return ei
 
 
-def augmented_expected_improvement(X, X_sample, Y_sample, noise, l_opt, sigma_f_opt, mu_sample_opt):
+def augmented_expected_improvement(X, X_sample, Y_sample, noise, l_opt, sigma_f_opt, mu_sample_opt, aleatoric_weight=1):
     """
     Computes the AEI using a homoscedastic GP.
 
@@ -77,6 +77,7 @@ def augmented_expected_improvement(X, X_sample, Y_sample, noise, l_opt, sigma_f_
     :param l_opt: optimised lengthscale(s) of the GP kernel.
     :param sigma_f_opt: optimised vertical lengthscale of the GP kernel.
     :param mu_sample_opt: incumbent eta
+    :param aleatoric_weight: weight penalty for aleatoric noise
     :return: Expected improvements at points X.
     """
 
@@ -88,7 +89,7 @@ def augmented_expected_improvement(X, X_sample, Y_sample, noise, l_opt, sigma_f_
         Z = imp / std
         ei = imp * norm.cdf(Z) + std * norm.pdf(Z)
         ei[std == 0.0] = 0.0
-        aei = ei*(1 - noise/np.sqrt(noise**2 + var**2))
+        aei = ei*(1 - aleatoric_weight*noise/np.sqrt(aleatoric_weight**2*noise**2 + var))
 
     return aei
 
@@ -115,7 +116,7 @@ def augmented_one_off_expected_improvement(X, X_sample, Y_sample, noise, l_opt, 
         Z = imp / std
         ei = imp * norm.cdf(Z) + std * norm.pdf(Z)
         ei[std == 0.0] = 0.0
-        aei = ei*(1 - np.sqrt(noise**2 + var**2)/noise)
+        aei = ei*(1 - np.sqrt(noise**2 + var)/noise)
 
     return aei
 
@@ -140,6 +141,8 @@ def heteroscedastic_expected_improvement(X, X_sample, Y_sample, variance_estimat
     :param hetero_ei: whether to use the ei minus one standard deviation as acquisition function
     :return: expected improvement at the test locations.
     """
+
+    # heteroscedastic GP predictive variance has no observation noise added.
 
     mu, var, aleatoric_std = bo_predict_hetero_gp(X_sample, Y_sample, variance_estimator, X, noise_func, gp1_l_opt, gp1_sigma_f_opt, gp2_noise, gp2_l_opt, gp2_sigma_f_opt)
     std = np.sqrt(np.diag(var))
@@ -227,12 +230,10 @@ def heteroscedastic_augmented_expected_improvement(X, X_sample, Y_sample, varian
     :return: expected improvement at the test locations.
     """
 
-    # var is epistemic + aleatoric uncertainty
+    # var is epistemic only
 
     mu, var, aleatoric_std = bo_predict_hetero_gp(X_sample, Y_sample, variance_estimator, X, noise_func, gp1_l_opt, gp1_sigma_f_opt, gp2_noise, gp2_l_opt, gp2_sigma_f_opt)
-    epistemic_unc = var - aleatoric_std
     std = np.sqrt(np.diag(var))
-    #std = np.sqrt(np.diag(epistemic_unc))
 
 
     if hetero_ei:
@@ -242,7 +243,7 @@ def heteroscedastic_augmented_expected_improvement(X, X_sample, Y_sample, varian
             Z = imp / std
             ei = imp * norm.cdf(Z) + std * norm.pdf(Z)
             ei[std == 0.0] = 0.0
-            aei = ei*(1 - aleatoric_weight*aleatoric_std/np.sqrt(aleatoric_weight*aleatoric_std**2 + std**2))
+            aei = ei*(1 - aleatoric_weight*aleatoric_std/np.sqrt(aleatoric_weight**2*aleatoric_std**2 + var))
 
         return aei
 
@@ -278,7 +279,7 @@ def heteroscedastic_one_off_augmented_expected_improvement(X, X_sample, Y_sample
     :return: expected improvement at the test locations.
     """
 
-    # var is epistemic + aleatoric uncertainty
+    # var is epistemic uncertainty
 
     mu, var, aleatoric_std = bo_predict_hetero_gp(X_sample, Y_sample, variance_estimator, X, noise_func, gp1_l_opt, gp1_sigma_f_opt, gp2_noise, gp2_l_opt, gp2_sigma_f_opt)
     std = np.sqrt(np.diag(var))
@@ -291,7 +292,7 @@ def heteroscedastic_one_off_augmented_expected_improvement(X, X_sample, Y_sample
             ei = imp * norm.cdf(Z) + std * norm.pdf(Z)
             ei[std == 0.0] = 0.0
             #aei = ei*(1 - np.sqrt(aleatoric_std**2 + std**2)/aleatoric_std)  # appears to be misspecified
-            aei = ei*(np.sqrt(std**2 + aleatoric_weight*aleatoric_std**2)/np.sqrt(std**2))  # works best empirically
+            aei = ei*(np.sqrt(var + aleatoric_weight*aleatoric_std**2)/std)  # works best empirically
 
         return aei
 
@@ -307,7 +308,7 @@ def heteroscedastic_one_off_augmented_expected_improvement(X, X_sample, Y_sample
 
 
 def my_propose_location(acquisition, X_sample, Y_sample, noise, l_init, sigma_f_init, bounds, plot_sample, n_restarts=1,
-                        min_val=1, f_plot=False):
+                        min_val=1, f_plot=False, aleatoric_weight=1, aei=False):
     """
     Proposes the next sampling point by optimising the acquisition function.
 
@@ -321,6 +322,8 @@ def my_propose_location(acquisition, X_sample, Y_sample, noise, l_init, sigma_f_
     :param plot_sample: for plotting the predictive mean and variance. Same for as X_sample but usually bigger.
     :param n_restarts: number of restarts for the optimiser.
     :param min_val: minimum value to do better than (will likely change depending on the problem).
+    :param aleatoric_weight: aleatoric weight penalty for aei
+    :param aei: whether the acquisition is aei
     :return: Location of the acquisition function maximum.
     """
 
@@ -351,20 +354,49 @@ def my_propose_location(acquisition, X_sample, Y_sample, noise, l_init, sigma_f_
 
         return -acquisition(X, X_sample, Y_sample, noise, l_opt, sigma_f_opt, mu_sample_opt)
 
+    def min_obj_aei(X):
+        """
+        Minimisation objective is the negative acquisition function.
+
+        :param X: points at which objective is evaluated.
+        :return: minimisation objective.
+        """
+
+        X = X.reshape(-1, 1).T  # Might have to be changed for higher dimensions (have added .T since writing this)
+
+        return -acquisition(X, X_sample, Y_sample, noise, l_opt, sigma_f_opt, mu_sample_opt, aleatoric_weight)
+
     # Find the best optimum by starting from n_restart different random points.
 
-    if dim == 1:  # change bounds for a single dimensions. Added for UCI dataset NAS experiments
-        for x0 in np.random.uniform(bounds[0], bounds[1], size=(n_restarts, dim)):
-            res = minimize(min_obj, x0=x0, bounds=bounds.reshape(-1, 2), method='L-BFGS-B')
-            if res.fun < min_val:
-                min_val = res.fun[0]
-                min_x = res.x
+    if not aei:
+
+        if dim == 1:  # change bounds for a single dimensions. Added for UCI dataset NAS experiments
+            for x0 in np.random.uniform(bounds[0], bounds[1], size=(n_restarts, dim)):
+                res = minimize(min_obj, x0=x0, bounds=bounds.reshape(-1, 2), method='L-BFGS-B')
+                if res.fun < min_val:
+                    min_val = res.fun[0]
+                    min_x = res.x
+        else:
+            for x0 in np.random.uniform(bounds[:, 0], bounds[:, 1], size=(n_restarts, dim)):
+                res = minimize(min_obj, x0=x0, bounds=bounds, method='L-BFGS-B')
+                if res.fun < min_val:
+                    min_val = res.fun[0]
+                    min_x = res.x
+
     else:
-        for x0 in np.random.uniform(bounds[:, 0], bounds[:, 1], size=(n_restarts, dim)):
-            res = minimize(min_obj, x0=x0, bounds=bounds, method='L-BFGS-B')
-            if res.fun < min_val:
-                min_val = res.fun[0]
-                min_x = res.x
+
+        if dim == 1:  # change bounds for a single dimensions. Added for UCI dataset NAS experiments
+            for x0 in np.random.uniform(bounds[0], bounds[1], size=(n_restarts, dim)):
+                res = minimize(min_obj_aei, x0=x0, bounds=bounds.reshape(-1, 2), method='L-BFGS-B')
+                if res.fun < min_val:
+                    min_val = res.fun[0]
+                    min_x = res.x
+        else:
+            for x0 in np.random.uniform(bounds[:, 0], bounds[:, 1], size=(n_restarts, dim)):
+                res = minimize(min_obj_aei, x0=x0, bounds=bounds, method='L-BFGS-B')
+                if res.fun < min_val:
+                    min_val = res.fun[0]
+                    min_x = res.x
 
     return min_x.reshape(-1, 1).T
 

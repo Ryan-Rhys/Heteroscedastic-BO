@@ -146,7 +146,7 @@ if __name__ == '__main__':
             print(i)
 
             # take random point from uniform distribution
-            rand_X_next = np.random.uniform(0, 2)  # this just takes X not the sin function itself
+            rand_X_next = np.random.uniform(bounds)  # this just takes X not the sin function itself
             # Obtain next noisy sample from the objective function
             rand_X_next = min(xs_train, key=lambda x: np.linalg.norm(x - rand_X_next))  # Closest point in the heldout set.
             rand_index = list(xs_train[:, 0]).index(rand_X_next[0])  # index by first dimension

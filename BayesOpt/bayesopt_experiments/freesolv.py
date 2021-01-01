@@ -9,6 +9,7 @@ import warnings
 from matplotlib import pyplot as plt
 from matplotlib.ticker import MaxNLocator
 import numpy as np
+from sklearn.decomposition import PCA
 from sklearn.model_selection import train_test_split
 
 from data_utils import parse_dataset, transform_data
@@ -27,9 +28,9 @@ use_exp = True  # use experimental values.
 if __name__ == '__main__':
 
     fill = True
-    penalty = 10
-    aleatoric_weight = 50
-    n_components = 10
+    penalty = 1
+    aleatoric_weight = 1
+    n_components = 14
 
     xs, ys, std = parse_dataset(task, FREESOLV_PATH, use_frag, use_exp)
 
@@ -74,9 +75,17 @@ if __name__ == '__main__':
 
         xs_train, xs_test, ys_train, ys_test = train_test_split(xs, ys, test_size=0.2, random_state=numpy_seed, shuffle=True)
 
+        pca = PCA(n_components)
+        xs_test = pca.fit_transform(xs_test)
+        print('Fraction of variance retained is: ' + str(sum(pca.explained_variance_ratio_)))
+        xs_train = pca.transform(xs_train)
+
         _, _, std_train, std_test = train_test_split(xs, std, test_size=0.2, random_state=numpy_seed, shuffle=True)
 
-        xs_train, xs_test, ys_train, ys_test, y_scaler = transform_data(xs_train, xs_test, ys_train, ys_test, n_components)
+        # xs_train, xs_test, ys_train, ys_test, y_scaler = transform_data(xs_train, xs_test, ys_train, ys_test, n_components)
+
+        ys_train = ys_train.reshape(-1, 1)
+        ys_test = ys_test.reshape(-1, 1)
 
         init_num_samples = len(ys_test)
 
@@ -108,7 +117,7 @@ if __name__ == '__main__':
 
         l_init = 1.0
         sigma_f_init = 1.0
-        noise = 1.0  # need to be careful about how we set this because it's not currently being optimised in the code (see reviewer comment)
+        noise = 1.0
         l_noise_init = 1.0
         sigma_f_noise_init = 1.0
         gp2_noise = 1.0
@@ -146,13 +155,13 @@ if __name__ == '__main__':
             print(i)
 
             # take random point from uniform distribution
-            rand_X_next = np.random.uniform(0, 2)  # this just takes X not the sin function itself
+            rand_X_next = np.random.uniform(np.min(xs_train, axis=0), np.max(xs_train, axis=0))  # this just takes X not the sin function itself
             # Obtain next noisy sample from the objective function
             rand_X_next = min(xs_train, key=lambda x: np.linalg.norm(x - rand_X_next))  # Closest point in the heldout set.
             rand_index = list(xs_train[:, 0]).index(rand_X_next[0])  # index by first dimension
-            rand_Y_next = ys[rand_index]
-            rand_composite_obj_val = rand_Y_next + penalty*std[rand_index]
-            rand_noise_val = std[rand_index]
+            rand_Y_next = ys_train[rand_index]
+            rand_composite_obj_val = rand_Y_next + penalty*std_train[rand_index]
+            rand_noise_val = std_train[rand_index]
             rand_collected_x.append(rand_X_next)
 
             # check if random point's Y value is better than best so far
@@ -181,7 +190,7 @@ if __name__ == '__main__':
             homo_index = list(xs_train[:, 0]).index(homo_X_next[0])  # index by first dimension
             homo_Y_next = ys_train[homo_index]
             homo_composite_obj_val = homo_Y_next + penalty*std_train[homo_index]
-            homo_noise_val = std[homo_index]
+            homo_noise_val = std_train[homo_index]
             homo_collected_x.append(homo_X_next)
 
             if homo_composite_obj_val < homo_best_so_far:
@@ -214,7 +223,7 @@ if __name__ == '__main__':
             het_index = list(xs_train[:, 0]).index(het_X_next[0])
             het_Y_next = ys_train[het_index]
             het_composite_obj_val = het_Y_next + penalty*std_train[het_index]
-            het_noise_val = std[het_index]
+            het_noise_val = std_train[het_index]
             het_collected_x.append(het_X_next)
 
             if het_composite_obj_val < het_best_so_far:
@@ -236,7 +245,7 @@ if __name__ == '__main__':
             # Obtain next sampling point from the augmented expected improvement (AEI)
 
             aug_X_next = my_propose_location(augmented_expected_improvement, aug_X_sample, aug_Y_sample, noise, l_init, sigma_f_init,
-                                             bounds, plot_sample, n_restarts=3, min_val=300)
+                                             bounds, plot_sample, n_restarts=3, min_val=300, aleatoric_weight=aleatoric_weight, aei=True)
 
             aug_collected_x.append(aug_X_next)
 
@@ -245,7 +254,7 @@ if __name__ == '__main__':
             aug_index = list(xs_train[:, 0]).index(aug_X_next[0])
             aug_Y_next = ys_train[aug_index]
             aug_composite_obj_val = aug_Y_next + penalty*std_train[aug_index]
-            aug_noise_val = std[aug_index]
+            aug_noise_val = std_train[aug_index]
             aug_collected_x.append(het_X_next)
 
             if aug_composite_obj_val < aug_best_so_far:
@@ -274,11 +283,11 @@ if __name__ == '__main__':
             aug_het_collected_x.append(aug_het_X_next)
 
             # Obtain next noisy sample from the objective function
-            aug_het_X_next = min(xs_train, key=lambda x: np.linalg.norm(x-aug_het_X_next))
+            aug_het_X_next = min(xs_train, key=lambda x: np.linalg.norm(x - aug_het_X_next))
             aug_het_index = list(xs_train[:, 0]).index(aug_het_X_next[0])
             aug_het_Y_next = ys_train[aug_het_index]
             aug_het_composite_obj_val = aug_het_Y_next + penalty*std_train[aug_het_index]
-            aug_het_noise_val = std[aug_het_index]
+            aug_het_noise_val = std_train[aug_het_index]
             aug_het_collected_x.append(aug_het_X_next)
 
             if aug_het_composite_obj_val < aug_het_best_so_far:
@@ -341,14 +350,16 @@ if __name__ == '__main__':
     aug_het_noise_means = aug_het_noise_running_sum / random_trials
     aug_het_noise_errs = (np.sqrt(aug_het_noise_squares / random_trials - aug_het_noise_means ** 2))/np.sqrt(random_trials)
 
+    print('List of average random values is: ' + str(rand_means))
+    print('List of random errors is: ' + str(rand_noise_means))
     print('List of average homoscedastic values is: ' + str(homo_means))
-    print('List of homoscedastic errors is: ' + str(homo_errs))
+    print('List of homoscedastic errors is: ' + str(homo_noise_means))
     print('List of average heteroscedastic values is ' + str(hetero_means))
-    print('List of heteroscedastic errors is: ' + str(hetero_errs))
+    print('List of heteroscedastic errors is: ' + str(hetero_noise_means))
     print('List of average AEI values is: ' + str(aug_means))
-    print('List of AEI errors is: ' + str(aug_errs))
-    print('List of average het-AEI values is: ' + str(aug_het_means))
-    print('List of het-AEI errors is: ' + str(aug_het_errs))
+    print('List of AEI errors is: ' + str(aug_noise_means))
+    print('List of average het-AEI values is: ' + str(aug_het_noise_means))
+    print('List of het-AEI errors is: ' + str(aug_het_noise_means))
 
     iter_x = np.arange(1, bayes_opt_iters + 1)
 
@@ -388,10 +399,14 @@ if __name__ == '__main__':
 
     plt.title('Best Objective Function Value Found so Far', fontsize=16)
     plt.xlabel('Function Evaluations', fontsize=14)
-    plt.ylabel('Hydration Free Energy (kcal/mol) - Noise', fontsize=14)
+    if penalty != 1:
+        plt.ylabel(f'Hydration Free Energy (kcal/mol) + {penalty}*Noise', fontsize=14)
+    else:
+        plt.ylabel(f'Hydration Free Energy (kcal/mol) + Noise', fontsize=14)
     plt.tick_params(labelsize=14)
-    plt.legend(loc=4)
-    plt.savefig('freesolv_figures/bayesopt_plot{}_iters_{}_random_trials_and_init_num_samples_of_{}_and_seed_{}_new_acq_penalty_is_{}_aleatoric_weight_is_{}_n_components_is_{}'.
+    plt.legend(loc=1)
+    plt.savefig('freesolv_figures/bayesopt_plot{}_iters_{}_random_trials_and_init_num_samples_of_{}_and_seed_{}_'
+                'new_acq_penalty_is_{}_aleatoric_weight_is_{}_n_components_is_{}_new_aei_comp_seed_check'.
                 format(bayes_opt_iters, random_trials, init_num_samples, numpy_seed, penalty, aleatoric_weight, n_components))
 
     plt.close()
@@ -435,5 +450,6 @@ if __name__ == '__main__':
     plt.ylabel('Aleatoric Noise', fontsize=14)
     plt.tick_params(labelsize=14)
     plt.legend(loc=1)
-    plt.savefig('freesolv_figures/bayesopt_plot{}_iters_{}_random_trials_and_init_num_samples_of_{}_and_seed_{}_noise_only_new_acq_penalty_is_{}_aleatoric_weight_is_{}_n_components_is_{}'.
+    plt.savefig('freesolv_figures/bayesopt_plot{}_iters_{}_random_trials_and_init_num_samples_of_{}_and_seed_{}_'
+                'noise_only_new_acq_penalty_is_{}_aleatoric_weight_is_{}_n_components_is_{}_new_aei_comp_seed_check'.
                 format(bayes_opt_iters, random_trials, init_num_samples, numpy_seed, penalty, aleatoric_weight, n_components))

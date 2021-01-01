@@ -236,7 +236,7 @@ if __name__ == '__main__':
             # Obtain next sampling point from the augmented expected improvement (AEI)
 
             aug_X_next = my_propose_location(augmented_expected_improvement, aug_X_sample, aug_Y_sample, noise, l_init, sigma_f_init,
-                                             bounds, plot_sample, n_restarts=3, min_val=300)
+                                             bounds, plot_sample, n_restarts=3, min_val=300, aleatoric_weight=aleatoric_weight, aei=True)
 
             aug_collected_x1.append(aug_X_next[:, 0])
             aug_collected_x2.append(aug_X_next[:, 1])
@@ -387,7 +387,8 @@ if __name__ == '__main__':
     plt.ylabel('f(x) + g(x)', fontsize=14)
     plt.tick_params(labelsize=14)
     plt.legend(loc=1, fontsize=12)
-    plt.savefig('toy_branin_figures/bayesopt_plot{}_iters_{}_random_trials_and_grid_size_of_{}_and_seed_{}_new_standardised_is_{}_penalty_is_{}_aleatoric_weight_is_{}'.
+    plt.savefig('toy_branin_figures/bayesopt_plot{}_iters_{}_random_trials_and_grid_size_of_{}_and_seed_{}'
+                '_new_standardised_is_{}_penalty_is_{}_aleatoric_weight_is_{}_new_aei'.
                 format(bayes_opt_iters, random_trials, grid_size, numpy_seed, standardised, penalty, aleatoric_weight))
 
     plt.close()
@@ -434,7 +435,8 @@ if __name__ == '__main__':
     plt.ylabel('g(x)', fontsize=14)
     plt.tick_params(labelsize=14)
     plt.legend(loc=1, fontsize=12)
-    plt.savefig('toy_branin_figures/bayesopt_plot{}_iters_{}_random_trials_and_grid_size_of_{}_and_seed_{}_noise_only_standardised_is_{}_penalty_is_{}_aleatoric_weight_is_{}'.
+    plt.savefig('toy_branin_figures/bayesopt_plot{}_iters_{}_random_trials_and_grid_size_of_{}_and_seed_{}_'
+                'noise_only_standardised_is_{}_penalty_is_{}_aleatoric_weight_is_{}_new_aei'.
                 format(bayes_opt_iters, random_trials, grid_size, numpy_seed, standardised, penalty, aleatoric_weight))
 
     if plot_collected:
