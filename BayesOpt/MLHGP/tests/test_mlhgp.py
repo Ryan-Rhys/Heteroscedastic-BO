@@ -10,7 +10,7 @@ import pytest
 from scipy.optimize import minimize
 
 from sample_gp_prior import compute_confidence_bounds
-from kernels import anisotropic_kernel, compute_kernel_matrix_sq_exp, kernel, sq_exp, scipy_kernel
+from kernels import anisotropic_kernel, compute_kernel_matrix_sq_exp, kernel, sq_exp, scipy_kernel, tanimoto_kernel
 from mean_functions import zero_mean
 from objective_functions import branin_function, heteroscedastic_branin
 from gp_utils import multivariate_normal, mvn_sample, neg_log_marg_lik_krasser, \
@@ -56,6 +56,32 @@ def test_scipy_kernel(input1, input2, signal_amp, lengthscale):
     y = kernel(x1, x2, l=lengthscale, sigma_f=signal_amp)
     y = y[0][0]
     assert np.allclose(x, y)
+
+
+@pytest.mark.parametrize("input1, input2, signal_amp", [
+    (np.array([[1, 1]]), np.array([[2, 1]]), 2),
+    (3, 4, 2),
+    (4, 3, 1),
+    (0, 0, 0),
+    (10, 10, 10),
+    (20, 10, 3),
+    (1, 1, 0),
+    (4, 5, 1)
+])
+def test_tanimoto_kernel(input1, input2, signal_amp):
+    """
+    Test for the scipy kernel.
+    """
+    if type(input1) != np.ndarray:
+        x1 = np.array([input1]).reshape(-1, 1)
+        x2 = np.array([input2]).reshape(-1, 1)
+    else:
+        x1 = input1
+        x2 = input2
+    k_scipy = scipy_kernel(x1, x2, l=1, sigma_f=signal_amp)
+    k_tanimoto = tanimoto_kernel(x1, x2, sigma_f=signal_amp)
+
+    assert k_tanimoto.shape == k_scipy.shape
 
 
 @pytest.mark.parametrize("input1, input2, signal_amp, lengthscale", [

@@ -9,13 +9,13 @@ import numpy as np
 import scipy.stats
 from scipy.linalg import cholesky, inv, solve_triangular
 
-from kernels import kernel, anisotropic_kernel, scipy_kernel
+from kernels import kernel, anisotropic_kernel, scipy_kernel, tanimoto_kernel
 from mean_functions import zero_mean
 
 
 def posterior_predictive(xs, y, xs_star, noise, l, sigma_f, mean_func=zero_mean, kernel=anisotropic_kernel, full_cov=True):
     """
-    Compute the posterior predictive mean and variance of the BayesOpt.
+    Compute the posterior predictive mean and variance of the GP.
 
     :param xs: training data input locations
     :param y: training data targets
@@ -24,8 +24,9 @@ def posterior_predictive(xs, y, xs_star, noise, l, sigma_f, mean_func=zero_mean,
     :param l: kernel lengthscale
     :param sigma_f: signal amplitude
     :param mean_func: prior mean function
-    :param kernel: BayesOpt covariance function
-    :return: pred_mean, pred_var, K, L; the BayesOpt posterior predictive mean and variance, training covariance matrix and
+    :param kernel: GP covariance function
+    :param kernel_choice: choice of kernel. One of 'tanimoto', 'sq_exp'
+    :return: pred_mean, pred_var, K, L; the GP posterior predictive mean and variance, training covariance matrix and
              the Cholesky decomposition of the covariance matrix.
     """
 
@@ -34,9 +35,9 @@ def posterior_predictive(xs, y, xs_star, noise, l, sigma_f, mean_func=zero_mean,
     m = len(xs)  # number of training points
     mean_vector = mean_func(xs)  # mean function applied to the training inputs
     K = kernel(xs, xs, l, sigma_f)  # covariance matrix applied to the x-values of the data points
-    L = np.linalg.cholesky(K + noise**2 * np.eye(m))  # We compute the Cholesky factor of the covariance matrix with output noise
-    K_ss = kernel(xs_star, xs_star, l, sigma_f)  # Using Katherine Bailey's notation for the cov matrix at test locations
     K_s = kernel(xs, xs_star, l, sigma_f)
+    K_ss = kernel(xs_star, xs_star, l, sigma_f)  # Using Katherine Bailey's notation for the cov matrix at test locations
+    L = np.linalg.cholesky(K + noise**2 * np.eye(m))  # We compute the Cholesky factor of the covariance matrix with output noise
     Lk = np.linalg.solve(L, K_s)
     pred_mean = np.dot(Lk.T, np.linalg.solve(L, y - mean_vector))
     pred_var = K_ss - np.dot(Lk.T, Lk)
@@ -88,7 +89,7 @@ def posterior_predictive_krasser(X_s, X_train, Y_train, l, sigma_f, sigma_y=1e-8
 
     Martin Krasser's implementation of the posterior predictive distribution. Assumes zero mean I think.
 
-    Computes the sufficient statistics of the BayesOpt posterior predictive distribution from m training data X_train
+    Computes the sufficient statistics of the GP posterior predictive distribution from m training data X_train
     and Y_train and n new inputs X_s. Args: X_s: New input locations (n x d). X_train: Training locations (m x d).
     Y_train: Training targets (m x 1). l: Kernel length parameter. sigma_f: Kernel vertical variation parameter.
     sigma_y: Noise parameter. Returns: Posterior mean vector (n x d) and covariance matrix (n x n).
@@ -243,7 +244,7 @@ def nll_fn_het(X_train, Y_train, noise):
 
     Returns a function that computes the negative log-likelihood for training data X_train and Y_train and given
     noise level. Args: X_train: training locations (m x d). Y_train: training targets (m x 1).
-    Returns: Minimization objective. For the heteroscedastic BayesOpt we don't optimise the noise level. For some reason it
+    Returns: Minimization objective. For the heteroscedastic GP we don't optimise the noise level. For some reason it
     works better this way.
     """
 
@@ -252,6 +253,7 @@ def nll_fn_het(X_train, Y_train, noise):
         # Compute determinant via Cholesky decomposition
         return np.sum(np.log(np.diagonal(cholesky(K)))) + 0.5 * Y_train.T.dot(inv(K).dot(Y_train)) + \
                0.5 * len(X_train) * np.log(2*np.pi)
+
     return step
 
 
@@ -288,7 +290,7 @@ def nlpd(pred_mean_vec, pred_var_vec, targets):
 
 def plot_het_gp1(xs, ys, xs_star, gp1_noise, gp1_l, gp1_sigma_f):
     """
-    Plot GP1 from the heteroscedastic BayesOpt.
+    Plot GP1 from the heteroscedastic GP.
 
     :param xs: input locations (m x d)
     :param ys: y values (m x 1)
@@ -324,7 +326,7 @@ def plot_het_gp1(xs, ys, xs_star, gp1_noise, gp1_l, gp1_sigma_f):
 
 def plot_het_gp2(xs, variance_estimator, xs_star, gp2_noise, gp2_l, gp2_sigma_f):
     """
-    Plot GP2 from the heteroscedastic BayesOpt.
+    Plot GP2 from the heteroscedastic GP.
 
     :param xs: input locations (m x d)
     :param variances: sampled noise (m x 1)

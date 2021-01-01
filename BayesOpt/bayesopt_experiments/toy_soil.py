@@ -11,16 +11,23 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 from acquisition_functions import heteroscedastic_expected_improvement, heteroscedastic_propose_location, \
     my_propose_location, my_expected_improvement, augmented_expected_improvement, heteroscedastic_augmented_expected_improvement
-from bayesopt_datasets import soil_bo
+from bayesopt_datasets.data_loader import soil_bo
 
 
 if __name__ == '__main__':
 
+    fill = True
+    penalty = 5
+    aleatoric_weight = 5
+
     # Number of iterations
-    bayes_opt_iters = 10
+    bayes_opt_iters = 5
+    random_trials = 50
 
     # We perform random trials of Bayesian Optimisation
 
+    rand_running_sum = np.zeros(bayes_opt_iters)
+    rand_squares = np.zeros(bayes_opt_iters)
     homo_running_sum = np.zeros(bayes_opt_iters)
     homo_squares = np.zeros(bayes_opt_iters)  # Following the single-pass estimator given on pg. 192 of mathematics for machine learning
     hetero_running_sum = np.zeros(bayes_opt_iters)
@@ -32,6 +39,8 @@ if __name__ == '__main__':
 
     # We compute the objective corresponding to aleatoric noise only
 
+    rand_noise_running_sum = np.zeros(bayes_opt_iters)
+    rand_noise_squares = np.zeros(bayes_opt_iters)
     homo_noise_running_sum = np.zeros(bayes_opt_iters)
     homo_noise_squares = np.zeros(bayes_opt_iters)  # Following the single-pass estimator given on pg. 192 of mathematics for machine learning
     hetero_noise_running_sum = np.zeros(bayes_opt_iters)
@@ -43,18 +52,17 @@ if __name__ == '__main__':
 
     xs, ys, std = soil_bo(fplot_data=False)
 
-    Y_scaler = StandardScaler().fit(ys)
-    ys = Y_scaler.transform(ys)
-
-    xs_train, xs_test, ys_train, ys_test = train_test_split(xs, ys, test_size=0.1)  # use (xs_test, ys_test) to initialise
-
-    random_trials = 10
+    # ys = np.log(ys)
+    # Y_scaler = StandardScaler().fit(ys)
+    # ys = Y_scaler.transform(ys)
 
     for i in range(random_trials):
 
-        numpy_seed = i + 62
-        tf_seed = i + 63
+        numpy_seed = i
         np.random.seed(numpy_seed)
+
+        xs_train, xs_test, ys_train, ys_test = train_test_split(xs, ys, test_size=0.3, shuffle=True, random_state=numpy_seed)  # use (xs_test, ys_test) to initialise
+        init_num_samples = len(ys_test)
 
         bounds = np.array([0, 2]).reshape(-1, 1)  # bounds of the Bayesian Optimisation problem.
 
@@ -73,29 +81,38 @@ if __name__ == '__main__':
         aug_het_X_sample = X_init.reshape(-1, 1)
         aug_het_Y_sample = Y_init.reshape(-1, 1)
 
-        # initial BayesOpt hypers
+        # initial GP hypers
 
         l_init = 1.0
         sigma_f_init = 1.0
-        noise = 1.0  # need to be careful about how we set this because it's not currently being optimised in the code (see reviewer comment)
+        noise = 1.0
         l_noise_init = 1.0
         sigma_f_noise_init = 1.0
         gp2_noise = 1.0
         num_iters = 10
         sample_size = 100
 
+        rand_best_so_far = 300
         homo_best_so_far = 300  # value to beat
         het_best_so_far = 300
         aug_best_so_far = 300
         aug_het_best_so_far = 300
+        rand_noise_best_so_far = 300  # value to beat
+        homo_noise_best_so_far = 300
+        het_noise_best_so_far = 300
+        aug_noise_best_so_far = 300
+        aug_het_noise_best_so_far = 300
+        rand_obj_val_list = []
         homo_obj_val_list = []
         het_obj_val_list = []
         aug_obj_val_list = []
         aug_het_obj_val_list = []
+        rand_noise_val_list = []
         homo_noise_val_list = []
         het_noise_val_list = []
         aug_noise_val_list = []
         aug_het_noise_val_list = []
+        rand_collected_x = []
         homo_collected_x = []
         het_collected_x = []
         aug_collected_x = []
@@ -105,6 +122,30 @@ if __name__ == '__main__':
 
             print(i)
 
+            # take random point from uniform distribution
+            rand_X_next = np.random.uniform(0, 2)
+            # Obtain next noisy sample from the objective function
+            rand_X_next = min(xs_train, key=lambda x: abs(x - rand_X_next))  # Closest point in the heldout set.
+            rand_index = list(xs).index(rand_X_next)
+            rand_Y_next = ys[rand_index]
+            rand_composite_obj_val = rand_Y_next + penalty*std[rand_index]
+            rand_noise_val = std[rand_index]
+            rand_collected_x.append(rand_X_next)
+
+            # check if random point's Y value is better than best so far
+            if rand_composite_obj_val < rand_best_so_far:
+                rand_best_so_far = rand_composite_obj_val
+                rand_obj_val_list.append(rand_composite_obj_val)
+            else:
+                rand_obj_val_list.append(rand_best_so_far)
+            # if yes, save it, if no, save best so far into list of best y-value per iteration in rand_composite_obj_val
+
+            if rand_noise_val < rand_noise_best_so_far:
+                rand_noise_best_so_far = rand_noise_val
+                rand_noise_val_list.append(rand_noise_val)
+            else:
+                rand_noise_val_list.append(rand_noise_best_so_far)
+
             # Obtain next sampling point from the acquisition function (expected_improvement)
 
             homo_X_next = my_propose_location(my_expected_improvement, homo_X_sample, homo_Y_sample, noise, l_init, sigma_f_init,
@@ -113,16 +154,23 @@ if __name__ == '__main__':
             homo_collected_x.append(homo_X_next)
 
             # Obtain next noisy sample from the objective function
-            homo_X_next = min(xs_train, key=lambda x:abs(x-homo_X_next))
+            homo_X_next = min(xs_train, key=lambda x: abs(x-homo_X_next))
             homo_index = list(xs).index(homo_X_next)
             homo_Y_next = ys[homo_index]
-            homo_composite_obj_val = homo_Y_next + std[homo_index]
+            homo_composite_obj_val = homo_Y_next + penalty*std[homo_index]
+            homo_noise_val = std[homo_index]
 
             if homo_composite_obj_val < homo_best_so_far:
                 homo_best_so_far = homo_composite_obj_val
                 homo_obj_val_list.append(homo_composite_obj_val)
             else:
                 homo_obj_val_list.append(homo_best_so_far)
+
+            if homo_noise_val < homo_noise_best_so_far:
+                homo_noise_best_so_far = homo_noise_val
+                homo_noise_val_list.append(homo_noise_val)
+            else:
+                homo_noise_val_list.append(homo_noise_best_so_far)
 
             # Add sample to previous samples
             homo_X_sample = np.vstack((homo_X_sample, homo_X_next))
@@ -133,7 +181,7 @@ if __name__ == '__main__':
             het_X_next = heteroscedastic_propose_location(heteroscedastic_expected_improvement, het_X_sample,
                                                           het_Y_sample, noise, l_init, sigma_f_init, l_noise_init,
                                                           sigma_f_noise_init, gp2_noise, num_iters, sample_size, bounds,
-                                                          plot_sample, n_restarts=3, min_val=300)
+                                                          plot_sample, n_restarts=3, min_val=300, aleatoric_weight=aleatoric_weight)
 
             het_collected_x.append(het_X_next)
 
@@ -141,13 +189,20 @@ if __name__ == '__main__':
             het_X_next = min(xs_train, key=lambda x:abs(x-het_X_next))
             het_index = list(xs).index(het_X_next)
             het_Y_next = ys[het_index]
-            het_composite_obj_val = het_Y_next + std[het_index]
+            het_composite_obj_val = het_Y_next + penalty*std[het_index]
+            het_noise_val = std[het_index]
 
             if het_composite_obj_val < het_best_so_far:
                 het_best_so_far = het_composite_obj_val
                 het_obj_val_list.append(het_composite_obj_val)
             else:
                 het_obj_val_list.append(het_best_so_far)
+
+            if het_noise_val < het_noise_best_so_far:
+                het_noise_best_so_far = het_noise_val
+                het_noise_val_list.append(het_noise_val)
+            else:
+                het_noise_val_list.append(het_noise_best_so_far)
 
             # Add sample to previous samples
             het_X_sample = np.vstack((het_X_sample, het_X_next))
@@ -156,21 +211,28 @@ if __name__ == '__main__':
             # Obtain next sampling point from the augmented expected improvement (AEI)
 
             aug_X_next = my_propose_location(augmented_expected_improvement, aug_X_sample, aug_Y_sample, noise, l_init, sigma_f_init,
-                                             bounds, plot_sample, n_restarts=3, min_val=300)
+                                             bounds, plot_sample, n_restarts=3, min_val=300, aleatoric_weight=aleatoric_weight, aei=True)
 
             aug_collected_x.append(aug_X_next)
 
             # Obtain next noisy sample from the objective function
-            aug_X_next = min(xs_train, key=lambda x:abs(x-aug_X_next))
+            aug_X_next = min(xs_train, key=lambda x: abs(x-aug_X_next))
             aug_index = list(xs).index(aug_X_next)
             aug_Y_next = ys[aug_index]
-            aug_composite_obj_val = aug_Y_next + std[aug_index]
+            aug_composite_obj_val = aug_Y_next + penalty*std[aug_index]
+            aug_noise_val = std[aug_index]
 
             if aug_composite_obj_val < aug_best_so_far:
                 aug_best_so_far = aug_composite_obj_val
                 aug_obj_val_list.append(aug_composite_obj_val)
             else:
                 aug_obj_val_list.append(aug_best_so_far)
+
+            if aug_noise_val < aug_noise_best_so_far:
+                aug_noise_best_so_far = aug_noise_val
+                aug_noise_val_list.append(aug_noise_val)
+            else:
+                aug_noise_val_list.append(aug_noise_best_so_far)
 
             # Add sample to previous sample
             aug_X_sample = np.vstack((aug_X_sample, aug_X_next))
@@ -181,7 +243,7 @@ if __name__ == '__main__':
             aug_het_X_next = heteroscedastic_propose_location(heteroscedastic_augmented_expected_improvement, aug_het_X_sample,
                                                           aug_het_Y_sample, noise, l_init, sigma_f_init, l_noise_init,
                                                           sigma_f_noise_init, gp2_noise, num_iters, sample_size, bounds,
-                                                          plot_sample, n_restarts=3, min_val=300)
+                                                          plot_sample, n_restarts=3, min_val=300, aleatoric_weight=aleatoric_weight)
 
             aug_het_collected_x.append(aug_het_X_next)
 
@@ -189,7 +251,8 @@ if __name__ == '__main__':
             aug_het_X_next = min(xs_train, key=lambda x:abs(x-aug_het_X_next))
             aug_het_index = list(xs).index(aug_het_X_next)
             aug_het_Y_next = ys[aug_het_index]
-            aug_het_composite_obj_val = aug_het_Y_next + std[aug_het_index]
+            aug_het_composite_obj_val = aug_het_Y_next + penalty*std[aug_het_index]
+            aug_het_noise_val = std[aug_het_index]
 
             if aug_het_composite_obj_val < aug_het_best_so_far:
                 aug_het_best_so_far = aug_het_composite_obj_val
@@ -197,10 +260,18 @@ if __name__ == '__main__':
             else:
                 aug_het_obj_val_list.append(aug_het_best_so_far)
 
+            if aug_het_noise_val < aug_het_noise_best_so_far:
+                aug_het_noise_best_so_far = aug_het_noise_val
+                aug_het_noise_val_list.append(aug_het_noise_val)
+            else:
+                aug_het_noise_val_list.append(aug_het_noise_best_so_far)
+
             # Add sample to previous sample
             aug_het_X_sample = np.vstack((aug_het_X_sample, aug_het_X_next))
             aug_het_Y_sample = np.vstack((aug_het_Y_sample, aug_het_Y_next))
 
+        rand_running_sum += np.array(rand_obj_val_list, dtype=np.float64).flatten()  # just the way to average out across all random trials
+        rand_squares += np.array(rand_obj_val_list, dtype=np.float64).flatten() ** 2  # likewise for errors
         homo_running_sum += np.array(homo_obj_val_list, dtype=np.float64).flatten()
         homo_squares += np.array(homo_obj_val_list, dtype=np.float64).flatten() ** 2
         hetero_running_sum += np.array(het_obj_val_list, dtype=np.float64).flatten()
@@ -210,19 +281,38 @@ if __name__ == '__main__':
         aug_het_running_sum += np.array(aug_het_obj_val_list, dtype=np.float64).flatten()
         aug_het_squares += np.array(aug_het_obj_val_list, dtype=np.float64).flatten() ** 2
 
-        # homo_noise_running_sum += np.array(homo_noise_val_list)
-        # homo_noise_squares += np.array(homo_noise_val_list) ** 2
-        # hetero_noise_running_sum += np.array(het_noise_val_list)
-        # hetero_noise_squares += np.array(het_noise_val_list) ** 2
+        rand_noise_running_sum += np.array(rand_noise_val_list, dtype=np.float64).flatten()  # just the way to average out across all random trials
+        rand_noise_squares += np.array(rand_noise_val_list, dtype=np.float64).flatten() ** 2  # likewise for errors
+        homo_noise_running_sum += np.array(homo_noise_val_list, dtype=np.float64).flatten()
+        homo_noise_squares += np.array(homo_noise_val_list, dtype=np.float64).flatten() ** 2
+        hetero_noise_running_sum += np.array(het_noise_val_list, dtype=np.float64).flatten()
+        hetero_noise_squares += np.array(het_noise_val_list, dtype=np.float64).flatten() ** 2
+        aug_noise_running_sum += np.array(aug_noise_val_list, dtype=np.float64).flatten()
+        aug_noise_squares += np.array(aug_noise_val_list, dtype=np.float64).flatten() ** 2
+        aug_het_noise_running_sum += np.array(aug_het_noise_val_list, dtype=np.float64).flatten()
+        aug_het_noise_squares += np.array(aug_het_noise_val_list, dtype=np.float64).flatten() ** 2
 
+    rand_means = rand_running_sum / random_trials
+    rand_errs = (np.sqrt(rand_squares / random_trials - rand_means **2))/np.sqrt(random_trials)
     homo_means = homo_running_sum / random_trials
     hetero_means = hetero_running_sum / random_trials
-    homo_errs = np.sqrt(homo_squares / random_trials - homo_means ** 2, dtype=np.float64)
-    hetero_errs = np.sqrt(hetero_squares / random_trials - hetero_means ** 2, dtype=np.float64)
+    homo_errs = (np.sqrt(homo_squares / random_trials - homo_means ** 2, dtype=np.float64))/np.sqrt(random_trials)
+    hetero_errs = (np.sqrt(hetero_squares / random_trials - hetero_means ** 2, dtype=np.float64))/np.sqrt(random_trials)
     aug_means = aug_running_sum / random_trials
-    aug_errs = np.sqrt(aug_squares / random_trials - aug_means ** 2, dtype=np.float64)
+    aug_errs = (np.sqrt(aug_squares / random_trials - aug_means ** 2, dtype=np.float64))/np.sqrt(random_trials)
     aug_het_means = aug_het_running_sum / random_trials
-    aug_het_errs = np.sqrt(aug_het_squares / random_trials - aug_het_means **2, dtype=np.float64)
+    aug_het_errs = (np.sqrt(aug_het_squares / random_trials - aug_het_means **2, dtype=np.float64))/np.sqrt(random_trials)
+
+    rand_noise_means = rand_noise_running_sum / random_trials
+    homo_noise_means = homo_noise_running_sum / random_trials
+    hetero_noise_means = hetero_noise_running_sum / random_trials
+    rand_noise_errs = (np.sqrt(rand_noise_squares / random_trials - rand_noise_means ** 2))/np.sqrt(random_trials)
+    homo_noise_errs = (np.sqrt(homo_noise_squares / random_trials - homo_noise_means ** 2))/np.sqrt(random_trials)
+    hetero_noise_errs = (np.sqrt(hetero_noise_squares / random_trials - hetero_noise_means ** 2))/np.sqrt(random_trials)
+    aug_noise_means = aug_noise_running_sum / random_trials
+    aug_noise_errs = (np.sqrt(aug_noise_squares / random_trials - aug_noise_means ** 2))/np.sqrt(random_trials)
+    aug_het_noise_means = aug_het_noise_running_sum / random_trials
+    aug_het_noise_errs = (np.sqrt(aug_het_noise_squares / random_trials - aug_het_noise_means ** 2))/np.sqrt(random_trials)
 
     print('List of average homoscedastic values is: ' + str(homo_means))
     print('List of homoscedastic errors is: ' + str(homo_errs))
@@ -235,12 +325,13 @@ if __name__ == '__main__':
 
     iter_x = np.arange(1, bayes_opt_iters + 1)
 
+    # clear figure from previous fplot returns if fiddling with form of function
+    plt.cla()
+
     ax = plt.gca()
     ax.xaxis.set_major_locator(MaxNLocator(integer=True))
-    plt.plot(iter_x, homo_means, color='r', label='Homoscedastic')
-    plt.plot(iter_x, hetero_means, color='b', label='Heteroscedastic ANPEI')
-    plt.plot(iter_x, aug_means, color='g', label='Homoscedastic AEI')
-    plt.plot(iter_x, aug_het_means, color='c', label='Heteroscedastic AEI')
+    lower_rand = np.array(rand_means) - np.array(rand_errs)
+    upper_rand = np.array(rand_means) + np.array(rand_errs)
     lower_homo = np.array(homo_means) - np.array(homo_errs)
     upper_homo = np.array(homo_means) + np.array(homo_errs)
     lower_hetero = np.array(hetero_means) - np.array(hetero_errs)
@@ -249,12 +340,97 @@ if __name__ == '__main__':
     upper_aei = np.array(aug_means) + np.array(aug_errs)
     lower_het_aei = np.array(aug_het_means) - np.array(aug_het_errs)
     upper_het_aei = np.array(aug_het_means) + np.array(aug_het_errs)
-    plt.fill_between(iter_x, lower_homo, upper_homo, color='r', label='Homoscedastic', alpha=0.1)
-    plt.fill_between(iter_x, lower_hetero, upper_hetero, color='b', label='Heteroscedastic ANPEI', alpha=0.1)
-    plt.fill_between(iter_x, lower_aei, upper_aei, color='g', label='Homoscedastic AEI', alpha=0.1)
-    plt.fill_between(iter_x, lower_het_aei, upper_het_aei, color='c', label='Heteroscedastic AEI', alpha=0.1)
-    plt.title('Best Objective Function Value Found so Far')
-    plt.xlabel('Number of Function Evaluations')
-    plt.ylabel('Objective Function Value + Noise')
-    plt.legend(loc=1)
-    plt.savefig('toy_soil_figures/bayesopt_plot{}_iters_{}_random_trials_and_seed_{}_with_het_aei_full_unc'.format(bayes_opt_iters, random_trials, numpy_seed))
+
+    if fill:
+        plt.plot(iter_x, rand_means, color='tab:orange', label='Random Sampling')
+        plt.plot(iter_x, homo_means, color='tab:blue', label='Homoscedastic')
+        plt.plot(iter_x, hetero_means, color='tab:green', label='Heteroscedastic ANPEI')
+        plt.plot(iter_x, aug_means, color='tab:red', label='Homoscedastic AEI')
+        plt.plot(iter_x, aug_het_means, color='tab:purple', label='Heteroscedastic AEI')
+        plt.fill_between(iter_x, lower_rand, upper_rand, color='tab:orange', alpha=0.1)
+        plt.fill_between(iter_x, lower_homo, upper_homo, color='tab:blue', alpha=0.1)
+        plt.fill_between(iter_x, lower_hetero, upper_hetero, color='tab:green', alpha=0.1)
+        plt.fill_between(iter_x, lower_aei, upper_aei, color='tab:red', alpha=0.1)
+        plt.fill_between(iter_x, lower_het_aei, upper_het_aei, color='tab:purple', alpha=0.1)
+        plt.yticks([75, 150, 225])
+    else:
+        plt.errorbar(iter_x, homo_means,
+                     yerr=np.concatenate((homo_means - lower_homo, upper_homo - homo_means)).reshape((2, 5)), color='r',
+                     label='Homoscedastic', capsize=5)
+        plt.errorbar(iter_x, hetero_means,
+                     yerr=np.concatenate((hetero_means - lower_hetero, upper_hetero - hetero_means)).reshape((2, 5)),
+                     color='b', label='Heteroscedastic ANPEI', capsize=5)
+        plt.errorbar(iter_x, rand_means,
+                     yerr=np.concatenate((rand_means - lower_rand, upper_rand - rand_means)).reshape((2, 5)), color='g',
+                     label='Random Sampling', capsize=5)
+        plt.errorbar(iter_x, aug_means,
+                     yerr=np.concatenate((aug_means - lower_aei, upper_aei - aug_means)).reshape((2, 5)), color='c',
+                     label='Homoscedastic AEI', capsize=5)
+        plt.errorbar(iter_x, aug_het_means,
+                     yerr=np.concatenate((aug_het_means - lower_het_aei, upper_het_aei - aug_het_means)).reshape(
+                         (2, 5)), color='m', label='Heteroscedastic AEI', capsize=5)
+
+    plt.title('Best Objective Function Value Found so Far', fontsize=16)
+    plt.xlabel('Function Evaluations', fontsize=14)
+    plt.ylabel('Phosphorous Fraction + 5*Noise', fontsize=14)
+    plt.tick_params(labelsize=14)
+    plt.legend(loc=1, fontsize=12)
+    plt.savefig('soil_figures/bayesopt_plot{}_iters_{}_random_trials_and_init_num_samples_of_{}'
+                '_and_seed_{}_new_penalty_is_{}_aleatoric_weight_is_{}_new_aei'.
+        format(bayes_opt_iters, random_trials, init_num_samples, numpy_seed, penalty, aleatoric_weight))
+
+    plt.close()
+
+    # clear figure from previous fplot returns if fiddling with form of function
+    plt.cla()
+
+    ax = plt.gca()
+    ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+    lower_noise_rand = np.array(rand_noise_means) - np.array(rand_noise_errs)
+    upper_noise_rand = np.array(rand_noise_means) + np.array(rand_noise_errs)
+    lower_noise_homo = np.array(homo_noise_means) - np.array(homo_noise_errs)
+    upper_noise_homo = np.array(homo_noise_means) + np.array(homo_noise_errs)
+    lower_noise_hetero = np.array(hetero_noise_means) - np.array(hetero_noise_errs)
+    upper_noise_hetero = np.array(hetero_noise_means) + np.array(hetero_noise_errs)
+    lower_noise_aei = np.array(aug_noise_means) - np.array(aug_noise_errs)
+    upper_noise_aei = np.array(aug_noise_means) + np.array(aug_noise_errs)
+    lower_noise_het_aei = np.array(aug_het_noise_means) - np.array(aug_het_noise_errs)
+    upper_noise_het_aei = np.array(aug_het_noise_means) + np.array(aug_het_noise_errs)
+
+    if fill:
+        plt.plot(iter_x, rand_noise_means, color='tab:orange', label='Random Sampling')
+        plt.plot(iter_x, homo_noise_means, color='tab:blue', label='Homoscedastic')
+        plt.plot(iter_x, hetero_noise_means, color='tab:green', label='Heteroscedastic ANPEI')
+        plt.plot(iter_x, aug_noise_means, color='tab:red', label='Homoscedastic AEI')
+        plt.plot(iter_x, aug_het_noise_means, color='tab:purple', label='Heteroscedastic AEI')
+        plt.yticks([10, 20, 30, 40])
+        plt.fill_between(iter_x, lower_noise_rand, upper_noise_rand, color='tab:orange', alpha=0.1)
+        plt.fill_between(iter_x, lower_noise_homo, upper_noise_homo, color='tab:blue', alpha=0.1)
+        plt.fill_between(iter_x, lower_noise_hetero, upper_noise_hetero, color='tab:green', alpha=0.1)
+        plt.fill_between(iter_x, lower_noise_aei, upper_noise_aei, color='tab:red', alpha=0.1)
+        plt.fill_between(iter_x, lower_noise_het_aei, upper_noise_het_aei, color='tab:purple', alpha=0.1)
+    else:
+        plt.errorbar(iter_x, homo_noise_means, yerr=np.concatenate(
+            (homo_noise_means - lower_noise_homo, upper_noise_homo - homo_noise_means)).reshape((2, 5)), color='r',
+                     label='Homoscedastic', capsize=5)
+        plt.errorbar(iter_x, hetero_noise_means, yerr=np.concatenate(
+            (hetero_noise_means - lower_noise_hetero, upper_noise_hetero - hetero_noise_means)).reshape((2, 5)),
+                     color='b', label='Heteroscedastic ANPEI', capsize=5)
+        plt.errorbar(iter_x, rand_noise_means, yerr=np.concatenate(
+            (rand_noise_means - lower_noise_rand, upper_noise_rand - rand_noise_means)).reshape((2, 5)), color='g',
+                     label='Random Sampling', capsize=5)
+        plt.errorbar(iter_x, aug_noise_means, yerr=np.concatenate(
+            (aug_noise_means - lower_noise_aei, upper_noise_aei - aug_noise_means)).reshape((2, 5)), color='c',
+                     label='Homoscedastic AEI', capsize=5)
+        plt.errorbar(iter_x, aug_het_noise_means, yerr=np.concatenate(
+            (aug_het_noise_means - lower_noise_het_aei, upper_noise_het_aei - aug_het_noise_means)).reshape((2, 5)),
+                     color='m', label='Heteroscedastic AEI', capsize=5)
+
+    plt.title('Lowest Aleatoric Noise Found so Far', fontsize=16)
+    plt.xlabel('Function Evaluations', fontsize=14)
+    plt.ylabel('Aleatoric Noise', fontsize=14)
+    plt.tick_params(labelsize=14)
+    plt.legend(loc=1, fontsize=12)
+    plt.savefig('soil_figures/bayesopt_plot{}_iters_{}_random_trials_and_init_num_samples_of_{}_and_seed_{}_'
+                'noise_only_penalty_is_{}_aleatoric_weight_is_{}_new_aei'.
+        format(bayes_opt_iters, random_trials, init_num_samples, numpy_seed, penalty, aleatoric_weight))

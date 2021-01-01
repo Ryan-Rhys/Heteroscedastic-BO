@@ -26,7 +26,7 @@ def kernel(X1, X2, l, sigma_f):
 def scipy_kernel(X1, X2, l, sigma_f):
     """
     Scipy implementation of the squared exponential kernel which deals with arbitrary dimensionality. Martin Krasser's
-    implementation above only deals with the one-dimensional case. For safety this kernels should probably only be used
+    implementation above only deals with the one-dimensional case. For safety this kernel should probably only be used
     for the multidimensional case.
 
     :param X1: Array of m points (m x d)
@@ -43,6 +43,25 @@ def scipy_kernel(X1, X2, l, sigma_f):
     reduced_X2 = X2@l_matrix
     pairwise_sq_dists = cdist(reduced_X1, reduced_X2, 'sqeuclidean')
     K = sigma_f**2 * np.exp(-0.5 * pairwise_sq_dists)
+
+    return K
+
+
+def tanimoto_kernel(X1, X2, sigma_f):
+    """
+    implementation of the tanimoto kernel.
+
+    :param X1: Array of m points (m x d)
+    :param X2: Array of n points (n x d)
+    :param sigma_f: vertical lengthscale
+    :return Covariance matrix (m x n)
+    """
+
+    X1s = np.sum(np.square(X1), axis=-1)  # Squared L2-norm of X
+    X2s = np.sum(np.square(X2), axis=-1)  # Squared L2-norm of X
+    outer_product = np.tensordot(X1, X2, axes=([-1], [-1]))  # outer product of the matrices X1 and X2
+    denominator = -outer_product + (X1s[:, np.newaxis] + X2s)
+    K = sigma_f**2 * outer_product/denominator
 
     return K
 
