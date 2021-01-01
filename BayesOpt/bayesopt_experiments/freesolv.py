@@ -12,7 +12,7 @@ import numpy as np
 from sklearn.decomposition import PCA
 from sklearn.model_selection import train_test_split
 
-from data_utils import parse_dataset, transform_data
+from data_utils import parse_dataset
 from acquisition_functions import heteroscedastic_expected_improvement, heteroscedastic_propose_location, \
     my_propose_location, my_expected_improvement, augmented_expected_improvement, heteroscedastic_augmented_expected_improvement
 
@@ -81,8 +81,6 @@ if __name__ == '__main__':
         xs_train = pca.transform(xs_train)
 
         _, _, std_train, std_test = train_test_split(xs, std, test_size=0.2, random_state=numpy_seed, shuffle=True)
-
-        # xs_train, xs_test, ys_train, ys_test, y_scaler = transform_data(xs_train, xs_test, ys_train, ys_test, n_components)
 
         ys_train = ys_train.reshape(-1, 1)
         ys_test = ys_test.reshape(-1, 1)
