@@ -11,7 +11,7 @@ from scipy.optimize import minimize
 from sklearn.preprocessing import StandardScaler
 
 from gp_utils import plot_het_gp1, plot_het_gp2
-from kernels import scipy_kernel, tanimoto_kernel
+from kernels import scipy_kernel
 from gp_utils import posterior_predictive, zero_mean, nll_fn_het
 
 
@@ -162,7 +162,8 @@ def bo_fit_hetero_gp(xs, ys, noise, l_init, sigma_f_init, l_noise_init, sigma_f_
     return noise, gp2_noise, gp1_l_opt, gp1_sigma_f_opt, gp2_l_opt, gp2_sigma_f_opt, variance_estimator
 
 
-def bo_predict_hetero_gp(xs, ys, variance_estimator, xs_star, noise_func, gp1_l_opt, gp1_sigma_f_opt, gp2_noise, gp2_l_opt, gp2_sigma_f_opt, f_plot=False, f_plot2=False):
+def bo_predict_hetero_gp(xs, ys, variance_estimator, xs_star, noise_func, gp1_l_opt, gp1_sigma_f_opt, gp2_noise,
+                         gp2_l_opt, gp2_sigma_f_opt, f_plot=False, f_plot2=False):
     """
     Compute predictions at the test locations using the heteroscedastic GP.
 

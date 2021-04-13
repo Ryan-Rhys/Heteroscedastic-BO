@@ -28,8 +28,8 @@ use_exp = True  # use experimental values.
 if __name__ == '__main__':
 
     fill = True
-    penalty = 1
-    aleatoric_weight = 1
+    penalty = 100
+    aleatoric_weight = 2
     n_components = 14
 
     xs, ys, std = parse_dataset(task, FREESOLV_PATH, use_frag, use_exp)
@@ -38,7 +38,7 @@ if __name__ == '__main__':
 
     # Number of iterations
     bayes_opt_iters = 10
-    random_trials = 5
+    random_trials = 10
 
     # We perform random trials of Bayesian Optimisation
 
@@ -68,8 +68,10 @@ if __name__ == '__main__':
 
     for i in range(random_trials):
 
-        numpy_seed = i
-        np.random.seed(numpy_seed)
+        numpy_seed = i + 1 # set to avoid segfault issue
+                             # ('Process finished with exit code 139 (interrupted by signal 11: SIGSEGV)') when i = 0
+        # if numpy_seed == 55:
+        #     continue
 
         # test in this instance is the initialisation set for Bayesian Optimisation and train is the heldout set.
 
@@ -356,7 +358,7 @@ if __name__ == '__main__':
     print('List of heteroscedastic errors is: ' + str(hetero_noise_means))
     print('List of average AEI values is: ' + str(aug_means))
     print('List of AEI errors is: ' + str(aug_noise_means))
-    print('List of average het-AEI values is: ' + str(aug_het_noise_means))
+    print('List of average het-AEI values is: ' + str(aug_het_means))
     print('List of het-AEI errors is: ' + str(aug_het_noise_means))
 
     iter_x = np.arange(1, bayes_opt_iters + 1)

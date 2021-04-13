@@ -344,9 +344,10 @@ if __name__ == '__main__':
         plt.ylabel('f(x) - g(x)', fontsize=14)
     plt.yticks([3, 4, 5, 6, 7])
     plt.tick_params(labelsize=14)
-    plt.legend(loc=4, fontsize=12)
+    plt.legend(loc=4, fontsize=14)
+    plt.tight_layout()
     plt.savefig('toy_figures/bayesopt_plot{}_iters_{}_random_trials_and_{}_coefficient_times_100_and_noise_coeff_times_'
-               '100_of_{}_init_num_samples_of_{}_and_seed_{}_new_penalty_is_{}_aleatoric_weight_is_{}_new_aei'.format(bayes_opt_iters, random_trials,
+               '100_of_{}_init_num_samples_of_{}_and_seed_{}_new_penalty_is_{}_aleatoric_weight_is_{}_new_aei2'.format(bayes_opt_iters, random_trials,
                                                                          int(coefficient * 100), int(noise_coeff * 100),
                                                                          init_num_samples, numpy_seed, penalty, aleatoric_penalty))
 
@@ -391,8 +392,9 @@ if __name__ == '__main__':
     plt.ylabel('g(x)', fontsize=14)
     plt.tick_params(labelsize=14)
     plt.yticks([0.5, 1.5, 2.5, 3.5])
-    plt.legend(loc=1, fontsize=12)
+    plt.legend(loc=1, fontsize=14)
+    plt.tight_layout()
     plt.savefig('toy_figures/bayesopt_plot{}_iters_{}_random_trials_and_{}_coefficient_times_100_and_noise_coeff_times_'
-               '100_of_{}_init_num_samples_of_{}_and_seed_{}_noise_only_penalty_is_{}_aleatoric_weight_is_{}_new_aei'.format(bayes_opt_iters, random_trials,
+               '100_of_{}_init_num_samples_of_{}_and_seed_{}_noise_only_penalty_is_{}_aleatoric_weight_is_{}_new_aei2'.format(bayes_opt_iters, random_trials,
                                                                          int(coefficient * 100), int(noise_coeff * 100),
                                                                          init_num_samples, numpy_seed, penalty, aleatoric_penalty))

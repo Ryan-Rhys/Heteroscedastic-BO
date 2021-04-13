@@ -226,7 +226,7 @@ def heteroscedastic_augmented_expected_improvement(X, X_sample, Y_sample, varian
     :param gp2_sigma_f_opt: optimised signal amplitude for GP2
     :param gp2_noise: GP2 noise level
     :param mu_sample_opt: incumbent eta
-    :param hetero_ei: whether to use the ei minus one standard deviation as acquisition function
+    :param hetero_ei: whether to use the heteroscedastic acquisition
     :return: expected improvement at the test locations.
     """
 
@@ -243,9 +243,9 @@ def heteroscedastic_augmented_expected_improvement(X, X_sample, Y_sample, varian
             Z = imp / std
             ei = imp * norm.cdf(Z) + std * norm.pdf(Z)
             ei[std == 0.0] = 0.0
-            aei = ei*(1 - aleatoric_weight*aleatoric_std/np.sqrt(aleatoric_weight**2*aleatoric_std**2 + var))
+            haei = ei*(1 - aleatoric_weight*aleatoric_std/np.sqrt(aleatoric_weight**2*aleatoric_std**2 + var))
 
-        return aei
+        return haei
 
     else:
 
@@ -292,9 +292,9 @@ def heteroscedastic_one_off_augmented_expected_improvement(X, X_sample, Y_sample
             ei = imp * norm.cdf(Z) + std * norm.pdf(Z)
             ei[std == 0.0] = 0.0
             #aei = ei*(1 - np.sqrt(aleatoric_std**2 + std**2)/aleatoric_std)  # appears to be misspecified
-            aei = ei*(np.sqrt(var + aleatoric_weight*aleatoric_std**2)/std)  # works best empirically
+            haei = ei*(np.sqrt(var + aleatoric_weight*aleatoric_std**2)/std)  # works best empirically
 
-        return aei
+        return haei
 
     else:
 
@@ -368,6 +368,8 @@ def my_propose_location(acquisition, X_sample, Y_sample, noise, l_init, sigma_f_
 
     # Find the best optimum by starting from n_restart different random points.
 
+    np.random.seed(1)
+
     if not aei:
 
         if dim == 1:  # change bounds for a single dimensions. Added for UCI dataset NAS experiments
@@ -424,6 +426,8 @@ def heteroscedastic_propose_location(acquisition, X_sample, Y_sample, noise, l_i
     :param min_val: minimum value to do better than (will likely change depending on the problem).
     :return: Location of the acquisition function maximum.
     """
+
+    np.random.seed(1)
 
     dim = X_sample.shape[1]
     min_x = None

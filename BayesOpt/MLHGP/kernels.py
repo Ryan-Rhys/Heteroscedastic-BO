@@ -42,14 +42,30 @@ def scipy_kernel(X1, X2, l, sigma_f):
     reduced_X1 = X1@l_matrix  # we right multiply by a diagonal matrix with 1/lengthscale on the diagonals
     reduced_X2 = X2@l_matrix
     pairwise_sq_dists = cdist(reduced_X1, reduced_X2, 'sqeuclidean')
-    K = sigma_f**2 * np.exp(-0.5 * pairwise_sq_dists)
+    pairwise_sq_dists = pairwise_sq_dists.clip(1e-30)  # clamping works very well cf. GPyTorch code.
 
-    return K
+    kernel_choice = 'rbf'  # One of ['matern_1/2', 'matern_3/2', 'matern_5/2', 'rbf']
+
+    if kernel_choice == 'matern_1/2':
+        K = np.exp(-np.sqrt(pairwise_sq_dists))
+    elif kernel_choice == 'matern_3/2':
+        prefactor = 1 + (np.sqrt(3) * np.sqrt(pairwise_sq_dists))
+        K = np.exp(-np.sqrt(3)*np.sqrt(pairwise_sq_dists))*prefactor
+    elif kernel_choice == 'matern_5/2':
+        prefactor = 1 + (np.sqrt(5) * np.sqrt(pairwise_sq_dists)) + (5/3 * pairwise_sq_dists)
+        K = np.exp(-np.sqrt(5)*np.sqrt(pairwise_sq_dists))*prefactor
+    elif kernel_choice == 'rbf':
+        K = np.exp(-0.5 * pairwise_sq_dists)
+    else:
+        raise(RuntimeError('Invalid kernel choice specified. Options are [\'matern_1/2\', \'matern_3/2\', '
+                           '\'matern_5/2\', \'rbf\']'))
+
+    return sigma_f**2 * K
 
 
 def tanimoto_kernel(X1, X2, sigma_f):
     """
-    implementation of the tanimoto kernel.
+    implementation of the tanimoto kernel. Unused currently but may be used for molecule experiments.
 
     :param X1: Array of m points (m x d)
     :param X2: Array of n points (n x d)
@@ -101,8 +117,28 @@ def anisotropic_kernel(X1, X2, l, sigma_f):
     reduced_X1 = X1@l_matrix  # we right multiply by a diagonal matrix with 1/lengthscale on the diagonals
     reduced_X2 = X2@l_matrix
     sqdist = np.sum(reduced_X1**2, 1).reshape(-1, 1) + np.sum(reduced_X2**2, 1) - 2 * np.dot(reduced_X1, reduced_X2.T)
-    return sigma_f**2 * np.exp(-0.5 * sqdist)
+    sqdist = sqdist.clip(1e-30)
 
+    kernel_choice = 'rbf'  # One of ['matern_1/2', 'matern_3/2', 'matern_5/2', 'rbf']
+
+    if kernel_choice == 'matern_1/2':
+        K = np.exp(-np.sqrt(sqdist))
+    elif kernel_choice == 'matern_3/2':
+        prefactor = 1 + (np.sqrt(3) * np.sqrt(sqdist))
+        K = np.exp(-np.sqrt(3)*np.sqrt(sqdist))*prefactor
+    elif kernel_choice == 'matern_5/2':
+        prefactor = 1 + (np.sqrt(5) * np.sqrt(sqdist)) + (5/3 * sqdist)
+        K = np.exp(-np.sqrt(5)*np.sqrt(sqdist))*prefactor
+    elif kernel_choice == 'rbf':
+        K = np.exp(-0.5 * sqdist)
+    else:
+        raise(RuntimeError('Invalid kernel choice specified. Options are [\'matern_1/2\', \'matern_3/2\', '
+                           '\'matern_5/2\', \'rbf\']'))
+
+    return sigma_f**2 * K
+
+
+# Functions below used only for testing purposes.
 
 def sq_exp(x_1, x_2, lengthscale, sigma):
     """
