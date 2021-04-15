@@ -44,7 +44,7 @@ def scipy_kernel(X1, X2, l, sigma_f):
     pairwise_sq_dists = cdist(reduced_X1, reduced_X2, 'sqeuclidean')
     pairwise_sq_dists = pairwise_sq_dists.clip(1e-30)  # clamping works very well cf. GPyTorch code.
 
-    kernel_choice = 'rbf'  # One of ['matern_1/2', 'matern_3/2', 'matern_5/2', 'rbf']
+    kernel_choice = 'matern_1/2'  # One of ['matern_1/2', 'matern_3/2', 'matern_5/2', 'rbf']
 
     if kernel_choice == 'matern_1/2':
         K = np.exp(-np.sqrt(pairwise_sq_dists))
@@ -119,7 +119,7 @@ def anisotropic_kernel(X1, X2, l, sigma_f):
     sqdist = np.sum(reduced_X1**2, 1).reshape(-1, 1) + np.sum(reduced_X2**2, 1) - 2 * np.dot(reduced_X1, reduced_X2.T)
     sqdist = sqdist.clip(1e-30)
 
-    kernel_choice = 'rbf'  # One of ['matern_1/2', 'matern_3/2', 'matern_5/2', 'rbf']
+    kernel_choice = 'matern_1/2'  # One of ['matern_1/2', 'matern_3/2', 'matern_5/2', 'rbf']
 
     if kernel_choice == 'matern_1/2':
         K = np.exp(-np.sqrt(sqdist))

@@ -368,7 +368,7 @@ def my_propose_location(acquisition, X_sample, Y_sample, noise, l_init, sigma_f_
 
     # Find the best optimum by starting from n_restart different random points.
 
-    np.random.seed(1)
+    # np.random.seed(1)
 
     if not aei:
 
@@ -427,8 +427,6 @@ def heteroscedastic_propose_location(acquisition, X_sample, Y_sample, noise, l_i
     :return: Location of the acquisition function maximum.
     """
 
-    np.random.seed(1)
-
     dim = X_sample.shape[1]
     min_x = None
 
@@ -459,6 +457,8 @@ def heteroscedastic_propose_location(acquisition, X_sample, Y_sample, noise, l_i
         #return -acquisition(X, X_sample, Y_sample, noise, l_init, sigma_f_init, l_noise_init, sigma_f_noise_init, gp2_noise, num_iters, sample_size)
         return -acquisition(X, X_sample, Y_sample, variance_estimator, noise_func, gp1_l_opt, gp1_sigma_f_opt, gp2_l_opt,
                             gp2_sigma_f_opt, gp2_noise, mu_sample_opt, hetero_ei=True, aleatoric_weight=aleatoric_weight)
+
+    # np.random.seed(1)  # ensures reproducibility between runs
 
     if dim == 1:  # change bounds for a single dimensions. Added for UCI dataset NAS experiments
         for x0 in np.random.uniform(bounds[0], bounds[1], size=(n_restarts, dim)):

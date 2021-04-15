@@ -30,6 +30,7 @@ def bo_fit_homo_gp(xs, ys, noise, l_init, sigma_f_init):
     dimensionality = xs.shape[1]  # Extract the dimensionality of the input so that lengthscales are appropriate dimension
     # Have added in noise here
     hypers = [l_init]*dimensionality + [sigma_f_init] + [noise]  # we initialise each dimension with the same lengthscale value
+    # no noise optimisation
     #hypers = [l_init]*dimensionality + [sigma_f_init]
     bounds = [(1e-2, 900)]*len(hypers)  # we initialise the bounds to be the same in each case
 
@@ -37,11 +38,15 @@ def bo_fit_homo_gp(xs, ys, noise, l_init, sigma_f_init):
 
     res = minimize(nll_fn_het(xs, ys, noise), hypers, bounds=bounds, method='L-BFGS-B')
 
+    # for noise optimisation
     l_opt = np.array(res.x[:-2]).reshape(-1, 1)
     sigma_f_opt = res.x[-2]
     noise_opt = res.x[-1]
 
-    #sigma_f_opt = res.x[-1]
+    # for no noise optimisation
+    # l_opt = np.array(res.x[:-1]).reshape(-1, 1)
+    # sigma_f_opt = res.x[-1]
+    # noise_opt = noise
 
     return l_opt, sigma_f_opt, noise_opt
 

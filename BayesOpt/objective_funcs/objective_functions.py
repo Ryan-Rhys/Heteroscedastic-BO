@@ -214,7 +214,8 @@ def branin_function(x1, x2, noise=0.0, standardised=False):
     if standardised:
         x_bar_one = 15*x1 - 5
         x_bar_two = 15*x2
-        f = (1/51.95)*((x_bar_two - ((5.1*x_bar_one**2)/(4*np.pi**2)) + (5*x_bar_one/np.pi) - 6)**2 + ((10 - 10/8*np.pi)*np.cos(x_bar_one)) - 44.81)
+        f = (1/51.95)*((x_bar_two - ((5.1*x_bar_one**2)/(4*np.pi**2)) + (5*x_bar_one/np.pi) - 6)**2 +
+                       ((10 - 10/8*np.pi)*np.cos(x_bar_one)) - 44.81)
 
     else:
         f = a * (x2 - b * x1 ** 2 + c * x1 - r) ** 2 + s * (1 - t) * np.cos(x1) + s  # Compute the Branin(x1, x2) function
