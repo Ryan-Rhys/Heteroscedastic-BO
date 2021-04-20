@@ -34,7 +34,7 @@ pluggy==0.8.0
 profilehooks==1.11.0
 progressbar2==3.34.3
 protobuf==3.6.1
-py==1.7.0
+py==1.10.0
 pylint==2.1.1
 pyparsing==2.3.0
 pytest==3.10.0
