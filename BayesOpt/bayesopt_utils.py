@@ -32,7 +32,7 @@ def bo_fit_homo_gp(xs, ys, noise, l_init, sigma_f_init):
     hypers = [l_init]*dimensionality + [sigma_f_init] + [noise]  # we initialise each dimension with the same lengthscale value
     # no noise optimisation
     #hypers = [l_init]*dimensionality + [sigma_f_init]
-    bounds = [(1e-2, 900)]*len(hypers)  # we initialise the bounds to be the same in each case
+    bounds = [(0.1, 1)]*len(hypers)  # we initialise the bounds to be the same in each case. [1e-2, 900] initially
 
     # We fit GP1 to the data
 
@@ -110,7 +110,7 @@ def bo_fit_hetero_gp(xs, ys, noise, l_init, sigma_f_init, l_noise_init, sigma_f_
     dimensionality = xs.shape[1]  # in order to plot only in the 1D input case.
     gp1_hypers = [l_init]*dimensionality + [sigma_f_init]  # we initialise each dimension with the same lengthscale value
     gp2_hypers = [l_noise_init]*dimensionality + [sigma_f_noise_init]  # we initialise each dimensions with the same lengthscale value for gp2 as well.
-    bounds = [(0.1, 900)]*len(gp1_hypers)  # we initialise the bounds to be the same in each case
+    bounds = [(0.1, 1)]*len(gp1_hypers)  # we initialise the bounds to be the same in each case. [0.1, 900] initially
 
     for i in range(0, num_iters):
 

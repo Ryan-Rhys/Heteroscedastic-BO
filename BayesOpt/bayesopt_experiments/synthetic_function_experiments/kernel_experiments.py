@@ -1,7 +1,8 @@
 # Copyright Ryan-Rhys Griffiths 2021
 # Author: Ryan-Rhys Griffiths
 """
-Scripts for benchmarking MLHGP-based Bayesian optimisation on synthetic functions with and without heteroscedastic noise.
+Script to assess different GP kernels on synthetic functions. Kernel changed in kernels.py module by setting the kernel
+choice option in the scipy_kernel function.
 """
 
 import matplotlib.pyplot as plt
@@ -15,24 +16,17 @@ from BayesOpt.objective_funcs.synthetic_functions import hosaki_function, branin
 
 if __name__ == '__main__':
 
-    exp_type = 'hetero'  # One of ['hetero', 'homoscedastic', 'noiseless']
-
+    kernel_type = 'matern_12'  # One of ['matern_12', 'matern_32', 'matern_52', 'rbf']
     fill = True  # Whether to plot errorbars as fill or not.
-    plot_collected = True  # Whether to plot collected data points on last random trial.
     penalty = 1  # penalty for aleatoric noise
-    aleatoric_weight = 10
+    aleatoric_weight = 1
     noise_level = 0  # homoscedastic noise level. Should be 0 when heteroscedastic is True.
-    if noise_level != 0:
-        assert exp_type == 'homoscedastic'
-    heteroscedastic = True
+    heteroscedastic = True  # Should be always set to true for kernel experiments.
     if heteroscedastic:
         assert noise_level == 0
-        assert exp_type == 'hetero'
-    if heteroscedastic is not True and noise_level == 0:
-        assert exp_type == 'noiseless'
     n_restarts = 20
-    opt_func = 'hosaki'  # One of ['hosaki', 'branin', 'goldstein']
-    grid_size = 12
+    opt_func = 'branin'  # One of ['hosaki', 'branin', 'goldstein']
+    grid_size = 5
 
     # Number of iterations
     bayes_opt_iters = 10
@@ -66,8 +60,8 @@ if __name__ == '__main__':
 
     for i in range(random_trials):
 
-        numpy_seed = i + 200
-        np.random.seed(numpy_seed)  # This seed changes the initialisation
+        numpy_seed = i
+        np.random.seed(numpy_seed)
 
         if opt_func == 'hosaki':
             bounds = np.array([[0.0, 5.0], [0.0, 5.0]])  # bounds of the Bayesian Optimisation problem for Hosaki
@@ -153,7 +147,7 @@ if __name__ == '__main__':
 
             # random sampling baseline
 
-            seed = bayes_opt_iters*i + j + 200  # This seed changes the randomly sampled points (will be independent of initialisation)
+            seed = bayes_opt_iters*i + j  # This approach
             print(f'Seed is: {seed}')
             np.random.seed(seed)
 
@@ -477,12 +471,12 @@ if __name__ == '__main__':
         rand_noise_means = rand_noise_running_sum / random_trials
         homo_noise_means = homo_noise_running_sum / random_trials
         hetero_noise_means = hetero_noise_running_sum / random_trials
-        aug_noise_means = aug_noise_running_sum / random_trials
-        aug_het_noise_means = aug_het_noise_running_sum / random_trials
         rand_noise_errs = (np.sqrt(rand_noise_squares / random_trials - rand_noise_means ** 2))/np.sqrt(random_trials)
         homo_noise_errs = (np.sqrt(homo_noise_squares / random_trials - homo_noise_means ** 2))/np.sqrt(random_trials)
         hetero_noise_errs = (np.sqrt(hetero_noise_squares / random_trials - hetero_noise_means ** 2))/np.sqrt(random_trials)
+        aug_noise_means = aug_noise_running_sum / random_trials
         aug_noise_errs = (np.sqrt(aug_noise_squares / random_trials - aug_noise_means ** 2))/np.sqrt(random_trials)
+        aug_het_noise_means = aug_het_noise_running_sum / random_trials
         aug_het_noise_errs = (np.sqrt(aug_het_noise_squares / random_trials - aug_het_noise_means ** 2))/np.sqrt(random_trials)
 
     print('List of average random values is: ' + str(rand_means))
@@ -536,7 +530,7 @@ if __name__ == '__main__':
     plt.xlabel('Function Evaluations', fontsize=14)
     if heteroscedastic:
         if penalty != 1:
-            plt.ylabel('f(x) +' + str(penalty) + 'g(x)', fontsize=14)
+            plt.ylabel('f(x) + ' + str(penalty) + 'g(x)', fontsize=14)
         else:
             plt.ylabel('f(x) + g(x)', fontsize=14)
     else:
@@ -550,9 +544,9 @@ if __name__ == '__main__':
             tag = 'heteroscedastic'
         else:
             tag = ''
-    plt.savefig('new_figures/{}/{}_{}_iters_{}_random_trials_and_grid_size_of_{}_and_seed_{}'
-                '_hundred_times_penalty_is_{}_aleatoric_weight_is_{}_{}_test'.
-                format(opt_func, exp_type, bayes_opt_iters, random_trials, grid_size, numpy_seed, int(100*penalty), aleatoric_weight, tag), bbox_inches='tight')
+    plt.savefig('kernel_figures/{}/{}_kernel_type_{}_iters_{}_random_trials_and_grid_size_of_{}_and_seed_{}'
+                '_hundred_times_penalty_is_{}_aleatoric_weight_is_{}_{}'.
+                format(opt_func, kernel_type, bayes_opt_iters, random_trials, grid_size, numpy_seed, int(100*penalty), aleatoric_weight, tag), bbox_inches='tight')
 
     plt.close()
 
@@ -572,8 +566,6 @@ if __name__ == '__main__':
         upper_noise_aei = np.array(aug_noise_means) + np.array(aug_noise_errs)
         lower_noise_het_aei = np.array(aug_het_noise_means) - np.array(aug_het_noise_errs)
         upper_noise_het_aei = np.array(aug_het_noise_means) + np.array(aug_het_noise_errs)
-
-        #best_noise_plot = np.zeros(len(iter_x))
 
         if fill:
             #plt.plot(iter_x, best_noise_plot, '--', color='k', label='Optimal')
@@ -599,102 +591,43 @@ if __name__ == '__main__':
         plt.ylabel('g(x)', fontsize=14)
         plt.tick_params(labelsize=14)
         plt.legend(loc='lower left', bbox_to_anchor=(0.0, -0.425), ncol=3, borderaxespad=0, fontsize=14, frameon=False)
-        plt.savefig('new_figures/{}/heteroscedastic_bayesopt_plot{}_iters_{}_random_trials_and_grid_size_of_{}_and_seed_{}_'
-                    'noise_only_hundred_times_penalty_is_{}_aleatoric_weight_is_{}_new_aei_test'.
-                    format(opt_func, bayes_opt_iters, random_trials, grid_size, numpy_seed, int(100*penalty), aleatoric_weight), bbox_inches='tight')
-
-    if plot_collected:
-
-        plt.cla()
-
-        plt.plot(np.array(rand_collected_x1), np.array(rand_collected_x2), '+', color='tab:orange', markersize='12', linewidth='8')
-        plt.xlabel('x1')
-        plt.ylabel('x2')
-        plt.xlim(bounds[0][0], bounds[0][1])
-        plt.ylim(bounds[1][0], bounds[1][1])
-        plt.title('Collected Data Points')
-        plt.savefig('new_figures/{}/collected_points/bayesopt_plot{}_iters_{}_random_trials_and'
-                '_grid_size_of_{}_and_seed_{}_with_het_aei_full_unc_new_rand'.format(opt_func, bayes_opt_iters, random_trials, grid_size, numpy_seed))
-        plt.close()
-        plt.cla()
-
-        plt.plot(np.array(homo_collected_x1), np.array(homo_collected_x2), '+', color='tab:blue', markersize='12', linewidth='8')
-        plt.xlabel('x1')
-        plt.ylabel('x2')
-        plt.xlim(bounds[0][0], bounds[0][1])
-        plt.ylim(bounds[1][0], bounds[1][1])
-        plt.title('Collected Data Points')
-        plt.savefig('new_figures/{}/collected_points/bayesopt_plot{}_iters_{}_random_trials_and'
-                '_grid_size_of_{}_and_seed_{}_with_het_aei_full_unc_new_rand_homo'.format(opt_func, bayes_opt_iters, random_trials, grid_size, numpy_seed))
-        plt.close()
-        plt.cla()
-
-        plt.plot(np.array(het_collected_x1), np.array(het_collected_x2), '+', color='tab:green', markersize='12', linewidth='8')
-        plt.xlabel('x1')
-        plt.ylabel('x2')
-        plt.xlim(bounds[0][0], bounds[0][1])
-        plt.ylim(bounds[1][0], bounds[1][1])
-        plt.title('Collected Data Points')
-        plt.savefig('new_figures/{}/collected_points/bayesopt_plot{}_iters_{}_random_trials_and'
-                '_grid_size_of_{}_and_seed_{}_with_het_aei_full_unc_new_het_anpei'.format(opt_func, bayes_opt_iters, random_trials, grid_size, numpy_seed))
-        plt.close()
-        plt.cla()
-
-        plt.plot(np.array(aug_collected_x1), np.array(aug_collected_x2), '+', color='tab:red', markersize='12', linewidth='8')
-        plt.xlabel('x1')
-        plt.ylabel('x2')
-        plt.xlim(bounds[0][0], bounds[0][1])
-        plt.ylim(bounds[1][0], bounds[1][1])
-        plt.title('Collected Data Points')
-        plt.savefig('new_figures/{}/collected_points/bayesopt_plot{}_iters_{}_random_trials_and'
-                '_grid_size_of_{}_and_seed_{}_with_het_aei_full_unc_new_rand_aug'.format(opt_func, bayes_opt_iters, random_trials, grid_size, numpy_seed))
-        plt.close()
-        plt.cla()
-
-        plt.plot(np.array(aug_het_collected_x1), np.array(aug_het_collected_x2), '+', color='tab:purple', markersize='12', linewidth='8')
-        plt.xlabel('x1')
-        plt.ylabel('x2')
-        plt.xlim(bounds[0][0], bounds[0][1])
-        plt.ylim(bounds[1][0], bounds[1][1])
-        plt.title('Collected Data Points')
-        plt.savefig('new_figures/{}/collected_points/bayesopt_plot{}_iters_{}_random_trials_and'
-                '_grid_size_of_{}_and_seed_{}_with_het_aei_full_unc_new_rand_aug_het'.format(opt_func, bayes_opt_iters, random_trials, grid_size, numpy_seed))
-        plt.close()
-
+        plt.savefig('kernel_figures/{}/{}_heteroscedastic_{}_iters_{}_random_trials_and_grid_size_of_{}_and_seed_{}_'
+                    'noise_only_hundred_times_penalty_is_{}_aleatoric_weight_is_{}_new_aei'.
+                    format(opt_func, kernel_type, bayes_opt_iters, random_trials, grid_size, numpy_seed, int(100*penalty), aleatoric_weight), bbox_inches='tight')
 
     # Save data for cosmetic plotting
 
-    np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/rand_means.txt', rand_means)
-    np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/homo_means.txt', homo_means)
-    np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/hetero_means.txt', hetero_means)
-    np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/aug_means.txt', aug_means)
-    np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/aug_het_means.txt', aug_het_means)
+    np.savetxt(f'synth_saved_data/{kernel_type}/{opt_func}/rand_means.txt', rand_means)
+    np.savetxt(f'synth_saved_data/{kernel_type}/{opt_func}/homo_means.txt', homo_means)
+    np.savetxt(f'synth_saved_data/{kernel_type}/{opt_func}/hetero_means.txt', hetero_means)
+    np.savetxt(f'synth_saved_data/{kernel_type}/{opt_func}/aug_means.txt', aug_means)
+    np.savetxt(f'synth_saved_data/{kernel_type}/{opt_func}/aug_het_means.txt', aug_het_means)
 
-    np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/lower_rand.txt', lower_rand)
-    np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/upper_rand.txt', upper_rand)
-    np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/lower_homo.txt', lower_homo)
-    np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/upper_homo.txt', upper_homo)
-    np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/lower_hetero.txt', lower_hetero)
-    np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/upper_hetero.txt', upper_hetero)
-    np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/lower_aei.txt', lower_aei)
-    np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/upper_aei.txt', upper_aei)
-    np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/lower_het_aei.txt', lower_het_aei)
-    np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/upper_het_aei.txt', upper_het_aei)
+    np.savetxt(f'synth_saved_data/{kernel_type}/{opt_func}/lower_rand.txt', lower_rand)
+    np.savetxt(f'synth_saved_data/{kernel_type}/{opt_func}/upper_rand.txt', upper_rand)
+    np.savetxt(f'synth_saved_data/{kernel_type}/{opt_func}/lower_homo.txt', lower_homo)
+    np.savetxt(f'synth_saved_data/{kernel_type}/{opt_func}/upper_homo.txt', upper_homo)
+    np.savetxt(f'synth_saved_data/{kernel_type}/{opt_func}/lower_hetero.txt', lower_hetero)
+    np.savetxt(f'synth_saved_data/{kernel_type}/{opt_func}/upper_hetero.txt', upper_hetero)
+    np.savetxt(f'synth_saved_data/{kernel_type}/{opt_func}/lower_aei.txt', lower_aei)
+    np.savetxt(f'synth_saved_data/{kernel_type}/{opt_func}/upper_aei.txt', upper_aei)
+    np.savetxt(f'synth_saved_data/{kernel_type}/{opt_func}/lower_het_aei.txt', lower_het_aei)
+    np.savetxt(f'synth_saved_data/{kernel_type}/{opt_func}/upper_het_aei.txt', upper_het_aei)
 
     if heteroscedastic:
-        np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/rand_noise_means.txt', rand_noise_means)
-        np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/homo_noise_means.txt', homo_noise_means)
-        np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/hetero_noise_means.txt', hetero_noise_means)
-        np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/aug_noise_means.txt', aug_noise_means)
-        np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/aug_het_noise_means.txt', aug_het_noise_means)
+        np.savetxt(f'synth_saved_data/{kernel_type}/{opt_func}/rand_noise_means.txt', rand_noise_means)
+        np.savetxt(f'synth_saved_data/{kernel_type}/{opt_func}/homo_noise_means.txt', homo_noise_means)
+        np.savetxt(f'synth_saved_data/{kernel_type}/{opt_func}/hetero_noise_means.txt', hetero_noise_means)
+        np.savetxt(f'synth_saved_data/{kernel_type}/{opt_func}/aug_noise_means.txt', aug_noise_means)
+        np.savetxt(f'synth_saved_data/{kernel_type}/{opt_func}/aug_het_noise_means.txt', aug_het_noise_means)
 
-        np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/lower_noise_rand.txt', lower_noise_rand)
-        np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/upper_noise_rand.txt', upper_noise_rand)
-        np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/lower_noise_homo.txt', lower_noise_homo)
-        np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/upper_noise_homo.txt', upper_noise_homo)
-        np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/lower_noise_hetero.txt', lower_noise_hetero)
-        np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/upper_noise_hetero.txt', upper_noise_hetero)
-        np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/lower_noise_aei.txt', lower_noise_aei)
-        np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/upper_noise_aei.txt', upper_noise_aei)
-        np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/lower_noise_het_aei.txt', lower_noise_het_aei)
-        np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/upper_noise_het_aei.txt', upper_noise_het_aei)
+        np.savetxt(f'synth_saved_data/{kernel_type}/{opt_func}/lower_noise_rand.txt', lower_noise_rand)
+        np.savetxt(f'synth_saved_data/{kernel_type}/{opt_func}/upper_noise_rand.txt', upper_noise_rand)
+        np.savetxt(f'synth_saved_data/{kernel_type}/{opt_func}/lower_noise_homo.txt', lower_noise_homo)
+        np.savetxt(f'synth_saved_data/{kernel_type}/{opt_func}/upper_noise_homo.txt', upper_noise_homo)
+        np.savetxt(f'synth_saved_data/{kernel_type}/{opt_func}/lower_noise_hetero.txt', lower_noise_hetero)
+        np.savetxt(f'synth_saved_data/{kernel_type}/{opt_func}/upper_noise_hetero.txt', upper_noise_hetero)
+        np.savetxt(f'synth_saved_data/{kernel_type}/{opt_func}/lower_noise_aei.txt', lower_noise_aei)
+        np.savetxt(f'synth_saved_data/{kernel_type}/{opt_func}/upper_noise_aei.txt', upper_noise_aei)
+        np.savetxt(f'synth_saved_data/{kernel_type}/{opt_func}/lower_noise_het_aei.txt', lower_noise_het_aei)
+        np.savetxt(f'synth_saved_data/{kernel_type}/{opt_func}/upper_noise_het_aei.txt', upper_noise_het_aei)

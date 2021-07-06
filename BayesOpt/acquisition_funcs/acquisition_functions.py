@@ -235,7 +235,6 @@ def heteroscedastic_augmented_expected_improvement(X, X_sample, Y_sample, varian
     mu, var, aleatoric_std = bo_predict_hetero_gp(X_sample, Y_sample, variance_estimator, X, noise_func, gp1_l_opt, gp1_sigma_f_opt, gp2_noise, gp2_l_opt, gp2_sigma_f_opt)
     std = np.sqrt(np.diag(var))
 
-
     if hetero_ei:
 
         with np.errstate(divide='warn'):
