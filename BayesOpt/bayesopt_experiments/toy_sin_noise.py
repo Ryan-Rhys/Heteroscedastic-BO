@@ -22,7 +22,7 @@ if __name__ == '__main__':
     noise_coeff = 0.5  # noise coefficient will be noise(X) will be linear e.g. 0.2 * X
 
     # Number of iterations
-    random_trials = 50
+    random_trials = 49
     bayes_opt_iters = 5
 
     # We perform random trials of Bayesian Optimisation

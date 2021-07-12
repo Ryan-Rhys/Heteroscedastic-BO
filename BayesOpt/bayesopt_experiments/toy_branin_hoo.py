@@ -20,10 +20,11 @@ if __name__ == '__main__':
     plot_collected = True  # Whether to plot collected data points
     penalty = 1  # penalty for aleatoric noise
     aleatoric_weight = 1
+    grid_size = 5
 
     # Number of iterations
     bayes_opt_iters = 10
-    random_trials = 50
+    random_trials = 5
 
     # We perform random trials of Bayesian Optimisation
 
@@ -53,7 +54,7 @@ if __name__ == '__main__':
 
     for i in range(random_trials):
 
-        numpy_seed = i
+        numpy_seed = i + 50
         np.random.seed(numpy_seed)
 
         if standardised:
@@ -62,8 +63,6 @@ if __name__ == '__main__':
             bounds = np.array([[-5.0, 10.0], [0.0, 15.0]])  # bounds of the Bayesian Optimisation problem.
 
         #  Initial noisy data points sampled uniformly at random from the input space.
-
-        grid_size = 5  # initialise with 16 points on the grid.
 
         if standardised:
             x1 = np.random.uniform(0, 1, size=(grid_size,))

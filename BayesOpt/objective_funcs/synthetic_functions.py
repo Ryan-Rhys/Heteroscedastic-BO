@@ -226,14 +226,13 @@ def branin_function(x1, x2, noise=0.0, heteroscedastic=False, f_plot=False):
         return (1 / 51.95) * ((x_bar_two - ((5.1 * x_bar_one ** 2) / (4 * np.pi ** 2)) + (5 * x_bar_one / np.pi) - 6) ** 2 + (
                 (10 - 10 / 8 * np.pi) * np.cos(x_bar_one)) - 44.81)
 
-
     f = br_function(x1, x2)
     f += noise**2 * np.random.randn(*x1.shape)  # Add noise to the Branin function f.
 
     def br_noise(x1, x2):
         """Noise function"""
 
-        return 15 - (2.8 * x1 ** 2 + 4.8 * x2 ** 2)
+        return 15 - (8 * x1 ** 1 + 8 * x2 ** 2)
 
     if heteroscedastic:
         assert noise == 0
@@ -366,6 +365,6 @@ if __name__ == '__main__':
     x1 = np.array([0, 0])  # Dummy variables
     x2 = np.array([0, 0])
 
-    goldstein_price_function(x1, x2, f_plot=True)
-    hosaki_function(x1, x2, f_plot=True)
+    # goldstein_price_function(x1, x2, f_plot=True)
+    # hosaki_function(x1, x2, f_plot=True)
     branin_function(x1, x2, f_plot=True)

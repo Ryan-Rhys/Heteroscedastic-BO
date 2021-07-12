@@ -7,6 +7,11 @@ This script contains utility data loading functions for the soil phosphorous fra
 from matplotlib import pyplot as plt
 import numpy as np
 
+from gp_fitting import fit_hetero_gp, fit_homo_gp
+from kernels import scipy_kernel
+from mean_functions import zero_mean, constant_mean
+from gp_utils import nlpd, one_d_train_test_split, posterior_predictive
+
 
 def soil(fplot_data=False):
     """
@@ -61,8 +66,6 @@ def soil_bo(fplot_data=False):
     y_soil = []
     std_soil = []
 
-    import os
-
     with open('../bayesopt_datasets/Soil/soil_x.txt', 'r') as file:
         for line in file:
             x_data = line.split()
@@ -91,4 +94,24 @@ def soil_bo(fplot_data=False):
 
 
 if __name__ == '__main__':
-    soil_bo(fplot_data=True)
+
+    xs, ys, stds = soil_bo(fplot_data=False)
+    xs_test = np.linspace(0, 1.8, 118).reshape(-1, 1)
+
+    # Plots the figures for the homoscedastic and heteroscedastic GP fits to the soil phosphorus fraction dataset.
+
+    l_init = 1  # lengthscale to initialise the optimiser with
+    sigma_f_init = 1  # signal amplitude to initialise the optimiser with
+    noise = 1  # noise to initialise the optimiser with. Same for both homoscedastic GP and GP1 of MLHGP
+
+    pred_mean, pred_var, nlml = fit_homo_gp(xs, ys, noise, xs_test, l_init, sigma_f_init, fplot=True, mean_func=zero_mean)
+
+    gp2_l_init = 1
+    gp2_sigma_f_init = 1
+    gp2_noise = 10
+    num_iters = 10
+    sample_size = 100
+
+    noise_func, gp2_noise, gp1_l_opt, gp1_sigma_f_opt, gp2_l_opt, gp2_sigma_f_opt, variance_estimator = \
+        fit_hetero_gp(xs, ys, noise, xs_test, l_init, sigma_f_init, gp2_l_init, gp2_sigma_f_init,
+                      gp2_noise, num_iters, sample_size, mean_func=zero_mean)

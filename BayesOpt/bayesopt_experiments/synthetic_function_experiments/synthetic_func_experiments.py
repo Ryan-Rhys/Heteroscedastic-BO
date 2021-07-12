@@ -20,7 +20,7 @@ if __name__ == '__main__':
     fill = True  # Whether to plot errorbars as fill or not.
     plot_collected = True  # Whether to plot collected data points on last random trial.
     penalty = 1  # penalty for aleatoric noise
-    aleatoric_weight = 10
+    aleatoric_weight = 1
     noise_level = 0  # homoscedastic noise level. Should be 0 when heteroscedastic is True.
     if noise_level != 0:
         assert exp_type == 'homoscedastic'
@@ -31,12 +31,12 @@ if __name__ == '__main__':
     if heteroscedastic is not True and noise_level == 0:
         assert exp_type == 'noiseless'
     n_restarts = 20
-    opt_func = 'hosaki'  # One of ['hosaki', 'branin', 'goldstein']
-    grid_size = 12
+    opt_func = 'branin'  # One of ['hosaki', 'branin', 'goldstein']
+    grid_size = 10
 
     # Number of iterations
     bayes_opt_iters = 10
-    random_trials = 50
+    random_trials = 46
 
     # We perform random trials of Bayesian Optimisation
 
@@ -66,7 +66,7 @@ if __name__ == '__main__':
 
     for i in range(random_trials):
 
-        numpy_seed = i + 200
+        numpy_seed = i
         np.random.seed(numpy_seed)  # This seed changes the initialisation
 
         if opt_func == 'hosaki':
@@ -153,7 +153,7 @@ if __name__ == '__main__':
 
             # random sampling baseline
 
-            seed = bayes_opt_iters*i + j + 200  # This seed changes the randomly sampled points (will be independent of initialisation)
+            seed = bayes_opt_iters*i + j  # This seed changes the randomly sampled points (will be independent of initialisation)
             print(f'Seed is: {seed}')
             np.random.seed(seed)
 
@@ -387,7 +387,7 @@ if __name__ == '__main__':
             aug_het_X_next = heteroscedastic_propose_location(heteroscedastic_augmented_expected_improvement, aug_het_X_sample,
                                                           aug_het_Y_sample, noise, l_init, sigma_f_init, l_noise_init,
                                                           sigma_f_noise_init, gp2_noise, num_iters, sample_size, bounds,
-                                                          plot_sample, n_restarts=n_restarts, min_val=300, aleatoric_weight=aleatoric_weight)
+                                                          plot_sample, n_restarts=n_restarts, min_val=300, aleatoric_weight=500)
 
             aug_het_collected_x1.append(aug_het_X_next[:, 0])
             aug_het_collected_x2.append(aug_het_X_next[:, 1])
