@@ -15,13 +15,13 @@ from BayesOpt.objective_funcs.synthetic_functions import hosaki_function, branin
 
 if __name__ == '__main__':
 
-    exp_type = 'noiseless'  # One of ['hetero', 'homoscedastic', 'noiseless']
+    exp_type = 'homoscedastic'  # One of ['hetero', 'homoscedastic', 'noiseless']
 
     fill = True  # Whether to plot errorbars as fill or not.
     plot_collected = True  # Whether to plot collected data points on last random trial.
     penalty = 1  # penalty for aleatoric noise
     aleatoric_weight = 1
-    noise_level = 0  # homoscedastic noise level. Should be 0 when heteroscedastic is True.
+    noise_level = 5  # homoscedastic noise level. Should be 0 when heteroscedastic is True.
     if noise_level != 0:
         assert exp_type == 'homoscedastic'
     heteroscedastic = False

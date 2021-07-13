@@ -29,8 +29,9 @@ if __name__ == '__main__':
 
     fill = True
     penalty = 100
-    aleatoric_weight = 2
+    aleatoric_weight = 1
     n_components = 14
+    test_set_size = 0.2  # 0.2 is 129 samples for intialisation
 
     xs, ys, std = parse_dataset(task, FREESOLV_PATH, use_frag, use_exp)
 
@@ -38,7 +39,7 @@ if __name__ == '__main__':
 
     # Number of iterations
     bayes_opt_iters = 10
-    random_trials = 10
+    random_trials = 20
 
     # We perform random trials of Bayesian Optimisation
 
@@ -75,14 +76,14 @@ if __name__ == '__main__':
 
         # test in this instance is the initialisation set for Bayesian Optimisation and train is the heldout set.
 
-        xs_train, xs_test, ys_train, ys_test = train_test_split(xs, ys, test_size=0.2, random_state=numpy_seed, shuffle=True)
+        xs_train, xs_test, ys_train, ys_test = train_test_split(xs, ys, test_size=test_set_size, random_state=numpy_seed, shuffle=True)
 
         pca = PCA(n_components)
         xs_test = pca.fit_transform(xs_test)
         print('Fraction of variance retained is: ' + str(sum(pca.explained_variance_ratio_)))
         xs_train = pca.transform(xs_train)
 
-        _, _, std_train, std_test = train_test_split(xs, std, test_size=0.2, random_state=numpy_seed, shuffle=True)
+        _, _, std_train, std_test = train_test_split(xs, std, test_size=test_set_size, random_state=numpy_seed, shuffle=True)
 
         ys_train = ys_train.reshape(-1, 1)
         ys_test = ys_test.reshape(-1, 1)
@@ -380,11 +381,11 @@ if __name__ == '__main__':
     upper_het_aei = np.array(aug_het_means) + np.array(aug_het_errs)
 
     if fill:
-        plt.plot(iter_x, rand_means, color='tab:orange', label='Random Sampling')
-        plt.plot(iter_x, homo_means, color='tab:blue', label='Homoscedastic')
-        plt.plot(iter_x, hetero_means, color='tab:green', label='Heteroscedastic ANPEI')
-        plt.plot(iter_x, aug_means, color='tab:red', label='Homoscedastic AEI')
-        plt.plot(iter_x, aug_het_means, color='tab:purple', label='Heteroscedastic AEI')
+        plt.plot(iter_x, rand_means, color='tab:orange', label='RS')
+        plt.plot(iter_x, homo_means, color='tab:blue', label='EI')
+        plt.plot(iter_x, hetero_means, color='tab:green', label='ANPEI')
+        plt.plot(iter_x, aug_means, color='tab:red', label='AEI')
+        plt.plot(iter_x, aug_het_means, color='tab:purple', label='HAEI')
         plt.fill_between(iter_x, lower_rand, upper_rand, color='tab:orange', alpha=0.1)
         plt.fill_between(iter_x, lower_homo, upper_homo, color='tab:blue', alpha=0.1)
         plt.fill_between(iter_x, lower_hetero, upper_hetero, color='tab:green', alpha=0.1)
@@ -397,17 +398,18 @@ if __name__ == '__main__':
         plt.errorbar(iter_x, aug_means, yerr=np.concatenate((aug_means - lower_aei, upper_aei - aug_means)).reshape((2,5)), color='c', label='Homoscedastic AEI', capsize=5)
         plt.errorbar(iter_x, aug_het_means, yerr=np.concatenate((aug_het_means - lower_het_aei, upper_het_aei - aug_het_means)).reshape((2,5)), color='m', label='Heteroscedastic AEI', capsize=5)
 
-    plt.title('Best Objective Function Value Found so Far', fontsize=16)
+    #plt.title('Best Objective Function Value Found so Far', fontsize=16)
     plt.xlabel('Function Evaluations', fontsize=14)
     if penalty != 1:
         plt.ylabel(f'Hydration Free Energy (kcal/mol) + {penalty}*Noise', fontsize=14)
     else:
         plt.ylabel(f'Hydration Free Energy (kcal/mol) + Noise', fontsize=14)
     plt.tick_params(labelsize=14)
-    plt.legend(loc=1)
-    plt.savefig('freesolv_figures/bayesopt_plot{}_iters_{}_random_trials_and_init_num_samples_of_{}_and_seed_{}_'
+    #plt.legend(loc=1)
+    plt.legend(loc='lower left', bbox_to_anchor=(0.0, -0.425), ncol=3, borderaxespad=0, fontsize=14, frameon=False)
+    plt.savefig('new_freesolv_figures/bayesopt_plot{}_iters_{}_random_trials_and_init_num_samples_of_{}_and_seed_{}_'
                 'new_acq_penalty_is_{}_aleatoric_weight_is_{}_n_components_is_{}_new_aei_comp_seed_check'.
-                format(bayes_opt_iters, random_trials, init_num_samples, numpy_seed, penalty, aleatoric_weight, n_components))
+                format(bayes_opt_iters, random_trials, init_num_samples, numpy_seed, penalty, aleatoric_weight, n_components), bbox_inches='tight')
 
     plt.close()
 
@@ -428,11 +430,11 @@ if __name__ == '__main__':
     upper_noise_het_aei = np.array(aug_het_noise_means) + np.array(aug_het_noise_errs)
 
     if fill:
-        plt.plot(iter_x, rand_noise_means, color='tab:orange', label='Random Sampling')
-        plt.plot(iter_x, homo_noise_means, color='tab:blue', label='Homoscedastic')
-        plt.plot(iter_x, hetero_noise_means, color='tab:green', label='Heteroscedastic ANPEI')
-        plt.plot(iter_x, aug_noise_means, color='tab:red', label='Homoscedastic AEI')
-        plt.plot(iter_x, aug_het_noise_means, color='tab:purple', label='Heteroscedastic AEI')
+        plt.plot(iter_x, rand_noise_means, color='tab:orange', label='RS')
+        plt.plot(iter_x, homo_noise_means, color='tab:blue', label='EI')
+        plt.plot(iter_x, hetero_noise_means, color='tab:green', label='ANPEI')
+        plt.plot(iter_x, aug_noise_means, color='tab:red', label='AEI')
+        plt.plot(iter_x, aug_het_noise_means, color='tab:purple', label='HAEI')
         plt.fill_between(iter_x, lower_noise_rand, upper_noise_rand, color='tab:orange', alpha=0.1)
         plt.fill_between(iter_x, lower_noise_homo, upper_noise_homo, color='tab:blue', alpha=0.1)
         plt.fill_between(iter_x, lower_noise_hetero, upper_noise_hetero, color='tab:green', alpha=0.1)
@@ -445,11 +447,12 @@ if __name__ == '__main__':
         plt.errorbar(iter_x, aug_noise_means, yerr=np.concatenate((aug_noise_means - lower_noise_aei, upper_noise_aei - aug_noise_means)).reshape((2,5)), color='c', label='Homoscedastic AEI', capsize=5)
         plt.errorbar(iter_x, aug_het_noise_means, yerr=np.concatenate((aug_het_noise_means - lower_noise_het_aei, upper_noise_het_aei - aug_het_noise_means)).reshape((2,5)), color='m', label='Heteroscedastic AEI', capsize=5)
 
-    plt.title('Lowest Aleatoric Noise Found so Far', fontsize=16)
+    #plt.title('Lowest Aleatoric Noise Found so Far', fontsize=16)
     plt.xlabel('Function Evaluations', fontsize=14)
     plt.ylabel('Aleatoric Noise', fontsize=14)
     plt.tick_params(labelsize=14)
-    plt.legend(loc=1)
-    plt.savefig('freesolv_figures/bayesopt_plot{}_iters_{}_random_trials_and_init_num_samples_of_{}_and_seed_{}_'
+    #plt.legend(loc=1)
+    plt.legend(loc='lower left', bbox_to_anchor=(0.0, -0.425), ncol=3, borderaxespad=0, fontsize=14, frameon=False)
+    plt.savefig('new_freesolv_figures/bayesopt_plot{}_iters_{}_random_trials_and_init_num_samples_of_{}_and_seed_{}_'
                 'noise_only_new_acq_penalty_is_{}_aleatoric_weight_is_{}_n_components_is_{}_new_aei_comp_seed_check'.
-                format(bayes_opt_iters, random_trials, init_num_samples, numpy_seed, penalty, aleatoric_weight, n_components))
+                format(bayes_opt_iters, random_trials, init_num_samples, numpy_seed, penalty, aleatoric_weight, n_components), bbox_inches='tight')

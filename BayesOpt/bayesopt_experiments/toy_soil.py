@@ -17,8 +17,9 @@ from bayesopt_datasets.data_loader import soil_bo
 if __name__ == '__main__':
 
     fill = True
-    penalty = 5
-    aleatoric_weight = 5
+    penalty = 1
+    aleatoric_weight = 1
+    test_set_size = 0.2  # Number of intialisation points. 0.3 = 36, 0.2 = 24 etc
 
     # Number of iterations
     bayes_opt_iters = 5
@@ -61,7 +62,7 @@ if __name__ == '__main__':
         numpy_seed = i
         np.random.seed(numpy_seed)
 
-        xs_train, xs_test, ys_train, ys_test = train_test_split(xs, ys, test_size=0.3, shuffle=True, random_state=numpy_seed)  # use (xs_test, ys_test) to initialise
+        xs_train, xs_test, ys_train, ys_test = train_test_split(xs, ys, test_size=test_set_size, shuffle=True, random_state=numpy_seed)  # use (xs_test, ys_test) to initialise
         init_num_samples = len(ys_test)
 
         bounds = np.array([0, 2]).reshape(-1, 1)  # bounds of the Bayesian Optimisation problem.
@@ -342,11 +343,11 @@ if __name__ == '__main__':
     upper_het_aei = np.array(aug_het_means) + np.array(aug_het_errs)
 
     if fill:
-        plt.plot(iter_x, rand_means, color='tab:orange', label='Random Sampling')
-        plt.plot(iter_x, homo_means, color='tab:blue', label='Homoscedastic')
-        plt.plot(iter_x, hetero_means, color='tab:green', label='Heteroscedastic ANPEI')
-        plt.plot(iter_x, aug_means, color='tab:red', label='Homoscedastic AEI')
-        plt.plot(iter_x, aug_het_means, color='tab:purple', label='Heteroscedastic AEI')
+        plt.plot(iter_x, rand_means, color='tab:orange', label='RS')
+        plt.plot(iter_x, homo_means, color='tab:blue', label='EI')
+        plt.plot(iter_x, hetero_means, color='tab:green', label='ANPEI')
+        plt.plot(iter_x, aug_means, color='tab:red', label='AEI')
+        plt.plot(iter_x, aug_het_means, color='tab:purple', label='HAEI')
         plt.fill_between(iter_x, lower_rand, upper_rand, color='tab:orange', alpha=0.1)
         plt.fill_between(iter_x, lower_homo, upper_homo, color='tab:blue', alpha=0.1)
         plt.fill_between(iter_x, lower_hetero, upper_hetero, color='tab:green', alpha=0.1)
@@ -356,28 +357,33 @@ if __name__ == '__main__':
     else:
         plt.errorbar(iter_x, homo_means,
                      yerr=np.concatenate((homo_means - lower_homo, upper_homo - homo_means)).reshape((2, 5)), color='r',
-                     label='Homoscedastic', capsize=5)
+                     label='EI', capsize=5)
         plt.errorbar(iter_x, hetero_means,
                      yerr=np.concatenate((hetero_means - lower_hetero, upper_hetero - hetero_means)).reshape((2, 5)),
-                     color='b', label='Heteroscedastic ANPEI', capsize=5)
+                     color='b', label='ANPEI', capsize=5)
         plt.errorbar(iter_x, rand_means,
                      yerr=np.concatenate((rand_means - lower_rand, upper_rand - rand_means)).reshape((2, 5)), color='g',
-                     label='Random Sampling', capsize=5)
+                     label='RS', capsize=5)
         plt.errorbar(iter_x, aug_means,
                      yerr=np.concatenate((aug_means - lower_aei, upper_aei - aug_means)).reshape((2, 5)), color='c',
-                     label='Homoscedastic AEI', capsize=5)
+                     label='AEI', capsize=5)
         plt.errorbar(iter_x, aug_het_means,
                      yerr=np.concatenate((aug_het_means - lower_het_aei, upper_het_aei - aug_het_means)).reshape(
-                         (2, 5)), color='m', label='Heteroscedastic AEI', capsize=5)
+                         (2, 5)), color='m', label='HAEI', capsize=5)
 
-    plt.title('Best Objective Function Value Found so Far', fontsize=16)
+    #plt.title('Best Objective Function Value Found so Far', fontsize=16)
     plt.xlabel('Function Evaluations', fontsize=14)
-    plt.ylabel('Phosphorous Fraction + 5*Noise', fontsize=14)
+    if penalty != 1:
+        plt.ylabel(f'Phosphorous Fraction + {penalty}*Noise', fontsize=14)
+    else:
+        plt.ylabel(f'Phosphorous Fraction + Noise', fontsize=14)
     plt.tick_params(labelsize=14)
-    plt.legend(loc=1, fontsize=12)
+    plt.ylim([0, 150])
+    #plt.legend(loc=1, fontsize=12)
+    plt.legend(loc='lower left', bbox_to_anchor=(0.0, -0.425), ncol=3, borderaxespad=0, fontsize=14, frameon=False)
     plt.savefig('soil_figures/bayesopt_plot{}_iters_{}_random_trials_and_init_num_samples_of_{}'
                 '_and_seed_{}_new_penalty_is_{}_aleatoric_weight_is_{}_new_aei'.
-        format(bayes_opt_iters, random_trials, init_num_samples, numpy_seed, penalty, aleatoric_weight))
+        format(bayes_opt_iters, random_trials, init_num_samples, numpy_seed, penalty, aleatoric_weight), bbox_inches='tight')
 
     plt.close()
 
@@ -398,11 +404,11 @@ if __name__ == '__main__':
     upper_noise_het_aei = np.array(aug_het_noise_means) + np.array(aug_het_noise_errs)
 
     if fill:
-        plt.plot(iter_x, rand_noise_means, color='tab:orange', label='Random Sampling')
-        plt.plot(iter_x, homo_noise_means, color='tab:blue', label='Homoscedastic')
-        plt.plot(iter_x, hetero_noise_means, color='tab:green', label='Heteroscedastic ANPEI')
-        plt.plot(iter_x, aug_noise_means, color='tab:red', label='Homoscedastic AEI')
-        plt.plot(iter_x, aug_het_noise_means, color='tab:purple', label='Heteroscedastic AEI')
+        plt.plot(iter_x, rand_noise_means, color='tab:orange', label='RS')
+        plt.plot(iter_x, homo_noise_means, color='tab:blue', label='EI')
+        plt.plot(iter_x, hetero_noise_means, color='tab:green', label='ANPEI')
+        plt.plot(iter_x, aug_noise_means, color='tab:red', label='AEI')
+        plt.plot(iter_x, aug_het_noise_means, color='tab:purple', label='HAEI')
         plt.yticks([10, 20, 30, 40])
         plt.fill_between(iter_x, lower_noise_rand, upper_noise_rand, color='tab:orange', alpha=0.1)
         plt.fill_between(iter_x, lower_noise_homo, upper_noise_homo, color='tab:blue', alpha=0.1)
@@ -412,25 +418,26 @@ if __name__ == '__main__':
     else:
         plt.errorbar(iter_x, homo_noise_means, yerr=np.concatenate(
             (homo_noise_means - lower_noise_homo, upper_noise_homo - homo_noise_means)).reshape((2, 5)), color='r',
-                     label='Homoscedastic', capsize=5)
+                     label='EI', capsize=5)
         plt.errorbar(iter_x, hetero_noise_means, yerr=np.concatenate(
             (hetero_noise_means - lower_noise_hetero, upper_noise_hetero - hetero_noise_means)).reshape((2, 5)),
-                     color='b', label='Heteroscedastic ANPEI', capsize=5)
+                     color='b', label='ANPEI', capsize=5)
         plt.errorbar(iter_x, rand_noise_means, yerr=np.concatenate(
             (rand_noise_means - lower_noise_rand, upper_noise_rand - rand_noise_means)).reshape((2, 5)), color='g',
-                     label='Random Sampling', capsize=5)
+                     label='RS', capsize=5)
         plt.errorbar(iter_x, aug_noise_means, yerr=np.concatenate(
             (aug_noise_means - lower_noise_aei, upper_noise_aei - aug_noise_means)).reshape((2, 5)), color='c',
-                     label='Homoscedastic AEI', capsize=5)
+                     label='AEI', capsize=5)
         plt.errorbar(iter_x, aug_het_noise_means, yerr=np.concatenate(
             (aug_het_noise_means - lower_noise_het_aei, upper_noise_het_aei - aug_het_noise_means)).reshape((2, 5)),
-                     color='m', label='Heteroscedastic AEI', capsize=5)
+                     color='m', label='HAEI', capsize=5)
 
-    plt.title('Lowest Aleatoric Noise Found so Far', fontsize=16)
+    #plt.title('Lowest Aleatoric Noise Found so Far', fontsize=16)
     plt.xlabel('Function Evaluations', fontsize=14)
     plt.ylabel('Aleatoric Noise', fontsize=14)
     plt.tick_params(labelsize=14)
-    plt.legend(loc=1, fontsize=12)
+    #plt.legend(loc=1, fontsize=12)
+    plt.legend(loc='lower left', bbox_to_anchor=(0.0, -0.425), ncol=3, borderaxespad=0, fontsize=14, frameon=False)
     plt.savefig('soil_figures/bayesopt_plot{}_iters_{}_random_trials_and_init_num_samples_of_{}_and_seed_{}_'
                 'noise_only_penalty_is_{}_aleatoric_weight_is_{}_new_aei'.
-        format(bayes_opt_iters, random_trials, init_num_samples, numpy_seed, penalty, aleatoric_weight))
+        format(bayes_opt_iters, random_trials, init_num_samples, numpy_seed, penalty, aleatoric_weight), bbox_inches='tight')
