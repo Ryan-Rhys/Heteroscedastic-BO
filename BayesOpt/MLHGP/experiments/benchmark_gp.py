@@ -56,9 +56,9 @@ def main(dataset, fplot, n_trials):
 
         # Fit the homoscedastic GP
 
-        l_init = 0.1  # lengthscale to initialise the optimiser with
-        sigma_f_init = 3  # signal amplitude to initialise the optimiser with
-        noise = 0.1  # noise to initialise the optimiser with. Same for both homoscedastic GP and GP1 of MLHGP
+        l_init = 0.5  # lengthscale to initialise the optimiser with
+        sigma_f_init = 1.2  # signal amplitude to initialise the optimiser with
+        noise = 0.2  # noise to initialise the optimiser with. Same for both homoscedastic GP and GP1 of MLHGP
 
         pred_mean, pred_var, nlml = fit_homo_gp(xs_train, ys_train, noise, xs_test, l_init, sigma_f_init, fplot=True)
 
@@ -72,15 +72,15 @@ def main(dataset, fplot, n_trials):
         print(f'Homoscedastic GP MSE for trial {i}: {mse_val_hom}')
         print(f'Homoscedastic GP NLPD for trial {i}: {nlpd_val_hom}')
 
-        gp2_l_init = 0.3
-        gp2_sigma_f_init = 2.5
+        gp2_l_init = 1
+        gp2_sigma_f_init = 2
         gp2_noise = 0.5
         num_iters = 10
         sample_size = 100
 
         noise_func, gp2_noise, gp1_l_opt, gp1_sigma_f_opt, gp2_l_opt, gp2_sigma_f_opt, variance_estimator = \
             fit_hetero_gp(xs_train, ys_train, noise, xs_train, l_init, sigma_f_init, gp2_l_init, gp2_sigma_f_init,
-                          gp2_noise, num_iters, sample_size)
+                          gp2_noise, num_iters, sample_size, mean_func=zero_mean)
 
         het_gp_param_dict = {'GP1 lengthscale': gp1_l_opt, 'GP1 signal amplitude': gp1_sigma_f_opt, 'GP1 noise': noise,
                              'GP2 lengthscale': gp2_l_opt, 'GP2 signal amplitude': gp2_sigma_f_opt, 'GP2 noise': gp2_noise}
@@ -135,7 +135,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('-d', '--dataset', type=str, default='yuan',
+    parser.add_argument('-d', '--dataset', type=str, default='williams',
                         help='Heteroscedastic dataset to generate. Choices are one of '
                              '[lidar, silverman, scallop, yuan, williams, goldberg]')
     parser.add_argument('-p', '--fplot', type=bool, default=False,

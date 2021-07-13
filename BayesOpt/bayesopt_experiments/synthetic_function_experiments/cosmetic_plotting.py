@@ -9,7 +9,7 @@ import numpy as np
 if __name__ == '__main__':
 
     heteroscedastic = True
-    opt_func = 'goldstein'  # One of ['branin', 'hosaki', 'goldstein']
+    opt_func = 'branin'  # One of ['branin', 'hosaki', 'goldstein']
     exp_type = 'hetero'  # One of ['homoscedastic', 'hetero', 'noiseless']
     bayes_opt_iters = 10
     iter_x = np.arange(1, bayes_opt_iters + 1)
@@ -51,6 +51,8 @@ if __name__ == '__main__':
         plt.ylabel('f(x)', fontsize=14)
     plt.tick_params(labelsize=14)
     plt.legend(loc='lower left', bbox_to_anchor=(0.0, -0.425), ncol=3, borderaxespad=0, fontsize=14, frameon=False)
+    plt.yticks([4, 6, 8, 10])
+    plt.xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
     if exp_type == 'homoscedastic':
         tag = 'with_noise_'
     else:
@@ -58,7 +60,7 @@ if __name__ == '__main__':
             tag = 'heteroscedastic'
         else:
             tag = ''
-    plt.savefig('new_figures/{}/bayesopt_plot{}_iters_{}'.format(opt_func, bayes_opt_iters, tag), bbox_inches='tight')
+    plt.savefig('cosmetic_figures/{}/bayesopt_plot{}_iters_{}'.format(opt_func, bayes_opt_iters, tag), bbox_inches='tight')
 
     plt.close()
     plt.cla()

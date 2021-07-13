@@ -54,7 +54,7 @@ if __name__ == '__main__':
 
     for i in range(random_trials):
 
-        numpy_seed = i + 50
+        numpy_seed = i
         np.random.seed(numpy_seed)
 
         if standardised:

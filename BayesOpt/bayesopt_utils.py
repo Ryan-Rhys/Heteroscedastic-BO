@@ -184,7 +184,8 @@ def bo_predict_hetero_gp(xs, ys, variance_estimator, xs_star, noise_func, gp1_l_
     :param gp2_sigma_f_opt: optimised signal amplitude of GP2
     :param f_plot: Whether to plot the GP1 fit
     :param f_plot2: Whether to plot the GP2 fit
-    :return: predictive mean and variance of the heteroscedastic GP at the test locations xs_star.
+    :return: predictive mean, epistemic variance, aleatoric noise standard deviation
+     of the heteroscedastic GP at the test locations xs_star.
     """
 
     pred_mean_het, pred_var_het, _, _ = posterior_predictive(xs, ys, xs_star, noise_func, gp1_l_opt, gp1_sigma_f_opt)
@@ -193,7 +194,7 @@ def bo_predict_hetero_gp(xs, ys, variance_estimator, xs_star, noise_func, gp1_l_
     pred_mean_noise = np.sqrt(pred_mean_noise).reshape(len(pred_mean_noise))  # taking the standard deviation
 
     pred_mean = pred_mean_het
-    pred_var = np.diag(pred_var_het) # + pred_mean_noise**2
+    pred_var = np.diag(pred_var_het)  # + pred_mean_noise**2
 
     if f_plot:
 

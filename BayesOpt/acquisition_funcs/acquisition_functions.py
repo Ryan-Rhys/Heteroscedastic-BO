@@ -89,7 +89,7 @@ def augmented_expected_improvement(X, X_sample, Y_sample, noise, l_opt, sigma_f_
         Z = imp / std
         ei = imp * norm.cdf(Z) + std * norm.pdf(Z)
         ei[std == 0.0] = 0.0
-        aei = ei*(1 - aleatoric_weight*noise/np.sqrt(aleatoric_weight**2*noise**2 + var))
+        aei = ei*(1 - (aleatoric_weight*noise)/np.sqrt(aleatoric_weight**2*noise**2 + var))
 
     return aei
 
@@ -242,7 +242,8 @@ def heteroscedastic_augmented_expected_improvement(X, X_sample, Y_sample, varian
             Z = imp / std
             ei = imp * norm.cdf(Z) + std * norm.pdf(Z)
             ei[std == 0.0] = 0.0
-            haei = ei*(1 - aleatoric_weight*aleatoric_std/np.sqrt(aleatoric_weight**2*aleatoric_std**2 + var))
+            haei = ei*(1 - (aleatoric_weight*aleatoric_std)/np.sqrt(aleatoric_weight**2*aleatoric_std**2 + var))
+            # recovering old version
 
         return haei
 

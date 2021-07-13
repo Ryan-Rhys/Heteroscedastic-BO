@@ -30,9 +30,13 @@ def fit_homo_gp(xs, ys, noise, xs_star, l_init, sigma_f_init, fplot=True, mean_f
     :return: negative log marginal likelihood value and negative log predictive density.
     """
 
-    mean_param = np.mean(ys)
-    std_param = np.std(ys)
-    ys = (ys - mean_param) / std_param  # standardise the y-values
+    soil_plot = False
+
+    if soil_plot:
+
+        mean_param = np.mean(ys)
+        std_param = np.std(ys)
+        ys = (ys - mean_param) / std_param  # standardise the y-values
 
     dimensionality = xs.shape[1]  # Extract the dimensionality of the input so that lengthscales are appropriate dimension
     hypers = [l_init]*dimensionality + [sigma_f_init] + [noise]  # we initialise each dimension with the same lengthscale value
@@ -58,7 +62,7 @@ def fit_homo_gp(xs, ys, noise, xs_star, l_init, sigma_f_init, fplot=True, mean_f
         print('noise_opt is: ' + str(noise))
         print('negative log marginal likelihood is: ' + str(nlml))
 
-    if fplot:
+    if fplot and soil_plot:
         plot_xs_star = xs_star.reshape(len(xs_star), )
 
         # Take the diagonal of the covariance matrix for plotting purposes
@@ -107,9 +111,13 @@ def fit_hetero_gp(xs, ys, aleatoric_noise, xs_star, l_init, sigma_f_init, l_nois
     :return: The negative log marginal likelihood value and the negative log predictive density at the test input locations.
     """
 
-    mean_param = np.mean(ys)
-    std_param = np.std(ys)
-    ys = (ys - mean_param) / std_param  # standardise the y-values
+    soil_plot = False
+
+    if soil_plot:
+
+        mean_param = np.mean(ys)
+        std_param = np.std(ys)
+        ys = (ys - mean_param) / std_param  # standardise the y-values
 
     dimensionality = xs.shape[1]  # in order to plot only in the 1D input case.
     gp1_hypers = [l_init]*dimensionality + [sigma_f_init]  # we initialise each dimension with the same lengthscale value
@@ -181,7 +189,7 @@ def fit_hetero_gp(xs, ys, aleatoric_noise, xs_star, l_init, sigma_f_init, l_nois
             ax.scatter(xs[:, 0], xs[:, 1], ys, '+', color='red')
             plt.show()
 
-        if f_gp1_plot_posterior:
+        if f_gp1_plot_posterior and soil_plot:
             if i == num_iters - 2:  # plot on the final iteration.
                 gp1_plot_pred_var = np.diag(gp1_pred_var).reshape(-1, 1)  # Take the diagonal of the covariance matrix for plotting purposes
                 gp1_plot_pred_var = gp1_plot_pred_var + np.square(aleatoric_noise)

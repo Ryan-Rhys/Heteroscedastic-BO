@@ -15,7 +15,7 @@ from BayesOpt.objective_funcs.synthetic_functions import hosaki_function, branin
 
 if __name__ == '__main__':
 
-    exp_type = 'hetero'  # One of ['hetero', 'homoscedastic', 'noiseless']
+    exp_type = 'noiseless'  # One of ['hetero', 'homoscedastic', 'noiseless']
 
     fill = True  # Whether to plot errorbars as fill or not.
     plot_collected = True  # Whether to plot collected data points on last random trial.
@@ -24,7 +24,7 @@ if __name__ == '__main__':
     noise_level = 0  # homoscedastic noise level. Should be 0 when heteroscedastic is True.
     if noise_level != 0:
         assert exp_type == 'homoscedastic'
-    heteroscedastic = True
+    heteroscedastic = False
     if heteroscedastic:
         assert noise_level == 0
         assert exp_type == 'hetero'
@@ -32,11 +32,11 @@ if __name__ == '__main__':
         assert exp_type == 'noiseless'
     n_restarts = 20
     opt_func = 'branin'  # One of ['hosaki', 'branin', 'goldstein']
-    grid_size = 10
+    grid_size = 5
 
     # Number of iterations
     bayes_opt_iters = 10
-    random_trials = 46
+    random_trials = 50
 
     # We perform random trials of Bayesian Optimisation
 
