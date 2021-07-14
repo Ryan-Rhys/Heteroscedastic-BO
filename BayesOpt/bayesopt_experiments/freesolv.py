@@ -28,7 +28,7 @@ use_exp = True  # use experimental values.
 if __name__ == '__main__':
 
     fill = True
-    penalty = 100
+    penalty = 1
     aleatoric_weight = 1
     n_components = 14
     test_set_size = 0.2  # 0.2 is 129 samples for intialisation
@@ -39,7 +39,7 @@ if __name__ == '__main__':
 
     # Number of iterations
     bayes_opt_iters = 10
-    random_trials = 20
+    random_trials = 50
 
     # We perform random trials of Bayesian Optimisation
 
@@ -69,10 +69,9 @@ if __name__ == '__main__':
 
     for i in range(random_trials):
 
-        numpy_seed = i + 1 # set to avoid segfault issue
+        start_seed = 47
+        numpy_seed = i + start_seed  # set to avoid segfault issue
                              # ('Process finished with exit code 139 (interrupted by signal 11: SIGSEGV)') when i = 0
-        # if numpy_seed == 55:
-        #     continue
 
         # test in this instance is the initialisation set for Bayesian Optimisation and train is the heldout set.
 
@@ -151,9 +150,9 @@ if __name__ == '__main__':
         aug_collected_x = []
         aug_het_collected_x = []
 
-        for i in range(bayes_opt_iters):
+        for j in range(bayes_opt_iters):
 
-            print(i)
+            print(j)
 
             # take random point from uniform distribution
             rand_X_next = np.random.uniform(np.min(xs_train, axis=0), np.max(xs_train, axis=0))  # this just takes X not the sin function itself
@@ -328,6 +327,34 @@ if __name__ == '__main__':
         aug_noise_squares += np.array(aug_noise_val_list, dtype=np.float64).flatten() ** 2
         aug_het_noise_running_sum += np.array(aug_het_noise_val_list, dtype=np.float64).flatten()
         aug_het_noise_squares += np.array(aug_het_noise_val_list, dtype=np.float64).flatten() ** 2
+
+        print(f'trial {i} complete')
+
+        if test_set_size == 0.2:
+
+            seed_index = i + start_seed + 1
+
+            np.savetxt(f'freesolv_data/02_pen_1/rand_means/rand_means_{start_seed}_{seed_index}.txt', rand_running_sum)
+            np.savetxt(f'freesolv_data/02_pen_1/rand_means/rand_squares_{start_seed}_{seed_index}.txt', rand_squares)
+            np.savetxt(f'freesolv_data/02_pen_1/homo_means/homo_means_{start_seed}_{seed_index}.txt', homo_running_sum)
+            np.savetxt(f'freesolv_data/02_pen_1/homo_means/homo_squares_{start_seed}_{seed_index}.txt', homo_squares)
+            np.savetxt(f'freesolv_data/02_pen_1/het_means/hetero_means_{start_seed}_{seed_index}.txt', hetero_running_sum)
+            np.savetxt(f'freesolv_data/02_pen_1/het_means/hetero_squares_{start_seed}_{seed_index}.txt', hetero_squares)
+            np.savetxt(f'freesolv_data/02_pen_1/aug_means/aug_means_{start_seed}_{seed_index}.txt', aug_running_sum)
+            np.savetxt(f'freesolv_data/02_pen_1/aug_means/aug_squares_{start_seed}_{seed_index}.txt', aug_squares)
+            np.savetxt(f'freesolv_data/02_pen_1/aug_het_means/aug_het_means_{start_seed}_{seed_index}.txt', aug_het_running_sum)
+            np.savetxt(f'freesolv_data/02_pen_1/aug_het_means/aug_het_squares_{start_seed}_{seed_index}.txt', aug_het_squares)
+
+            np.savetxt(f'freesolv_data/02_pen_1/rand_noise/rand_means_{start_seed}_{seed_index}.txt', rand_noise_running_sum)
+            np.savetxt(f'freesolv_data/02_pen_1/rand_noise/rand_squares_{start_seed}_{seed_index}.txt', rand_noise_squares)
+            np.savetxt(f'freesolv_data/02_pen_1/homo_noise/homo_means_{start_seed}_{seed_index}.txt', homo_noise_running_sum)
+            np.savetxt(f'freesolv_data/02_pen_1/homo_noise/homo_squares_{start_seed}_{seed_index}.txt', homo_noise_squares)
+            np.savetxt(f'freesolv_data/02_pen_1/het_noise/hetero_means_{start_seed}_{seed_index}.txt', hetero_noise_running_sum)
+            np.savetxt(f'freesolv_data/02_pen_1/het_noise/hetero_squares_{start_seed}_{seed_index}.txt', hetero_noise_squares)
+            np.savetxt(f'freesolv_data/02_pen_1/aug_noise/aug_means_{start_seed}_{seed_index}.txt', aug_noise_running_sum)
+            np.savetxt(f'freesolv_data/02_pen_1/aug_noise/aug_squares_{start_seed}_{seed_index}.txt', aug_noise_squares)
+            np.savetxt(f'freesolv_data/02_pen_1/aug_het_noise/aug_het_means_{start_seed}_{seed_index}.txt', aug_het_noise_running_sum)
+            np.savetxt(f'freesolv_data/02_pen_1/aug_het_noise/aug_het_squares_{start_seed}_{seed_index}.txt', aug_het_noise_squares)
 
     rand_means = rand_running_sum / random_trials
     rand_errs = (np.sqrt(rand_squares / random_trials - rand_means **2))/np.sqrt(random_trials)
