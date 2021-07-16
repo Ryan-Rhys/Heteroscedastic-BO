@@ -52,7 +52,6 @@ def hosaki_function(x1, x2, noise=0.0, heteroscedastic=False, f_plot=False):
 
         return 50 * (1 / ((x1 - 3.5) ** 2 + 2.5) * 1 / ((x2 - 2.0) ** 2 + 2.5))
 
-
     if heteroscedastic:
         assert noise == 0
         # Add heteroscedastic noise to the Hosaki function f.
@@ -68,40 +67,46 @@ def hosaki_function(x1, x2, noise=0.0, heteroscedastic=False, f_plot=False):
 
         X, Y = np.meshgrid(x1_plot, x2_plot)
         y = hos_function(X, Y)
-        CS = plt.contourf(X, Y, y, cmap=cm.inferno)
-        CB = plt.colorbar(CS, shrink=0.8, extend='both')
+        CS = plt.contourf(X, Y, y, cmap=cm.viridis)
+        CB = plt.colorbar(CS, shrink=0.8, ticks=[-2.4, -0.8, 0.8, 2.4], extend='both')
         CB.ax.tick_params(labelsize=22)
         plt.xlabel('x1', fontsize=24)
         plt.ylabel('x2', fontsize=24)
         plt.tick_params(labelsize=22)
-        plt.title('Hosaki Function')
+        #plt.title('Hosaki Function')
         #plt.show()
+        plt.yticks([1, 2, 3, 4])
+        plt.xticks([1, 2, 3, 4])
         plt.tight_layout()
         plt.savefig('synthetic_figures/hosaki_function')
         plt.close()
 
         y2 = hos_noise(X, Y)
-        CS = plt.contourf(X, Y, y2, cmap=cm.inferno)
-        CB = plt.colorbar(CS, shrink=0.8, extend='both')
+        CS = plt.contourf(X, Y, y2, cmap=cm.viridis)
+        CB = plt.colorbar(CS, shrink=0.8, ticks=[0, 2, 4, 6, 8], extend='both')
         CB.ax.tick_params(labelsize=22)
         plt.xlabel('x1', fontsize=24)
         plt.ylabel('x2', fontsize=24)
         plt.tick_params(labelsize=22)
-        plt.title('Hosaki Aleatoric Noise Function')
+        #plt.title('Hosaki Aleatoric Noise Function')
         #plt.show()
+        plt.yticks([1, 2, 3, 4])
+        plt.xticks([1, 2, 3, 4])
         plt.tight_layout()
         plt.savefig('synthetic_figures/hosaki_noise_function')
         plt.close()
 
         y3 = y + y2
-        CS = plt.contourf(X, Y, y3, cmap=cm.inferno)
-        CB = plt.colorbar(CS, shrink=0.8, extend='both')
+        CS = plt.contourf(X, Y, y3, cmap=cm.viridis)
+        CB = plt.colorbar(CS, shrink=0.8, ticks=[1.6, 3.2, 4.8, 6.4], extend='both')
         CB.ax.tick_params(labelsize=22)
         plt.xlabel('x1', fontsize=24)
         plt.ylabel('x2', fontsize=24)
         plt.tick_params(labelsize=22)
-        plt.title('Hosaki Composite Function')
+        #plt.title('Hosaki Composite Function')
         #plt.show()
+        plt.yticks([1, 2, 3, 4])
+        plt.xticks([1, 2, 3, 4])
         plt.tight_layout()
         plt.savefig('synthetic_figures/hosaki_composite_function')
         plt.close()
@@ -164,7 +169,7 @@ def goldstein_price_function(x1, x2, noise=0.0, heteroscedastic=False, f_plot=Fa
         Compute the heteroscedastic noise
         """
 
-        return 3 * (1 / ((x1 - 0.5) ** 2 + 0.5) * 1 / ((x2 - 0.3) ** 2 + 0.5))
+        return 1.5 * (1 / ((x1 - 0.5) ** 2 + 0.2) * 1 / ((x2 - 0.3) ** 2 + 0.3))
 
     if heteroscedastic:
 
@@ -182,44 +187,53 @@ def goldstein_price_function(x1, x2, noise=0.0, heteroscedastic=False, f_plot=Fa
         x2_plot = np.arange(0.0, 1.0, 0.01)
 
         X, Y = np.meshgrid(x1_plot, x2_plot)
-        y = -gs_function(X, Y)
-        CS = plt.contourf(X, Y, y, cmap=cm.inferno)
-        CB = plt.colorbar(CS, shrink=0.8, extend='both')
+        y = gs_function(X, Y)
+        CS = plt.contourf(X, Y, y, cmap=cm.cividis)
+        CB = plt.colorbar(CS, shrink=0.8, ticks=[-2.4, -0.8, 0.8, 2.4], extend='both')
         CB.ax.tick_params(labelsize=22)
         plt.xlabel('x1', fontsize=24)
         plt.ylabel('x2', fontsize=24)
         plt.tick_params(labelsize=22)
-        plt.title('Goldstein-Price Function')
+        #plt.title('Goldstein-Price Function')
         #plt.show()
+        plt.yticks([0.2, 0.4, 0.6, 0.8])
+        plt.xticks([0.2, 0.4, 0.6, 0.8])
         plt.tight_layout()
         plt.savefig('synthetic_figures/goldstein_function')
         plt.cla()
+        plt.close()
 
         y2 = gs_noise(X, Y)
-        CS = plt.contourf(X, Y, y2, cmap=cm.inferno)
-        CB = plt.colorbar(CS, shrink=0.8, extend='both')
+        CS = plt.contourf(X, Y, y2, cmap=cm.cividis)
+        CB = plt.colorbar(CS, shrink=0.8, ticks=[3, 9, 15, 21, 27], extend='both')
         CB.ax.tick_params(labelsize=22)
         plt.xlabel('x1', fontsize=24)
         plt.ylabel('x2', fontsize=24)
         plt.tick_params(labelsize=22)
-        plt.title('Goldstein-Price Aleatoric Noise Function')
+        #plt.title('Goldstein-Price Aleatoric Noise Function')
         #plt.show()
+        plt.yticks([0.2, 0.4, 0.6, 0.8])
+        plt.xticks([0.2, 0.4, 0.6, 0.8])
         plt.tight_layout()
         plt.savefig('synthetic_figures/goldstein_noise_function')
         plt.cla()
+        plt.close()
 
-        y3 = y - y2
-        CS = plt.contourf(X, Y, y3, cmap=cm.inferno)
-        CB = plt.colorbar(CS, shrink=0.8, extend='both')
+        y3 = y + y2
+        CS = plt.contourf(X, Y, y3, cmap=cm.cividis)
+        CB = plt.colorbar(CS, shrink=0.8, ticks=[5, 10, 15, 20, 25], extend='both')
         CB.ax.tick_params(labelsize=22)
         plt.xlabel('x1', fontsize=24)
         plt.ylabel('x2', fontsize=24)
         plt.tick_params(labelsize=22)
-        plt.title('Goldstein-Price Composite Function')
+        #plt.title('Goldstein-Price Composite Function')
         #plt.show()
+        plt.yticks([0.2, 0.4, 0.6, 0.8])
+        plt.xticks([0.2, 0.4, 0.6, 0.8])
         plt.tight_layout()
         plt.savefig('synthetic_figures/goldstein_composite_function')
         plt.cla()
+        plt.close()
 
     return -f
 
@@ -285,6 +299,7 @@ def branin_function(x1, x2, noise=0.0, heteroscedastic=False, f_plot=False):
         plt.tight_layout()
         plt.savefig('synthetic_figures/branin_function')
         #plt.show()
+        plt.cla()
         plt.close()
 
         y2 = br_noise(X, Y)
@@ -300,6 +315,7 @@ def branin_function(x1, x2, noise=0.0, heteroscedastic=False, f_plot=False):
         #plt.show()
         plt.tight_layout()
         plt.savefig('synthetic_figures/branin_noise_function')
+        plt.cla()
         plt.close()
 
         y3 = y + y2
@@ -316,6 +332,7 @@ def branin_function(x1, x2, noise=0.0, heteroscedastic=False, f_plot=False):
         #plt.show()
         plt.tight_layout()
         plt.savefig('synthetic_figures/branin_composite_function')
+        plt.cla()
         plt.close()
 
     return -f
@@ -408,6 +425,6 @@ if __name__ == '__main__':
     x1 = np.array([0, 0])  # Dummy variables
     x2 = np.array([0, 0])
 
-    # goldstein_price_function(x1, x2, f_plot=True)
-    # hosaki_function(x1, x2, f_plot=True)
+    goldstein_price_function(x1, x2, f_plot=True)
+    hosaki_function(x1, x2, f_plot=True)
     branin_function(x1, x2, f_plot=True)

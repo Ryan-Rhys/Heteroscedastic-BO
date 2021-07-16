@@ -15,24 +15,24 @@ from BayesOpt.objective_funcs.synthetic_functions import hosaki_function, branin
 
 if __name__ == '__main__':
 
-    exp_type = 'homoscedastic'  # One of ['hetero', 'homoscedastic', 'noiseless']
+    exp_type = 'hetero'  # One of ['hetero', 'homoscedastic', 'noiseless']
 
     fill = True  # Whether to plot errorbars as fill or not.
     plot_collected = True  # Whether to plot collected data points on last random trial.
     penalty = 1  # penalty for aleatoric noise
     aleatoric_weight = 1
-    noise_level = 5  # homoscedastic noise level. Should be 0 when heteroscedastic is True.
+    noise_level = 0  # homoscedastic noise level. Should be 0 when heteroscedastic is True.
     if noise_level != 0:
         assert exp_type == 'homoscedastic'
-    heteroscedastic = False
+    heteroscedastic = True
     if heteroscedastic:
         assert noise_level == 0
         assert exp_type == 'hetero'
     if heteroscedastic is not True and noise_level == 0:
         assert exp_type == 'noiseless'
     n_restarts = 20
-    opt_func = 'branin'  # One of ['hosaki', 'branin', 'goldstein']
-    grid_size = 5
+    opt_func = 'goldstein'  # One of ['hosaki', 'branin', 'goldstein']
+    grid_size = 10
 
     # Number of iterations
     bayes_opt_iters = 10
@@ -551,7 +551,7 @@ if __name__ == '__main__':
         else:
             tag = ''
     plt.savefig('new_figures/{}/{}_{}_iters_{}_random_trials_and_grid_size_of_{}_and_seed_{}'
-                '_hundred_times_penalty_is_{}_aleatoric_weight_is_{}_{}_test'.
+                '_hundred_times_penalty_is_{}_aleatoric_weight_is_{}_{}_'.
                 format(opt_func, exp_type, bayes_opt_iters, random_trials, grid_size, numpy_seed, int(100*penalty), aleatoric_weight, tag), bbox_inches='tight')
 
     plt.close()
@@ -600,7 +600,7 @@ if __name__ == '__main__':
         plt.tick_params(labelsize=14)
         plt.legend(loc='lower left', bbox_to_anchor=(0.0, -0.425), ncol=3, borderaxespad=0, fontsize=14, frameon=False)
         plt.savefig('new_figures/{}/heteroscedastic_bayesopt_plot{}_iters_{}_random_trials_and_grid_size_of_{}_and_seed_{}_'
-                    'noise_only_hundred_times_penalty_is_{}_aleatoric_weight_is_{}_new_aei_test'.
+                    'noise_only_hundred_times_penalty_is_{}_aleatoric_weight_is_{}_new_ae'.
                     format(opt_func, bayes_opt_iters, random_trials, grid_size, numpy_seed, int(100*penalty), aleatoric_weight), bbox_inches='tight')
 
     if plot_collected:

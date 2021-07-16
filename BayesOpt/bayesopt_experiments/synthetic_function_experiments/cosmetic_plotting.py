@@ -9,7 +9,7 @@ import numpy as np
 if __name__ == '__main__':
 
     heteroscedastic = True
-    opt_func = 'branin'  # One of ['branin', 'hosaki', 'goldstein']
+    opt_func = 'hosaki'  # One of ['branin', 'hosaki', 'goldstein']
     exp_type = 'hetero'  # One of ['homoscedastic', 'hetero', 'noiseless']
     bayes_opt_iters = 10
     iter_x = np.arange(1, bayes_opt_iters + 1)
@@ -52,9 +52,12 @@ if __name__ == '__main__':
     plt.tick_params(labelsize=14)
     plt.legend(loc='lower left', bbox_to_anchor=(0.0, -0.425), ncol=3, borderaxespad=0, fontsize=14, frameon=False)
     #plt.yticks([4, 6, 8, 10])
+    #plt.yticks([-1.5, -1, -0.5, 0])
     plt.xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
     if exp_type == 'homoscedastic':
         tag = 'with_noise_'
+    elif exp_type == 'noiseless':
+        tag = 'noiseless_'
     else:
         if heteroscedastic:
             tag = 'heteroscedastic'
