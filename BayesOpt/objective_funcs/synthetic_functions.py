@@ -116,7 +116,7 @@ def hosaki_function(x1, x2, noise=0.0, heteroscedastic=False, f_plot=False):
 
 def goldstein_price_function(x1, x2, noise=0.0, heteroscedastic=False, f_plot=False):
     """
-    Definition of the 2D Hosaki function defined here:
+    Definition of the 2D Goldstein-Price function defined here:
     https://www.sfu.ca/~ssurjano/goldpr.html and defined as in Picheny et al. 2012
     Bounds are [0, 1] in both x1 and x2.
     Global optimum: f(x) =
@@ -428,3 +428,4 @@ if __name__ == '__main__':
     goldstein_price_function(x1, x2, f_plot=True)
     hosaki_function(x1, x2, f_plot=True)
     branin_function(x1, x2, f_plot=True)
+

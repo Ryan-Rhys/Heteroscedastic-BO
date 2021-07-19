@@ -19,7 +19,8 @@ if __name__ == '__main__':
 
     fill = True  # Whether to plot errorbars as fill or not.
     penalty = 1  # penalty for aleatoric noise
-    aleatoric_weight = 200  # gamma
+    aleatoric_weight = 300  # gamma
+    aleatoric_weight_aug = 2000
     noise_level = 0  # homoscedastic noise level. Should be 0 when heteroscedastic is True.
     if noise_level != 0:
         assert exp_type == 'homoscedastic'
@@ -30,8 +31,8 @@ if __name__ == '__main__':
     if heteroscedastic is not True and noise_level == 0:
         assert exp_type == 'noiseless'
     n_restarts = 20
-    opt_func = 'goldstein'  # One of ['hosaki', 'branin', 'goldstein']
-    grid_size = 10
+    opt_func = 'branin'  # One of ['hosaki', 'branin', 'goldstein']
+    grid_size = 6
 
     # Number of iterations
     bayes_opt_iters = 10
@@ -186,7 +187,7 @@ if __name__ == '__main__':
             aug_het_X_next = heteroscedastic_propose_location(heteroscedastic_augmented_expected_improvement, aug_het_X_sample,
                                                           aug_het_Y_sample, noise, l_init, sigma_f_init, l_noise_init,
                                                           sigma_f_noise_init, gp2_noise, num_iters, sample_size, bounds,
-                                                          plot_sample, n_restarts=n_restarts, min_val=300, aleatoric_weight=aleatoric_weight)
+                                                          plot_sample, n_restarts=n_restarts, min_val=300, aleatoric_weight=aleatoric_weight_aug)
 
             aug_het_collected_x1.append(aug_het_X_next[:, 0])
             aug_het_collected_x2.append(aug_het_X_next[:, 1])
@@ -289,8 +290,8 @@ if __name__ == '__main__':
     plt.legend(loc='lower left', bbox_to_anchor=(0.0, -0.425), ncol=3, borderaxespad=0, fontsize=14, frameon=False)
     tag = 'heteroscedastic'
     plt.savefig('gamma_figures/{}_{}_iters_{}_random_trials_and_grid_size_of_{}_and_seed_{}'
-                '_hundred_times_penalty_is_{}_aleatoric_weight_is_{}_{}'.
-                format(opt_func, bayes_opt_iters, random_trials, grid_size, numpy_seed, int(100*penalty), aleatoric_weight, tag), bbox_inches='tight')
+                '_hundred_times_penalty_is_{}_aleatoric_weight_aug_is_{}_{}_aug'.
+                format(opt_func, bayes_opt_iters, random_trials, grid_size, numpy_seed, int(100*penalty), aleatoric_weight_aug, tag), bbox_inches='tight')
 
     plt.close()
 
@@ -315,23 +316,23 @@ if __name__ == '__main__':
     plt.tick_params(labelsize=14)
     plt.legend(loc='lower left', bbox_to_anchor=(0.0, -0.425), ncol=3, borderaxespad=0, fontsize=14, frameon=False)
     plt.savefig('gamma_figures/{}_{}_iters_{}_random_trials_and_grid_size_of_{}_and_seed_{}_'
-                'noise_only_hundred_times_penalty_is_{}_aleatoric_weight_is_{}_new_aei'.
-                format(opt_func, bayes_opt_iters, random_trials, grid_size, numpy_seed, int(100*penalty), aleatoric_weight), bbox_inches='tight')
+                'noise_only_hundred_times_penalty_is_{}_aleatoric_weight_aug_is_{}_aug'.
+                format(opt_func, bayes_opt_iters, random_trials, grid_size, numpy_seed, int(100*penalty), aleatoric_weight_aug), bbox_inches='tight')
 
     # Save data for cosmetic plotting
 
-    np.savetxt(f'synth_saved_data/gamma/hetero_means_aleatoric_weight_is_{aleatoric_weight}.txt', hetero_means)
-    np.savetxt(f'synth_saved_data/gamma/aug_het_means_aleatoric_weight_is_{aleatoric_weight}.txt', aug_het_means)
+    np.savetxt(f'synth_saved_data/gamma/hetero_means_aleatoric_weight_is_{aleatoric_weight_aug}_aug.txt', hetero_means)
+    np.savetxt(f'synth_saved_data/gamma/aug_het_means_aleatoric_weight_is_{aleatoric_weight_aug}_aug.txt', aug_het_means)
 
-    np.savetxt(f'synth_saved_data/gamma/lower_hetero_aleatoric_weight_is_{aleatoric_weight}.txt', lower_hetero)
-    np.savetxt(f'synth_saved_data/gamma/upper_hetero_aleatoric_weight_is_{aleatoric_weight}.txt', upper_hetero)
-    np.savetxt(f'synth_saved_data/gamma/lower_het_aei_aleatoric_weight_is_{aleatoric_weight}.txt', lower_het_aei)
-    np.savetxt(f'synth_saved_data/gamma/upper_het_aei_aleatoric_weight_is_{aleatoric_weight}.txt', upper_het_aei)
+    np.savetxt(f'synth_saved_data/gamma/lower_hetero_aleatoric_weight_is_{aleatoric_weight_aug}_aug.txt', lower_hetero)
+    np.savetxt(f'synth_saved_data/gamma/upper_hetero_aleatoric_weight_is_{aleatoric_weight_aug}_aug.txt', upper_hetero)
+    np.savetxt(f'synth_saved_data/gamma/lower_het_aei_aleatoric_weight_is_{aleatoric_weight_aug}_aug.txt', lower_het_aei)
+    np.savetxt(f'synth_saved_data/gamma/upper_het_aei_aleatoric_weight_is_{aleatoric_weight_aug}_aug.txt', upper_het_aei)
 
-    np.savetxt(f'synth_saved_data/gamma/hetero_noise_means_aleatoric_weight_is_{aleatoric_weight}.txt', hetero_noise_means)
-    np.savetxt(f'synth_saved_data/gamma/aug_het_noise_means_aleatoric_weight_is_{aleatoric_weight}.txt', aug_het_noise_means)
+    np.savetxt(f'synth_saved_data/gamma/hetero_noise_means_aleatoric_weight_is_{aleatoric_weight_aug}_aug.txt', hetero_noise_means)
+    np.savetxt(f'synth_saved_data/gamma/aug_het_noise_means_aleatoric_weight_is_{aleatoric_weight_aug}_aug.txt', aug_het_noise_means)
 
-    np.savetxt(f'synth_saved_data/gamma/lower_noise_hetero_aleatoric_weight_is_{aleatoric_weight}.txt', lower_noise_hetero)
-    np.savetxt(f'synth_saved_data/gamma/upper_noise_hetero_aleatoric_weight_is_{aleatoric_weight}.txt', upper_noise_hetero)
-    np.savetxt(f'synth_saved_data/gamma/lower_noise_het_aei_aleatoric_weight_is_{aleatoric_weight}.txt', lower_noise_het_aei)
-    np.savetxt(f'synth_saved_data/gamma/upper_noise_het_aei_aleatoric_weight_is_{aleatoric_weight}.txt', upper_noise_het_aei)
+    np.savetxt(f'synth_saved_data/gamma/lower_noise_hetero_aleatoric_weight_is_{aleatoric_weight_aug}_aug.txt', lower_noise_hetero)
+    np.savetxt(f'synth_saved_data/gamma/upper_noise_hetero_aleatoric_weight_is_{aleatoric_weight_aug}_aug.txt', upper_noise_hetero)
+    np.savetxt(f'synth_saved_data/gamma/lower_noise_het_aei_aleatoric_weight_is_{aleatoric_weight_aug}_aug.txt', lower_noise_het_aei)
+    np.savetxt(f'synth_saved_data/gamma/upper_noise_het_aei_aleatoric_weight_is_{aleatoric_weight_aug}_aug.txt', upper_noise_het_aei)

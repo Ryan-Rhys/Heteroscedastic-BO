@@ -300,7 +300,7 @@ def noise_plot_function(x1, x2, standardised=False):
         # basis_func_two = amp*np.exp(-np.linalg.norm(min_two_dist, axis=0)**2/(2*bandwidth))
         # basis_func_three = amp*np.exp(-np.linalg.norm(min_three_dist, axis=0)**2/(2*bandwidth))
 
-        return 15 - (2.8*x1**2 + 4.8*x2**2)
+        return 15 - (8*x1 + 8*x2**2)
 
 
 def heteroscedastic_branin(x1, x2, standardised=False, f_plot=False, penalty=1):

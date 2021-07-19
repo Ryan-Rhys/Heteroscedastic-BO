@@ -20,7 +20,7 @@ if __name__ == '__main__':
     fill = True  # Whether to plot errorbars as fill or not.
     plot_collected = True  # Whether to plot collected data points on last random trial.
     penalty = 1  # penalty for aleatoric noise
-    aleatoric_weight = 1
+    aleatoric_weight = 10
     noise_level = 0  # homoscedastic noise level. Should be 0 when heteroscedastic is True.
     if noise_level != 0:
         assert exp_type == 'homoscedastic'
@@ -155,6 +155,10 @@ if __name__ == '__main__':
 
             seed = bayes_opt_iters*i + j  # This seed changes the randomly sampled points (will be independent of initialisation)
             print(f'Seed is: {seed}')
+            # if seed == 361:
+            #     seed += 400
+            # elif seed == 362:
+            #     seed += 400
             np.random.seed(seed)
 
             if opt_func == 'hosaki':
@@ -551,7 +555,7 @@ if __name__ == '__main__':
         else:
             tag = ''
     plt.savefig('new_figures/{}/{}_{}_iters_{}_random_trials_and_grid_size_of_{}_and_seed_{}'
-                '_hundred_times_penalty_is_{}_aleatoric_weight_is_{}_{}_'.
+                '_hundred_times_penalty_is_{}_aleatoric_weight_is_{}_{}_rbf_again'.
                 format(opt_func, exp_type, bayes_opt_iters, random_trials, grid_size, numpy_seed, int(100*penalty), aleatoric_weight, tag), bbox_inches='tight')
 
     plt.close()
@@ -600,7 +604,7 @@ if __name__ == '__main__':
         plt.tick_params(labelsize=14)
         plt.legend(loc='lower left', bbox_to_anchor=(0.0, -0.425), ncol=3, borderaxespad=0, fontsize=14, frameon=False)
         plt.savefig('new_figures/{}/heteroscedastic_bayesopt_plot{}_iters_{}_random_trials_and_grid_size_of_{}_and_seed_{}_'
-                    'noise_only_hundred_times_penalty_is_{}_aleatoric_weight_is_{}_new_ae'.
+                    'noise_only_hundred_times_penalty_is_{}_rbf_again'.
                     format(opt_func, bayes_opt_iters, random_trials, grid_size, numpy_seed, int(100*penalty), aleatoric_weight), bbox_inches='tight')
 
     if plot_collected:
@@ -658,43 +662,43 @@ if __name__ == '__main__':
         plt.ylim(bounds[1][0], bounds[1][1])
         plt.title('Collected Data Points')
         plt.savefig('new_figures/{}/collected_points/bayesopt_plot{}_iters_{}_random_trials_and'
-                '_grid_size_of_{}_and_seed_{}_with_het_aei_full_unc_new_rand_aug_het'.format(opt_func, bayes_opt_iters, random_trials, grid_size, numpy_seed))
+                '_grid_size_of_{}_and_seed_{}_rbf_again'.format(opt_func, bayes_opt_iters, random_trials, grid_size, numpy_seed))
         plt.close()
 
 
     # Save data for cosmetic plotting
 
-    np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/rand_means.txt', rand_means)
-    np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/homo_means.txt', homo_means)
-    np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/hetero_means.txt', hetero_means)
-    np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/aug_means.txt', aug_means)
-    np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/aug_het_means.txt', aug_het_means)
+    np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/rand_means_rbf.txt', rand_means)
+    np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/homo_means_rbf.txt', homo_means)
+    np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/hetero_means_rbf.txt', hetero_means)
+    np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/aug_means_rbf.txt', aug_means)
+    np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/aug_het_means_rbf.txt', aug_het_means)
 
-    np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/lower_rand.txt', lower_rand)
-    np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/upper_rand.txt', upper_rand)
-    np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/lower_homo.txt', lower_homo)
-    np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/upper_homo.txt', upper_homo)
-    np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/lower_hetero.txt', lower_hetero)
-    np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/upper_hetero.txt', upper_hetero)
-    np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/lower_aei.txt', lower_aei)
-    np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/upper_aei.txt', upper_aei)
-    np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/lower_het_aei.txt', lower_het_aei)
-    np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/upper_het_aei.txt', upper_het_aei)
+    np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/lower_rand_rbf.txt', lower_rand)
+    np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/upper_rand_rbf.txt', upper_rand)
+    np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/lower_homo_rbf.txt', lower_homo)
+    np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/upper_homo_rbf.txt', upper_homo)
+    np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/lower_hetero_rbf.txt', lower_hetero)
+    np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/upper_hetero_rbf.txt', upper_hetero)
+    np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/lower_aei_rbf.txt', lower_aei)
+    np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/upper_aei_rbf.txt', upper_aei)
+    np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/lower_het_aei_rbf.txt', lower_het_aei)
+    np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/upper_het_aei_rbf.txt', upper_het_aei)
 
     if heteroscedastic:
-        np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/rand_noise_means.txt', rand_noise_means)
-        np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/homo_noise_means.txt', homo_noise_means)
-        np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/hetero_noise_means.txt', hetero_noise_means)
-        np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/aug_noise_means.txt', aug_noise_means)
-        np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/aug_het_noise_means.txt', aug_het_noise_means)
+        np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/rand_noise_means_rbf.txt', rand_noise_means)
+        np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/homo_noise_means_rbf.txt', homo_noise_means)
+        np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/hetero_noise_means_rbf.txt', hetero_noise_means)
+        np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/aug_noise_means_rbf.txt', aug_noise_means)
+        np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/aug_het_noise_means_rbf.txt', aug_het_noise_means)
 
-        np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/lower_noise_rand.txt', lower_noise_rand)
-        np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/upper_noise_rand.txt', upper_noise_rand)
-        np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/lower_noise_homo.txt', lower_noise_homo)
-        np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/upper_noise_homo.txt', upper_noise_homo)
-        np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/lower_noise_hetero.txt', lower_noise_hetero)
-        np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/upper_noise_hetero.txt', upper_noise_hetero)
-        np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/lower_noise_aei.txt', lower_noise_aei)
-        np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/upper_noise_aei.txt', upper_noise_aei)
-        np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/lower_noise_het_aei.txt', lower_noise_het_aei)
-        np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/upper_noise_het_aei.txt', upper_noise_het_aei)
+        np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/lower_noise_rand_rbf.txt', lower_noise_rand)
+        np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/upper_noise_rand_rbf.txt', upper_noise_rand)
+        np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/lower_noise_homo_rbf.txt', lower_noise_homo)
+        np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/upper_noise_homo_rbf.txt', upper_noise_homo)
+        np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/lower_noise_hetero_rbf.txt', lower_noise_hetero)
+        np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/upper_noise_hetero_rbf.txt', upper_noise_hetero)
+        np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/lower_noise_aei_rbf.txt', lower_noise_aei)
+        np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/upper_noise_aei_rbf.txt', upper_noise_aei)
+        np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/lower_noise_het_aei_rbf.txt', lower_noise_het_aei)
+        np.savetxt(f'synth_saved_data/{exp_type}/{opt_func}/upper_noise_het_aei_rbf.txt', upper_noise_het_aei)
