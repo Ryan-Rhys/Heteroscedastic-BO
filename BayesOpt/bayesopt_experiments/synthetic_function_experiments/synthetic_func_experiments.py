@@ -20,7 +20,7 @@ if __name__ == '__main__':
     fill = True  # Whether to plot errorbars as fill or not.
     plot_collected = True  # Whether to plot collected data points on last random trial.
     penalty = 1  # penalty for aleatoric noise
-    aleatoric_weight = 10
+    aleatoric_weight = 1
     noise_level = 0  # homoscedastic noise level. Should be 0 when heteroscedastic is True.
     if noise_level != 0:
         assert exp_type == 'homoscedastic'
@@ -31,7 +31,7 @@ if __name__ == '__main__':
     if heteroscedastic is not True and noise_level == 0:
         assert exp_type == 'noiseless'
     n_restarts = 20
-    opt_func = 'goldstein'  # One of ['hosaki', 'branin', 'goldstein']
+    opt_func = 'branin'  # One of ['hosaki', 'branin', 'goldstein']
     grid_size = 10
 
     # Number of iterations

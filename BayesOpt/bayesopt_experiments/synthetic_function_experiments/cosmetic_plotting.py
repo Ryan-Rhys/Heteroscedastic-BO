@@ -9,7 +9,7 @@ import numpy as np
 if __name__ == '__main__':
 
     heteroscedastic = True
-    opt_func = 'hosaki'  # One of ['branin', 'hosaki', 'goldstein']
+    opt_func = 'goldstein'  # One of ['branin', 'hosaki', 'goldstein']
     exp_type = 'kernel'  # One of ['homoscedastic', 'hetero', 'noiseless', 'gamma', 'kernel']
     bayes_opt_iters = 10
     iter_x = np.arange(1, bayes_opt_iters + 1)
@@ -20,9 +20,9 @@ if __name__ == '__main__':
 
         assert heteroscedastic == True
 
-        hetero_means_rbf = np.loadtxt(f'synth_saved_data/hetero/{opt_func}/hetero_means.txt')
-        lower_hetero_rbf = np.loadtxt(f'synth_saved_data/hetero/{opt_func}/lower_hetero.txt')
-        upper_hetero_rbf = np.loadtxt(f'synth_saved_data/hetero/{opt_func}/upper_hetero.txt')
+        hetero_means_rbf = np.loadtxt(f'synth_saved_data/hetero/{opt_func}/hetero_means_rbf.txt')
+        lower_hetero_rbf = np.loadtxt(f'synth_saved_data/hetero/{opt_func}/lower_hetero_rbf.txt')
+        upper_hetero_rbf = np.loadtxt(f'synth_saved_data/hetero/{opt_func}/upper_hetero_rbf.txt')
 
         hetero_means_mat12 = np.loadtxt(f'synth_saved_data/hetero/{opt_func}/hetero_means_mat12.txt')
         lower_hetero_mat12 = np.loadtxt(f'synth_saved_data/hetero/{opt_func}/lower_hetero_mat12.txt')
@@ -34,7 +34,7 @@ if __name__ == '__main__':
 
         plt.plot(iter_x, hetero_means_rbf, color='#006600', label=r'RBF')
         plt.fill_between(iter_x, lower_hetero_rbf, upper_hetero_rbf, color='#006600', alpha=0.1)
-        plt.plot(iter_x, hetero_means_mat12, color='#003366', label=r'Matern 1/2')
+        plt.plot(iter_x, hetero_means_mat12, color='#003366', label=r'Exp')
         plt.fill_between(iter_x, lower_hetero_mat12, upper_hetero_mat12, color='#003366', alpha=0.1)
         plt.plot(iter_x, hetero_means_mat52, color='#99004C', label=r'Matern 5/2')
         plt.fill_between(iter_x, lower_hetero_mat52, upper_hetero_mat52, color='#99004C', alpha=0.1)
@@ -45,6 +45,8 @@ if __name__ == '__main__':
         plt.legend(loc='lower left', bbox_to_anchor=(0.0, -0.425), ncol=3, borderaxespad=0, fontsize=14, frameon=False)
         # plt.yticks([4, 6, 8, 10])
         # plt.yticks([-1.5, -1, -0.5, 0])
+        #plt.yticks([1.24, 1.28, 1.32])  # for Hosaki
+        plt.yticks([8, 9])  # for Goldstein-Price.
         plt.xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
 
         tag = 'kernel_test_anpei'
@@ -55,9 +57,9 @@ if __name__ == '__main__':
         plt.close()
         plt.cla()
 
-        aug_het_means_rbf = np.loadtxt(f'synth_saved_data/hetero/{opt_func}/aug_het_means.txt')
-        lower_het_aei_rbf = np.loadtxt(f'synth_saved_data/hetero/{opt_func}/lower_het_aei.txt')
-        upper_het_aei_rbf = np.loadtxt(f'synth_saved_data/hetero/{opt_func}/upper_het_aei.txt')
+        aug_het_means_rbf = np.loadtxt(f'synth_saved_data/hetero/{opt_func}/aug_het_means_rbf.txt')
+        lower_het_aei_rbf = np.loadtxt(f'synth_saved_data/hetero/{opt_func}/lower_het_aei_rbf.txt')
+        upper_het_aei_rbf = np.loadtxt(f'synth_saved_data/hetero/{opt_func}/upper_het_aei_rbf.txt')
 
         aug_het_means_mat12 = np.loadtxt(f'synth_saved_data/hetero/{opt_func}/aug_het_means_mat12.txt')
         lower_het_aei_mat12 = np.loadtxt(f'synth_saved_data/hetero/{opt_func}/lower_het_aei_mat12.txt')
@@ -73,7 +75,7 @@ if __name__ == '__main__':
 
         plt.plot(iter_x, aug_het_means_rbf, color='#006600', label=r'RBF')
         plt.fill_between(iter_x, lower_het_aei_rbf, upper_het_aei_rbf, color='#006600', alpha=0.1)
-        plt.plot(iter_x, aug_het_means_mat12, color='#003366', label=r'Matern 1/2')
+        plt.plot(iter_x, aug_het_means_mat12, color='#003366', label=r'Exp')
         plt.fill_between(iter_x, lower_het_aei_mat12, upper_het_aei_mat12, color='#003366', alpha=0.1)
         plt.plot(iter_x, aug_het_means_mat52, color='#99004C', label=r'Matern 5/2')
         plt.fill_between(iter_x, lower_het_aei_mat52, upper_het_aei_mat52, color='#99004C', alpha=0.1)
@@ -86,8 +88,10 @@ if __name__ == '__main__':
             plt.ylabel('f(x)', fontsize=14)
         plt.tick_params(labelsize=14)
         plt.legend(loc='lower left', bbox_to_anchor=(0.0, -0.425), ncol=3, borderaxespad=0, fontsize=14, frameon=False)
-        plt.yticks([6, 7, 8, 9])
+        #plt.yticks([6, 7, 8, 9])
         # plt.yticks([-1.5, -1, -0.5, 0])
+        #plt.yticks([1.5, 2.25, 3.0]) # for Hosaki
+        #plt.yticks([6, 7, 8])  # for Branin
         plt.xticks([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
 
         tag = 'kernel_test_haei'
