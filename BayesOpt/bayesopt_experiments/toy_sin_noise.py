@@ -4,6 +4,8 @@
 This module contains the code for benchmarking heteroscedastic Bayesian Optimisation on a 1D toy problem.
 """
 
+import argparse
+
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 import numpy as np
@@ -13,17 +15,19 @@ from acquisition_functions import heteroscedastic_expected_improvement, heterosc
     heteroscedastic_augmented_expected_improvement
 from objective_functions import linear_sin_noise, max_sin_noise_objective
 
-if __name__ == '__main__':
 
-    fill = True  # Whether to fill errorbars or not
+def main(penalty, aleatoric_weight, random_trials, bayes_opt_iters):
+    """
+    Run experiments on the sin wave function.
+
+    param: penalty: $\alpha$ parameter specifying weight of noise component to objective
+    param: aleatoric_weight: float specifying the value of both $\beta and $\gamma of ANPEI and HAEI
+    param: random_trials: int specifying the number of random initialisations
+    param: bayes_opt_iters: int specifying the number of iterations of BayesOpt
+    """
+
     coefficient = 0.2  # tunes the relative size of the maxima in the function (used when modification = True)
-    penalty = 1
-    aleatoric_penalty = 1
     noise_coeff = 0.5  # noise coefficient will be noise(X) will be linear e.g. 0.2 * X
-
-    # Number of iterations
-    random_trials = 50
-    bayes_opt_iters = 5
 
     # We perform random trials of Bayesian Optimisation
 
@@ -318,25 +322,18 @@ if __name__ == '__main__':
     lower_het_aei = np.array(aug_het_means) - np.array(aug_het_errs)
     upper_het_aei = np.array(aug_het_means) + np.array(aug_het_errs)
 
-    if fill:
-        plt.plot(iter_x, rand_means, color='tab:orange', label='RS')
-        plt.plot(iter_x, homo_means, color='tab:blue', label='EI')
-        plt.plot(iter_x, hetero_means, color='tab:green', label='ANPEI')
-        plt.plot(iter_x, aug_means, color='tab:red', label='AEI')
-        plt.plot(iter_x, aug_het_means, color='tab:purple', label='HAEI')
-        plt.fill_between(iter_x, lower_rand, upper_rand, color='tab:orange', alpha=0.1)
-        plt.fill_between(iter_x, lower_homo, upper_homo, color='tab:blue', alpha=0.1)
-        plt.fill_between(iter_x, lower_hetero, upper_hetero, color='tab:green', alpha=0.1)
-        plt.fill_between(iter_x, lower_aei, upper_aei, color='tab:red', alpha=0.1)
-        plt.fill_between(iter_x, lower_het_aei, upper_het_aei, color='tab:purple', alpha=0.1)
-    else:
-        plt.errorbar(iter_x, homo_means, yerr=np.concatenate((homo_means - lower_homo, upper_homo - homo_means)).reshape((2,5)), color='r', label='EI', capsize=5)
-        plt.errorbar(iter_x, hetero_means, yerr=np.concatenate((hetero_means - lower_hetero, upper_hetero - hetero_means)).reshape((2,5)), color='b', label='ANPEI', capsize=5)
-        plt.errorbar(iter_x, rand_means, yerr=np.concatenate((rand_means - lower_rand, upper_rand - rand_means)).reshape((2,5)), color='g', label='RS', capsize=5)
-        plt.errorbar(iter_x, aug_means, yerr=np.concatenate((aug_means - lower_aei, upper_aei - aug_means)).reshape((2,5)), color='c', label='AEI', capsize=5)
-        plt.errorbar(iter_x, aug_het_means, yerr=np.concatenate((aug_het_means - lower_het_aei, upper_het_aei - aug_het_means)).reshape((2,5)), color='m', label='HAEI', capsize=5)
-
+    plt.plot(iter_x, rand_means, color='tab:orange', label='RS')
+    plt.plot(iter_x, homo_means, color='tab:blue', label='EI')
+    plt.plot(iter_x, hetero_means, color='tab:green', label='ANPEI')
+    plt.plot(iter_x, aug_means, color='tab:red', label='AEI')
+    plt.plot(iter_x, aug_het_means, color='tab:purple', label='HAEI')
+    plt.fill_between(iter_x, lower_rand, upper_rand, color='tab:orange', alpha=0.1)
+    plt.fill_between(iter_x, lower_homo, upper_homo, color='tab:blue', alpha=0.1)
+    plt.fill_between(iter_x, lower_hetero, upper_hetero, color='tab:green', alpha=0.1)
+    plt.fill_between(iter_x, lower_aei, upper_aei, color='tab:red', alpha=0.1)
+    plt.fill_between(iter_x, lower_het_aei, upper_het_aei, color='tab:purple', alpha=0.1)
     #plt.title('Best Objective Function Value Found so Far', fontsize=16)
+
     plt.xlabel('Function Evaluations', fontsize=14)
     if penalty > 1:
         plt.ylabel(f'f(x) - {penalty}*g(x)', fontsize=14)
@@ -370,23 +367,16 @@ if __name__ == '__main__':
     lower_noise_het_aei = np.array(aug_het_noise_means) - np.array(aug_het_noise_errs)
     upper_noise_het_aei = np.array(aug_het_noise_means) + np.array(aug_het_noise_errs)
 
-    if fill:
-        plt.plot(iter_x, rand_noise_means, color='tab:orange', label='RS')
-        plt.plot(iter_x, homo_noise_means, color='tab:blue', label='EI')
-        plt.plot(iter_x, hetero_noise_means, color='tab:green', label='ANPEI')
-        plt.plot(iter_x, aug_noise_means, color='tab:red', label='AEI')
-        plt.plot(iter_x, aug_het_noise_means, color='tab:purple', label='HAEI')
-        plt.fill_between(iter_x, lower_noise_rand, upper_noise_rand, color='tab:orange', alpha=0.1)
-        plt.fill_between(iter_x, lower_noise_homo, upper_noise_homo, color='tab:blue', alpha=0.1)
-        plt.fill_between(iter_x, lower_noise_hetero, upper_noise_hetero, color='tab:green', alpha=0.1)
-        plt.fill_between(iter_x, lower_noise_aei, upper_noise_aei, color='tab:red', alpha=0.1)
-        plt.fill_between(iter_x, lower_noise_het_aei, upper_noise_het_aei, color='tab:purple', alpha=0.1)
-    else:
-        plt.errorbar(iter_x, homo_noise_means, yerr=np.concatenate((homo_noise_means - lower_noise_homo, upper_noise_homo - homo_noise_means)).reshape((2,5)), color='r', label='EI', capsize=5)
-        plt.errorbar(iter_x, hetero_noise_means, yerr=np.concatenate((hetero_noise_means - lower_noise_hetero, upper_noise_hetero - hetero_noise_means)).reshape((2,5)), color='b', label='ANPEI', capsize=5)
-        plt.errorbar(iter_x, rand_noise_means, yerr=np.concatenate((rand_noise_means - lower_noise_rand, upper_noise_rand - rand_noise_means)).reshape((2,5)), color='g', label='RS', capsize=5)
-        plt.errorbar(iter_x, aug_noise_means, yerr=np.concatenate((aug_noise_means - lower_noise_aei, upper_noise_aei - aug_noise_means)).reshape((2,5)), color='c', label='AEI', capsize=5)
-        plt.errorbar(iter_x, aug_het_noise_means, yerr=np.concatenate((aug_het_noise_means - lower_noise_het_aei, upper_noise_het_aei - aug_het_noise_means)).reshape((2,5)), color='m', label='HAEI', capsize=5)
+    plt.plot(iter_x, rand_noise_means, color='tab:orange', label='RS')
+    plt.plot(iter_x, homo_noise_means, color='tab:blue', label='EI')
+    plt.plot(iter_x, hetero_noise_means, color='tab:green', label='ANPEI')
+    plt.plot(iter_x, aug_noise_means, color='tab:red', label='AEI')
+    plt.plot(iter_x, aug_het_noise_means, color='tab:purple', label='HAEI')
+    plt.fill_between(iter_x, lower_noise_rand, upper_noise_rand, color='tab:orange', alpha=0.1)
+    plt.fill_between(iter_x, lower_noise_homo, upper_noise_homo, color='tab:blue', alpha=0.1)
+    plt.fill_between(iter_x, lower_noise_hetero, upper_noise_hetero, color='tab:green', alpha=0.1)
+    plt.fill_between(iter_x, lower_noise_aei, upper_noise_aei, color='tab:red', alpha=0.1)
+    plt.fill_between(iter_x, lower_noise_het_aei, upper_noise_het_aei, color='tab:purple', alpha=0.1)
 
     #plt.title('Lowest Aleatoric Noise Found so Far', fontsize=16)
     plt.xlabel('Function Evaluations', fontsize=14)
@@ -400,3 +390,21 @@ if __name__ == '__main__':
                '100_of_{}_init_num_samples_of_{}_and_seed_{}_noise_only_penalty_is_{}_aleatoric_weight_is_{}_new_aei2'.format(bayes_opt_iters, random_trials,
                                                                          int(coefficient * 100), int(noise_coeff * 100),
                                                                          init_num_samples, numpy_seed, penalty, aleatoric_penalty), bbox_inches='tight')
+
+
+if __name__ == '__main__':
+
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('-p', '--penalty', type=int, default=1,
+                        help='$\alpha$ parameter specifying weight of noise component to objective.')
+    parser.add_argument('-a', '--aleatoric_weight', type=float, default=1,
+                        help='The value of both $\beta and $\gamma of ANPEI and HAEI')
+    parser.add_argument('-r', '--random_trials', type=int, default=50,
+                        help='Number of random initialisations')
+    parser.add_argument('-b', '--bayes_opt_iters', type=int, default=5,
+                        help='The number of iterations of BayesOpt')
+
+    args = parser.parse_args()
+
+    main(args.penalty, args.aleatoric_weight, args.random_trials, args.bayes_opt_iters)
