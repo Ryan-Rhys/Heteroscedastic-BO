@@ -3,27 +3,28 @@
 This module contains the code for benchmarking heteroscedastic Bayesian Optimisation on the soil dataset.
 """
 
+import argparse
+
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 import numpy as np
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 from acquisition_functions import heteroscedastic_expected_improvement, heteroscedastic_propose_location, \
     my_propose_location, my_expected_improvement, augmented_expected_improvement, heteroscedastic_augmented_expected_improvement
 from bayesopt_datasets.data_loader import soil_bo
 
 
-if __name__ == '__main__':
+def main(penalty, aleatoric_weight, random_trials, bayes_opt_iters, init_set_size):
+    """
+    Script for running the soil phosphorus fraction optimisation experiment.
 
-    fill = True
-    penalty = 1
-    aleatoric_weight = 1
-    test_set_size = 0.2  # Number of intialisation points. 0.3 = 36, 0.2 = 24 etc
-
-    # Number of iterations
-    bayes_opt_iters = 5
-    random_trials = 50
+    param: penalty: $\alpha$ parameter specifying weight of noise component to objective
+    param: aleatoric_weight: float specifying the value of $\beta of ANPEI
+    param: random_trials: int specifying the number of random initialisations
+    param: bayes_opt_iters: int specifying the number of iterations of BayesOpt
+    param: init_set_size: int specifying the side length of the 2D grid to initialise on.
+    """
 
     # We perform random trials of Bayesian Optimisation
 
@@ -62,7 +63,7 @@ if __name__ == '__main__':
         numpy_seed = i
         np.random.seed(numpy_seed)
 
-        xs_train, xs_test, ys_train, ys_test = train_test_split(xs, ys, test_size=test_set_size, shuffle=True, random_state=numpy_seed)  # use (xs_test, ys_test) to initialise
+        xs_train, xs_test, ys_train, ys_test = train_test_split(xs, ys, test_size=init_set_size, shuffle=True, random_state=numpy_seed)  # use (xs_test, ys_test) to initialise
         init_num_samples = len(ys_test)
 
         bounds = np.array([0, 2]).reshape(-1, 1)  # bounds of the Bayesian Optimisation problem.
@@ -342,34 +343,17 @@ if __name__ == '__main__':
     lower_het_aei = np.array(aug_het_means) - np.array(aug_het_errs)
     upper_het_aei = np.array(aug_het_means) + np.array(aug_het_errs)
 
-    if fill:
-        plt.plot(iter_x, rand_means, color='tab:orange', label='RS')
-        plt.plot(iter_x, homo_means, color='tab:blue', label='EI')
-        plt.plot(iter_x, hetero_means, color='tab:green', label='ANPEI')
-        plt.plot(iter_x, aug_means, color='tab:red', label='AEI')
-        plt.plot(iter_x, aug_het_means, color='tab:purple', label='HAEI')
-        plt.fill_between(iter_x, lower_rand, upper_rand, color='tab:orange', alpha=0.1)
-        plt.fill_between(iter_x, lower_homo, upper_homo, color='tab:blue', alpha=0.1)
-        plt.fill_between(iter_x, lower_hetero, upper_hetero, color='tab:green', alpha=0.1)
-        plt.fill_between(iter_x, lower_aei, upper_aei, color='tab:red', alpha=0.1)
-        plt.fill_between(iter_x, lower_het_aei, upper_het_aei, color='tab:purple', alpha=0.1)
-        plt.yticks([75, 150, 225])
-    else:
-        plt.errorbar(iter_x, homo_means,
-                     yerr=np.concatenate((homo_means - lower_homo, upper_homo - homo_means)).reshape((2, 5)), color='r',
-                     label='EI', capsize=5)
-        plt.errorbar(iter_x, hetero_means,
-                     yerr=np.concatenate((hetero_means - lower_hetero, upper_hetero - hetero_means)).reshape((2, 5)),
-                     color='b', label='ANPEI', capsize=5)
-        plt.errorbar(iter_x, rand_means,
-                     yerr=np.concatenate((rand_means - lower_rand, upper_rand - rand_means)).reshape((2, 5)), color='g',
-                     label='RS', capsize=5)
-        plt.errorbar(iter_x, aug_means,
-                     yerr=np.concatenate((aug_means - lower_aei, upper_aei - aug_means)).reshape((2, 5)), color='c',
-                     label='AEI', capsize=5)
-        plt.errorbar(iter_x, aug_het_means,
-                     yerr=np.concatenate((aug_het_means - lower_het_aei, upper_het_aei - aug_het_means)).reshape(
-                         (2, 5)), color='m', label='HAEI', capsize=5)
+    plt.plot(iter_x, rand_means, color='tab:orange', label='RS')
+    plt.plot(iter_x, homo_means, color='tab:blue', label='EI')
+    plt.plot(iter_x, hetero_means, color='tab:green', label='ANPEI')
+    plt.plot(iter_x, aug_means, color='tab:red', label='AEI')
+    plt.plot(iter_x, aug_het_means, color='tab:purple', label='HAEI')
+    plt.fill_between(iter_x, lower_rand, upper_rand, color='tab:orange', alpha=0.1)
+    plt.fill_between(iter_x, lower_homo, upper_homo, color='tab:blue', alpha=0.1)
+    plt.fill_between(iter_x, lower_hetero, upper_hetero, color='tab:green', alpha=0.1)
+    plt.fill_between(iter_x, lower_aei, upper_aei, color='tab:red', alpha=0.1)
+    plt.fill_between(iter_x, lower_het_aei, upper_het_aei, color='tab:purple', alpha=0.1)
+    plt.yticks([75, 150, 225])
 
     #plt.title('Best Objective Function Value Found so Far', fontsize=16)
     plt.xlabel('Function Evaluations', fontsize=14)
@@ -403,34 +387,17 @@ if __name__ == '__main__':
     lower_noise_het_aei = np.array(aug_het_noise_means) - np.array(aug_het_noise_errs)
     upper_noise_het_aei = np.array(aug_het_noise_means) + np.array(aug_het_noise_errs)
 
-    if fill:
-        plt.plot(iter_x, rand_noise_means, color='tab:orange', label='RS')
-        plt.plot(iter_x, homo_noise_means, color='tab:blue', label='EI')
-        plt.plot(iter_x, hetero_noise_means, color='tab:green', label='ANPEI')
-        plt.plot(iter_x, aug_noise_means, color='tab:red', label='AEI')
-        plt.plot(iter_x, aug_het_noise_means, color='tab:purple', label='HAEI')
-        plt.yticks([10, 20, 30, 40])
-        plt.fill_between(iter_x, lower_noise_rand, upper_noise_rand, color='tab:orange', alpha=0.1)
-        plt.fill_between(iter_x, lower_noise_homo, upper_noise_homo, color='tab:blue', alpha=0.1)
-        plt.fill_between(iter_x, lower_noise_hetero, upper_noise_hetero, color='tab:green', alpha=0.1)
-        plt.fill_between(iter_x, lower_noise_aei, upper_noise_aei, color='tab:red', alpha=0.1)
-        plt.fill_between(iter_x, lower_noise_het_aei, upper_noise_het_aei, color='tab:purple', alpha=0.1)
-    else:
-        plt.errorbar(iter_x, homo_noise_means, yerr=np.concatenate(
-            (homo_noise_means - lower_noise_homo, upper_noise_homo - homo_noise_means)).reshape((2, 5)), color='r',
-                     label='EI', capsize=5)
-        plt.errorbar(iter_x, hetero_noise_means, yerr=np.concatenate(
-            (hetero_noise_means - lower_noise_hetero, upper_noise_hetero - hetero_noise_means)).reshape((2, 5)),
-                     color='b', label='ANPEI', capsize=5)
-        plt.errorbar(iter_x, rand_noise_means, yerr=np.concatenate(
-            (rand_noise_means - lower_noise_rand, upper_noise_rand - rand_noise_means)).reshape((2, 5)), color='g',
-                     label='RS', capsize=5)
-        plt.errorbar(iter_x, aug_noise_means, yerr=np.concatenate(
-            (aug_noise_means - lower_noise_aei, upper_noise_aei - aug_noise_means)).reshape((2, 5)), color='c',
-                     label='AEI', capsize=5)
-        plt.errorbar(iter_x, aug_het_noise_means, yerr=np.concatenate(
-            (aug_het_noise_means - lower_noise_het_aei, upper_noise_het_aei - aug_het_noise_means)).reshape((2, 5)),
-                     color='m', label='HAEI', capsize=5)
+    plt.plot(iter_x, rand_noise_means, color='tab:orange', label='RS')
+    plt.plot(iter_x, homo_noise_means, color='tab:blue', label='EI')
+    plt.plot(iter_x, hetero_noise_means, color='tab:green', label='ANPEI')
+    plt.plot(iter_x, aug_noise_means, color='tab:red', label='AEI')
+    plt.plot(iter_x, aug_het_noise_means, color='tab:purple', label='HAEI')
+    plt.yticks([10, 20, 30, 40])
+    plt.fill_between(iter_x, lower_noise_rand, upper_noise_rand, color='tab:orange', alpha=0.1)
+    plt.fill_between(iter_x, lower_noise_homo, upper_noise_homo, color='tab:blue', alpha=0.1)
+    plt.fill_between(iter_x, lower_noise_hetero, upper_noise_hetero, color='tab:green', alpha=0.1)
+    plt.fill_between(iter_x, lower_noise_aei, upper_noise_aei, color='tab:red', alpha=0.1)
+    plt.fill_between(iter_x, lower_noise_het_aei, upper_noise_het_aei, color='tab:purple', alpha=0.1)
 
     #plt.title('Lowest Aleatoric Noise Found so Far', fontsize=16)
     plt.xlabel('Function Evaluations', fontsize=14)
@@ -441,3 +408,23 @@ if __name__ == '__main__':
     plt.savefig('soil_figures/bayesopt_plot{}_iters_{}_random_trials_and_init_num_samples_of_{}_and_seed_{}_'
                 'noise_only_penalty_is_{}_aleatoric_weight_is_{}_new_aei'.
         format(bayes_opt_iters, random_trials, init_num_samples, numpy_seed, penalty, aleatoric_weight), bbox_inches='tight')
+
+
+if __name__ == '__main__':
+
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('-p', '--penalty', type=int, default=1,
+                        help='$\alpha$ parameter specifying weight of noise component to objective.')
+    parser.add_argument('-a', '--aleatoric_weight', type=float, default=1,
+                        help='The value of both $\beta and $\gamma of ANPEI and HAEI')
+    parser.add_argument('-r', '--random_trials', type=int, default=50,
+                        help='Number of random initialisations')
+    parser.add_argument('-b', '--bayes_opt_iters', type=int, default=10,
+                        help='The number of iterations of BayesOpt')
+    parser.add_argument('-t', '--init_set_size', type=float, default=0.2,
+                        help='The fraction of datapoints to initialise with')
+
+    args = parser.parse_args()
+
+    main(args.penalty, args.aleatoric_weight, args.random_trials, args.bayes_opt_iters, args.init_set_size)

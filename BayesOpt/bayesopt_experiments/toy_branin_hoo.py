@@ -23,6 +23,7 @@ def main(penalty, aleatoric_weight, random_trials, bayes_opt_iters, grid_size):
     param: aleatoric_weight: float specifying the value of $\beta of ANPEI
     param: random_trials: int specifying the number of random initialisations
     param: bayes_opt_iters: int specifying the number of iterations of BayesOpt
+    param: grid_size: int specifying the side length of the 2D grid to initialise on.
     """
 
     standardised = True  # Whether or not to use the standardised Branin function from Picheny and Ginsbourger 2012
@@ -486,7 +487,7 @@ if __name__ == '__main__':
                         help='The value of both $\beta and $\gamma of ANPEI and HAEI')
     parser.add_argument('-r', '--random_trials', type=int, default=50,
                         help='Number of random initialisations')
-    parser.add_argument('-b', '--bayes_opt_iters', type=int, default=5,
+    parser.add_argument('-b', '--bayes_opt_iters', type=int, default=10,
                         help='The number of iterations of BayesOpt')
     parser.add_argument('-g', '--grid_size', type=int, default=10,
                         help='The grid size to intialise with i.e. the side length of a 2x2 grid')
