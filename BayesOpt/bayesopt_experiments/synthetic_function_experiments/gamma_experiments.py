@@ -4,6 +4,8 @@
 Script for describing effect of the gamma parameter of HAEI and ANPEI on synthetic functions with heteroscedastic noise.
 """
 
+import argparse
+
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 import numpy as np
@@ -13,30 +15,30 @@ from acquisition_functions import heteroscedastic_expected_improvement, heterosc
 from BayesOpt.objective_funcs.synthetic_functions import hosaki_function, branin_function, goldstein_price_function
 
 
-if __name__ == '__main__':
+def main(penalty, aleatoric_weight, aleatoric_weight_aug, random_trials, bayes_opt_iters, grid_size, exp_type, opt_func,
+         noise_level):
+    """
+    Optimise the heteroscedastic Branin-Hoo function.
 
-    exp_type = 'hetero'  # One of ['hetero', 'homoscedastic', 'noiseless']
+    param: penalty: $\alpha$ parameter specifying weight of noise component to objective
+    param: aleatoric_weight: float specifying the value of $\beta of ANPEI
+    param: aleatoric_weight_aug: float specifying the value of $\gamma of HAEI
+    param: random_trials: int specifying the number of random initialisations
+    param: bayes_opt_iters: int specifying the number of iterations of BayesOpt
+    param: grid_size: int specifying the side length of the 2D grid to initialise on.
+    param: exp_type: str specifying the type of experiment. One of ['hetero', 'homoscedastic', 'noiseless']
+    param: opt_func: str specifying the optimisation function. One of ['hosaki', 'branin', 'goldstein']
+    param: noise_level: int specifying the noise level for homoscedastic noise. Should be 0 when heteroscedastic.
+    """
 
-    fill = True  # Whether to plot errorbars as fill or not.
-    penalty = 1  # penalty for aleatoric noise
-    aleatoric_weight = 300  # gamma
-    aleatoric_weight_aug = 2000
-    noise_level = 0  # homoscedastic noise level. Should be 0 when heteroscedastic is True.
     if noise_level != 0:
         assert exp_type == 'homoscedastic'
-    heteroscedastic = True
-    if heteroscedastic:
+    if exp_type == 'hetero':
         assert noise_level == 0
-        assert exp_type == 'hetero'
+        heteroscedastic = True
     if heteroscedastic is not True and noise_level == 0:
         assert exp_type == 'noiseless'
     n_restarts = 20
-    opt_func = 'branin'  # One of ['hosaki', 'branin', 'goldstein']
-    grid_size = 6
-
-    # Number of iterations
-    bayes_opt_iters = 10
-    random_trials = 50
 
     # We perform random trials of Bayesian Optimisation
 
@@ -336,3 +338,32 @@ if __name__ == '__main__':
     np.savetxt(f'synth_saved_data/gamma/upper_noise_hetero_aleatoric_weight_is_{aleatoric_weight_aug}_aug.txt', upper_noise_hetero)
     np.savetxt(f'synth_saved_data/gamma/lower_noise_het_aei_aleatoric_weight_is_{aleatoric_weight_aug}_aug.txt', lower_noise_het_aei)
     np.savetxt(f'synth_saved_data/gamma/upper_noise_het_aei_aleatoric_weight_is_{aleatoric_weight_aug}_aug.txt', upper_noise_het_aei)
+
+
+if __name__ == '__main__':
+
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('-p', '--penalty', type=int, default=1,
+                        help='$\alpha$ parameter specifying weight of noise component to objective.')
+    parser.add_argument('-a', '--aleatoric_weight', type=float, default=300,
+                        help='The value of both $\beta of ANPEI')
+    parser.add_argument('-ga', '--aleatoric_weight_aug', type=float, default=500,
+                        help='The value of $\gamma of HAEI')
+    parser.add_argument('-r', '--random_trials', type=int, default=50,
+                        help='Number of random initialisations')
+    parser.add_argument('-b', '--bayes_opt_iters', type=int, default=10,
+                        help='The number of iterations of BayesOpt')
+    parser.add_argument('-g', '--grid_size', type=int, default=6,
+                        help='The grid size to intialise with i.e. the side length of a 2x2 grid')
+    parser.add_argument('-e', '--exp_type', type=str, default='hetero',
+                        help='The type of noise to use. One of [hetero, homoscedastic, noiseless]')
+    parser.add_argument('-o', '--opt_func', type=str, default='branin',
+                        help='The optimisation function to use. One of [branin, hosaki, goldstein]')
+    parser.add_argument('-n', '--noise_level', type=int, default=0,
+                        help='The noise level to use for homoscedatic noise experiments')
+
+    args = parser.parse_args()
+
+    main(args.penalty, args.aleatoric_weight, args.aleatoric_weight_aug, args.random_trials, args.bayes_opt_iters,
+         args.grid_size, args.exp_type, args.opt_func, args.noise_level)
