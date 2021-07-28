@@ -4,13 +4,18 @@ This module contains the code for benchmarking heteroscedastic Bayesian Optimisa
 """
 
 import argparse
+import sys
 
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 import numpy as np
 from sklearn.model_selection import train_test_split
 
-from acquisition_functions import heteroscedastic_expected_improvement, heteroscedastic_propose_location, \
+sys.path.append('../')
+sys.path.append('../..')
+sys.path.append('../../..')
+
+from acquisition_funcs.acquisition_functions import heteroscedastic_expected_improvement, heteroscedastic_propose_location, \
     my_propose_location, my_expected_improvement, augmented_expected_improvement, heteroscedastic_augmented_expected_improvement
 from bayesopt_datasets.data_loader import soil_bo
 

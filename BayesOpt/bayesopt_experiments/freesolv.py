@@ -4,8 +4,8 @@ This module contains the code for heteroscedastic Bayesian Optimisation on the F
 """
 
 import argparse
-
 import os
+import sys
 import warnings
 
 from matplotlib import pyplot as plt
@@ -14,8 +14,12 @@ import numpy as np
 from sklearn.decomposition import PCA
 from sklearn.model_selection import train_test_split
 
+sys.path.append('../')
+sys.path.append('../..')
+sys.path.append('../../..')
+
 from data_utils import parse_dataset
-from acquisition_functions import heteroscedastic_expected_improvement, heteroscedastic_propose_location, \
+from acquisition_funcs.acquisition_functions import heteroscedastic_expected_improvement, heteroscedastic_propose_location, \
     my_propose_location, my_expected_improvement, augmented_expected_improvement, heteroscedastic_augmented_expected_improvement
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
@@ -474,6 +478,7 @@ def main(penalty, aleatoric_weight, random_trials, bayes_opt_iters, init_set_siz
     plt.savefig('new_freesolv_figures/bayesopt_plot{}_iters_{}_random_trials_and_init_num_samples_of_{}_and_seed_{}_'
                 'noise_only_new_acq_penalty_is_{}_aleatoric_weight_is_{}_n_components_is_{}_new_aei_comp_seed_check'.
                 format(bayes_opt_iters, random_trials, init_num_samples, numpy_seed, penalty, aleatoric_weight, n_components), bbox_inches='tight')
+
 
 if __name__ == '__main__':
 

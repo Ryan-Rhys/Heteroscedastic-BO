@@ -5,15 +5,21 @@ This module contains the code for benchmarking heteroscedastic Bayesian Optimisa
 """
 
 import argparse
+import sys
 
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 import numpy as np
 
-from acquisition_functions import heteroscedastic_expected_improvement, heteroscedastic_propose_location, \
+sys.path.append('../')
+sys.path.append('../..')
+sys.path.append('../../..')
+
+
+from acquisition_funcs.acquisition_functions import heteroscedastic_expected_improvement, heteroscedastic_propose_location, \
     my_propose_location, my_expected_improvement, augmented_expected_improvement, \
     heteroscedastic_augmented_expected_improvement
-from objective_functions import linear_sin_noise, max_sin_noise_objective
+from objective_funcs.objective_functions import linear_sin_noise, max_sin_noise_objective
 
 
 def main(penalty, aleatoric_weight, random_trials, bayes_opt_iters):
@@ -173,7 +179,7 @@ def main(penalty, aleatoric_weight, random_trials, bayes_opt_iters):
             het_X_next = heteroscedastic_propose_location(heteroscedastic_expected_improvement, het_X_sample,
                                                           het_Y_sample, noise, l_init, sigma_f_init, l_noise_init,
                                                           sigma_f_noise_init, gp2_noise, num_iters, sample_size, bounds,
-                                                          plot_sample, n_restarts=3, min_val=300, aleatoric_weight=aleatoric_penalty)
+                                                          plot_sample, n_restarts=3, min_val=300, aleatoric_weight=aleatoric_weight)
 
             # Obtain next noisy sample from the objective function
             het_Y_next = linear_sin_noise(het_X_next, noise_coeff, plot_sample, coefficient, fplot=False)
@@ -199,7 +205,7 @@ def main(penalty, aleatoric_weight, random_trials, bayes_opt_iters):
             # Obtain next sampling point from the augmented expected improvement (AEI)
 
             aug_X_next = my_propose_location(augmented_expected_improvement, aug_X_sample, aug_Y_sample, noise,l_init,
-                                             sigma_f_init, bounds, plot_sample, n_restarts=3, min_val=300, aleatoric_weight=aleatoric_penalty, aei=True)
+                                             sigma_f_init, bounds, plot_sample, n_restarts=3, min_val=300, aleatoric_weight=aleatoric_weight, aei=True)
 
             # Obtain next noisy sample from the objective function
             aug_Y_next = linear_sin_noise(aug_X_next, noise_coeff, plot_sample, coefficient, fplot=False)
@@ -226,7 +232,7 @@ def main(penalty, aleatoric_weight, random_trials, bayes_opt_iters):
             aug_het_X_next = heteroscedastic_propose_location(heteroscedastic_augmented_expected_improvement,
                                                               aug_het_X_sample,aug_het_Y_sample, noise, l_init, sigma_f_init,
                                                               l_noise_init, sigma_f_noise_init, gp2_noise, num_iters, sample_size,
-                                                              bounds, plot_sample, n_restarts=3, min_val=300, aleatoric_weight=aleatoric_penalty)
+                                                              bounds, plot_sample, n_restarts=3, min_val=300, aleatoric_weight=aleatoric_weight)
 
             # Obtain next noisy sample from the objective function
             aug_het_Y_next = linear_sin_noise(aug_het_X_next, noise_coeff, plot_sample, coefficient, fplot=False)
@@ -347,7 +353,7 @@ def main(penalty, aleatoric_weight, random_trials, bayes_opt_iters):
     plt.savefig('toy_figures/bayesopt_plot{}_iters_{}_random_trials_and_{}_coefficient_times_100_and_noise_coeff_times_'
                '100_of_{}_init_num_samples_of_{}_and_seed_{}_new_penalty_is_{}_aleatoric_weight_is_{}_new_aei2'.format(bayes_opt_iters, random_trials,
                                                                          int(coefficient * 100), int(noise_coeff * 100),
-                                                                         init_num_samples, numpy_seed, penalty, aleatoric_penalty), bbox_inches='tight')
+                                                                         init_num_samples, numpy_seed, penalty, aleatoric_weight), bbox_inches='tight')
 
     plt.close()
 
@@ -389,7 +395,7 @@ def main(penalty, aleatoric_weight, random_trials, bayes_opt_iters):
     plt.savefig('toy_figures/bayesopt_plot{}_iters_{}_random_trials_and_{}_coefficient_times_100_and_noise_coeff_times_'
                '100_of_{}_init_num_samples_of_{}_and_seed_{}_noise_only_penalty_is_{}_aleatoric_weight_is_{}_new_aei2'.format(bayes_opt_iters, random_trials,
                                                                          int(coefficient * 100), int(noise_coeff * 100),
-                                                                         init_num_samples, numpy_seed, penalty, aleatoric_penalty), bbox_inches='tight')
+                                                                         init_num_samples, numpy_seed, penalty, aleatoric_weight), bbox_inches='tight')
 
 
 if __name__ == '__main__':

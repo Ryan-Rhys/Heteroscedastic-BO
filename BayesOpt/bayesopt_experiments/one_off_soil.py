@@ -9,7 +9,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
-from acquisition_functions import heteroscedastic_one_off_expected_improvement, heteroscedastic_propose_location, \
+from acquisition_funcs.acquisition_functions import heteroscedastic_one_off_expected_improvement, heteroscedastic_propose_location, \
     my_propose_location, my_expected_improvement, augmented_one_off_expected_improvement, heteroscedastic_one_off_augmented_expected_improvement
 from bayesopt_datasets.data_loader import soil_bo
 

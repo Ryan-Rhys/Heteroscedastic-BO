@@ -6,17 +6,22 @@ choice option in the scipy_kernel function.
 """
 
 import argparse
+import sys
 
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 import numpy as np
 
-from acquisition_functions import heteroscedastic_expected_improvement, heteroscedastic_propose_location, \
+sys.path.append('../')
+sys.path.append('../..')
+sys.path.append('../../..')
+
+from acquisition_funcs.acquisition_functions import heteroscedastic_expected_improvement, heteroscedastic_propose_location, \
     my_propose_location, my_expected_improvement, augmented_expected_improvement, heteroscedastic_augmented_expected_improvement
 from BayesOpt.objective_funcs.synthetic_functions import hosaki_function, branin_function, goldstein_price_function
 
 
-def main(penalty, aleatoric_weight, random_trials, bayes_opt_iters, grid_size, kernel_type, exp_type, opt_func):
+def main(penalty, aleatoric_weight, random_trials, bayes_opt_iters, grid_size, kernel_type, opt_func):
     """
     Optimise the heteroscedastic Branin-Hoo function.
 
@@ -26,7 +31,6 @@ def main(penalty, aleatoric_weight, random_trials, bayes_opt_iters, grid_size, k
     param: bayes_opt_iters: int specifying the number of iterations of BayesOpt
     param: grid_size: int specifying the side length of the 2D grid to initialise on.
     param: kernel_type: str specifying the type of kernel. One of ['matern_12', 'matern_32', 'matern_52', 'rbf']
-    param: exp_type: str specifying the type of experiment. One of ['hetero', 'homoscedastic', 'noiseless']
     param: opt_func: str specifying the optimisation function. One of ['hosaki', 'branin', 'goldstein']
     """
 

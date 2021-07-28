@@ -9,9 +9,9 @@ from matplotlib import pyplot as plt
 import numpy as np
 from scipy.optimize import minimize
 
-from kernels import scipy_kernel
-from mean_functions import zero_mean
-from gp_utils import neg_log_marg_lik_krasser, posterior_predictive, nll_fn_het
+from MLHGP.kernels import scipy_kernel
+from MLHGP.mean_functions import zero_mean
+from MLHGP.gp_utils import neg_log_marg_lik_krasser, posterior_predictive, nll_fn_het
 
 
 def fit_homo_gp(xs, ys, noise, xs_star, l_init, sigma_f_init, fplot=True, mean_func=zero_mean):

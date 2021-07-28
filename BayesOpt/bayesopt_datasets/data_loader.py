@@ -7,10 +7,8 @@ This script contains utility data loading functions for the soil phosphorous fra
 from matplotlib import pyplot as plt
 import numpy as np
 
-from gp_fitting import fit_hetero_gp, fit_homo_gp
-from kernels import scipy_kernel
-from mean_functions import zero_mean, constant_mean
-from gp_utils import nlpd, one_d_train_test_split, posterior_predictive
+from MLHGP.gp_fitting import fit_hetero_gp, fit_homo_gp
+from MLHGP.mean_functions import zero_mean
 
 
 def soil(fplot_data=False):

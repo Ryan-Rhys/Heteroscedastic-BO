@@ -5,12 +5,17 @@ Script for describing effect of the gamma parameter of HAEI and ANPEI on synthet
 """
 
 import argparse
+import sys
 
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 import numpy as np
 
-from acquisition_functions import heteroscedastic_expected_improvement, heteroscedastic_propose_location, \
+sys.path.append('../')
+sys.path.append('../..')
+sys.path.append('../../..')
+
+from acquisition_funcs.acquisition_functions import heteroscedastic_expected_improvement, heteroscedastic_propose_location, \
     heteroscedastic_augmented_expected_improvement
 from BayesOpt.objective_funcs.synthetic_functions import hosaki_function, branin_function, goldstein_price_function
 

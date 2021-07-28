@@ -8,9 +8,9 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 import numpy as np
 
-from acquisition_functions import heteroscedastic_one_off_expected_improvement, heteroscedastic_propose_location, \
+from acquisition_funcs.acquisition_functions import heteroscedastic_one_off_expected_improvement, heteroscedastic_propose_location, \
     my_propose_location, my_expected_improvement, augmented_expected_improvement, heteroscedastic_one_off_augmented_expected_improvement
-from objective_functions import linear_sin_noise, max_one_off_sin_noise_objective
+from objective_funcs.objective_functions import linear_sin_noise, max_one_off_sin_noise_objective
 
 
 if __name__ == '__main__':

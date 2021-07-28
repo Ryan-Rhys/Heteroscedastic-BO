@@ -8,7 +8,7 @@ import numpy as np
 from scipy.optimize import minimize
 from scipy.stats import norm
 
-from bayesopt_utils import bo_fit_homo_gp, bo_predict_homo_gp, bo_fit_hetero_gp, bo_predict_hetero_gp
+from BayesOpt.bayesopt_utils import bo_fit_homo_gp, bo_predict_homo_gp, bo_fit_hetero_gp, bo_predict_hetero_gp
 
 
 def expected_improvement(X, X_sample, gpr, xi=0.01):
