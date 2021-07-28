@@ -9,8 +9,8 @@ import numpy as np
 import scipy.stats
 from scipy.linalg import cholesky, inv, solve_triangular
 
-from kernels import kernel, anisotropic_kernel, scipy_kernel, tanimoto_kernel
-from mean_functions import zero_mean
+from MLHGP.kernels import kernel, anisotropic_kernel, scipy_kernel, tanimoto_kernel
+from MLHGP.mean_functions import zero_mean, constant_mean
 
 
 def posterior_predictive(xs, y, xs_star, noise, l, sigma_f, mean_func=zero_mean, kernel=anisotropic_kernel, full_cov=True):
@@ -33,7 +33,10 @@ def posterior_predictive(xs, y, xs_star, noise, l, sigma_f, mean_func=zero_mean,
     jitter = 1e-3
 
     m = len(xs)  # number of training points
-    mean_vector = mean_func(xs)  # mean function applied to the training inputs
+    if mean_func == constant_mean:
+        mean_vector = constant_mean(xs, np.mean(y))  # set to mean of the y-values for constant mean
+    else:
+        mean_vector = mean_func(xs)  # mean function applied to the training inputs
     K = kernel(xs, xs, l, sigma_f)  # covariance matrix applied to the x-values of the data points
     K_s = kernel(xs, xs_star, l, sigma_f)
     K_ss = kernel(xs_star, xs_star, l, sigma_f)  # Using Katherine Bailey's notation for the cov matrix at test locations

@@ -10,9 +10,8 @@ from matplotlib import pyplot as plt
 from scipy.optimize import minimize
 from sklearn.preprocessing import StandardScaler
 
-from gp_utils import plot_het_gp1, plot_het_gp2
-from kernels import scipy_kernel, tanimoto_kernel
-from gp_utils import posterior_predictive, zero_mean, nll_fn_het
+from MLHGP.kernels import scipy_kernel
+from MLHGP.gp_utils import posterior_predictive, zero_mean, nll_fn_het, plot_het_gp1, plot_het_gp2
 
 
 def bo_fit_homo_gp(xs, ys, noise, l_init, sigma_f_init):
@@ -30,18 +29,23 @@ def bo_fit_homo_gp(xs, ys, noise, l_init, sigma_f_init):
     dimensionality = xs.shape[1]  # Extract the dimensionality of the input so that lengthscales are appropriate dimension
     # Have added in noise here
     hypers = [l_init]*dimensionality + [sigma_f_init] + [noise]  # we initialise each dimension with the same lengthscale value
+    # no noise optimisation
     #hypers = [l_init]*dimensionality + [sigma_f_init]
-    bounds = [(1e-2, 900)]*len(hypers)  # we initialise the bounds to be the same in each case
+    bounds = [(0.1, 1)]*len(hypers)  # we initialise the bounds to be the same in each case. [1e-2, 900] initially
 
     # We fit GP1 to the data
 
     res = minimize(nll_fn_het(xs, ys, noise), hypers, bounds=bounds, method='L-BFGS-B')
 
+    # for noise optimisation
     l_opt = np.array(res.x[:-2]).reshape(-1, 1)
     sigma_f_opt = res.x[-2]
     noise_opt = res.x[-1]
 
-    #sigma_f_opt = res.x[-1]
+    # for no noise optimisation
+    # l_opt = np.array(res.x[:-1]).reshape(-1, 1)
+    # sigma_f_opt = res.x[-1]
+    # noise_opt = noise
 
     return l_opt, sigma_f_opt, noise_opt
 
@@ -105,7 +109,7 @@ def bo_fit_hetero_gp(xs, ys, noise, l_init, sigma_f_init, l_noise_init, sigma_f_
     dimensionality = xs.shape[1]  # in order to plot only in the 1D input case.
     gp1_hypers = [l_init]*dimensionality + [sigma_f_init]  # we initialise each dimension with the same lengthscale value
     gp2_hypers = [l_noise_init]*dimensionality + [sigma_f_noise_init]  # we initialise each dimensions with the same lengthscale value for gp2 as well.
-    bounds = [(0.1, 900)]*len(gp1_hypers)  # we initialise the bounds to be the same in each case
+    bounds = [(0.1, 1)]*len(gp1_hypers)  # we initialise the bounds to be the same in each case. [0.1, 900] initially
 
     for i in range(0, num_iters):
 
@@ -162,7 +166,8 @@ def bo_fit_hetero_gp(xs, ys, noise, l_init, sigma_f_init, l_noise_init, sigma_f_
     return noise, gp2_noise, gp1_l_opt, gp1_sigma_f_opt, gp2_l_opt, gp2_sigma_f_opt, variance_estimator
 
 
-def bo_predict_hetero_gp(xs, ys, variance_estimator, xs_star, noise_func, gp1_l_opt, gp1_sigma_f_opt, gp2_noise, gp2_l_opt, gp2_sigma_f_opt, f_plot=False, f_plot2=False):
+def bo_predict_hetero_gp(xs, ys, variance_estimator, xs_star, noise_func, gp1_l_opt, gp1_sigma_f_opt, gp2_noise,
+                         gp2_l_opt, gp2_sigma_f_opt, f_plot=False, f_plot2=False):
     """
     Compute predictions at the test locations using the heteroscedastic GP.
 
@@ -178,7 +183,8 @@ def bo_predict_hetero_gp(xs, ys, variance_estimator, xs_star, noise_func, gp1_l_
     :param gp2_sigma_f_opt: optimised signal amplitude of GP2
     :param f_plot: Whether to plot the GP1 fit
     :param f_plot2: Whether to plot the GP2 fit
-    :return: predictive mean and variance of the heteroscedastic GP at the test locations xs_star.
+    :return: predictive mean, epistemic variance, aleatoric noise standard deviation
+     of the heteroscedastic GP at the test locations xs_star.
     """
 
     pred_mean_het, pred_var_het, _, _ = posterior_predictive(xs, ys, xs_star, noise_func, gp1_l_opt, gp1_sigma_f_opt)
@@ -187,7 +193,7 @@ def bo_predict_hetero_gp(xs, ys, variance_estimator, xs_star, noise_func, gp1_l_
     pred_mean_noise = np.sqrt(pred_mean_noise).reshape(len(pred_mean_noise))  # taking the standard deviation
 
     pred_mean = pred_mean_het
-    pred_var = np.diag(pred_var_het) # + pred_mean_noise**2
+    pred_var = np.diag(pred_var_het)  # + pred_mean_noise**2
 
     if f_plot:
 

@@ -3,7 +3,9 @@
 This module contains the code for heteroscedastic Bayesian Optimisation on the Freesolv dataset.
 """
 
+import argparse
 import os
+import sys
 import warnings
 
 from matplotlib import pyplot as plt
@@ -12,33 +14,41 @@ import numpy as np
 from sklearn.decomposition import PCA
 from sklearn.model_selection import train_test_split
 
+sys.path.append('../')
+sys.path.append('../..')
+sys.path.append('../../..')
+
 from data_utils import parse_dataset
-from acquisition_functions import heteroscedastic_expected_improvement, heteroscedastic_propose_location, \
+from acquisition_funcs.acquisition_functions import heteroscedastic_expected_improvement, heteroscedastic_propose_location, \
     my_propose_location, my_expected_improvement, augmented_expected_improvement, heteroscedastic_augmented_expected_improvement
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-# Adjust accordingly for your own file system
 
-FREESOLV_PATH = '../bayesopt_datasets/Freesolv/Freesolv.txt'
-task = 'FreeSolv'
-use_frag = True
-use_exp = True  # use experimental values.
+def main(penalty, aleatoric_weight, random_trials, bayes_opt_iters, init_set_size, n_components, path):
+    """
+    Script for running the soil phosphorus fraction optimisation experiment.
 
-if __name__ == '__main__':
+    param: penalty: $\alpha$ parameter specifying weight of noise component to objective
+    param: aleatoric_weight: float specifying the value of $\beta of ANPEI
+    param: random_trials: int specifying the number of random initialisations
+    param: bayes_opt_iters: int specifying the number of iterations of BayesOpt
+    param: init_set_size: int specifying the side length of the 2D grid to initialise on.
+    param: n_components: int specifying the number of PCA principle components to keep.
+    param: path: str specifying the path to the Freesolv.txt file.
+    """
 
-    fill = True
-    penalty = 1
-    aleatoric_weight = 1
-    n_components = 14
+    task = 'FreeSolv'
+    use_frag = True
+    use_exp = True  # use experimental values.
 
-    xs, ys, std = parse_dataset(task, FREESOLV_PATH, use_frag, use_exp)
+    xs, ys, std = parse_dataset(task, path, use_frag, use_exp)
 
     warnings.filterwarnings('ignore')
 
     # Number of iterations
     bayes_opt_iters = 10
-    random_trials = 5
+    random_trials = 50
 
     # We perform random trials of Bayesian Optimisation
 
@@ -68,19 +78,20 @@ if __name__ == '__main__':
 
     for i in range(random_trials):
 
-        numpy_seed = i
-        np.random.seed(numpy_seed)
+        start_seed = 47
+        numpy_seed = i + start_seed  # set to avoid segfault issue
+                             # ('Process finished with exit code 139 (interrupted by signal 11: SIGSEGV)') when i = 0
 
         # test in this instance is the initialisation set for Bayesian Optimisation and train is the heldout set.
 
-        xs_train, xs_test, ys_train, ys_test = train_test_split(xs, ys, test_size=0.2, random_state=numpy_seed, shuffle=True)
+        xs_train, xs_test, ys_train, ys_test = train_test_split(xs, ys, test_size=init_set_size, random_state=numpy_seed, shuffle=True)
 
         pca = PCA(n_components)
         xs_test = pca.fit_transform(xs_test)
         print('Fraction of variance retained is: ' + str(sum(pca.explained_variance_ratio_)))
         xs_train = pca.transform(xs_train)
 
-        _, _, std_train, std_test = train_test_split(xs, std, test_size=0.2, random_state=numpy_seed, shuffle=True)
+        _, _, std_train, std_test = train_test_split(xs, std, test_size=init_set_size, random_state=numpy_seed, shuffle=True)
 
         ys_train = ys_train.reshape(-1, 1)
         ys_test = ys_test.reshape(-1, 1)
@@ -148,9 +159,9 @@ if __name__ == '__main__':
         aug_collected_x = []
         aug_het_collected_x = []
 
-        for i in range(bayes_opt_iters):
+        for j in range(bayes_opt_iters):
 
-            print(i)
+            print(j)
 
             # take random point from uniform distribution
             rand_X_next = np.random.uniform(np.min(xs_train, axis=0), np.max(xs_train, axis=0))  # this just takes X not the sin function itself
@@ -326,6 +337,34 @@ if __name__ == '__main__':
         aug_het_noise_running_sum += np.array(aug_het_noise_val_list, dtype=np.float64).flatten()
         aug_het_noise_squares += np.array(aug_het_noise_val_list, dtype=np.float64).flatten() ** 2
 
+        print(f'trial {i} complete')
+
+        if init_set_size == 0.2:
+
+            seed_index = i + start_seed + 1
+
+            np.savetxt(f'freesolv_data/02_pen_1/rand_means/rand_means_{start_seed}_{seed_index}.txt', rand_running_sum)
+            np.savetxt(f'freesolv_data/02_pen_1/rand_means/rand_squares_{start_seed}_{seed_index}.txt', rand_squares)
+            np.savetxt(f'freesolv_data/02_pen_1/homo_means/homo_means_{start_seed}_{seed_index}.txt', homo_running_sum)
+            np.savetxt(f'freesolv_data/02_pen_1/homo_means/homo_squares_{start_seed}_{seed_index}.txt', homo_squares)
+            np.savetxt(f'freesolv_data/02_pen_1/het_means/hetero_means_{start_seed}_{seed_index}.txt', hetero_running_sum)
+            np.savetxt(f'freesolv_data/02_pen_1/het_means/hetero_squares_{start_seed}_{seed_index}.txt', hetero_squares)
+            np.savetxt(f'freesolv_data/02_pen_1/aug_means/aug_means_{start_seed}_{seed_index}.txt', aug_running_sum)
+            np.savetxt(f'freesolv_data/02_pen_1/aug_means/aug_squares_{start_seed}_{seed_index}.txt', aug_squares)
+            np.savetxt(f'freesolv_data/02_pen_1/aug_het_means/aug_het_means_{start_seed}_{seed_index}.txt', aug_het_running_sum)
+            np.savetxt(f'freesolv_data/02_pen_1/aug_het_means/aug_het_squares_{start_seed}_{seed_index}.txt', aug_het_squares)
+
+            np.savetxt(f'freesolv_data/02_pen_1/rand_noise/rand_means_{start_seed}_{seed_index}.txt', rand_noise_running_sum)
+            np.savetxt(f'freesolv_data/02_pen_1/rand_noise/rand_squares_{start_seed}_{seed_index}.txt', rand_noise_squares)
+            np.savetxt(f'freesolv_data/02_pen_1/homo_noise/homo_means_{start_seed}_{seed_index}.txt', homo_noise_running_sum)
+            np.savetxt(f'freesolv_data/02_pen_1/homo_noise/homo_squares_{start_seed}_{seed_index}.txt', homo_noise_squares)
+            np.savetxt(f'freesolv_data/02_pen_1/het_noise/hetero_means_{start_seed}_{seed_index}.txt', hetero_noise_running_sum)
+            np.savetxt(f'freesolv_data/02_pen_1/het_noise/hetero_squares_{start_seed}_{seed_index}.txt', hetero_noise_squares)
+            np.savetxt(f'freesolv_data/02_pen_1/aug_noise/aug_means_{start_seed}_{seed_index}.txt', aug_noise_running_sum)
+            np.savetxt(f'freesolv_data/02_pen_1/aug_noise/aug_squares_{start_seed}_{seed_index}.txt', aug_noise_squares)
+            np.savetxt(f'freesolv_data/02_pen_1/aug_het_noise/aug_het_means_{start_seed}_{seed_index}.txt', aug_het_noise_running_sum)
+            np.savetxt(f'freesolv_data/02_pen_1/aug_het_noise/aug_het_squares_{start_seed}_{seed_index}.txt', aug_het_noise_squares)
+
     rand_means = rand_running_sum / random_trials
     rand_errs = (np.sqrt(rand_squares / random_trials - rand_means **2))/np.sqrt(random_trials)
     homo_means = homo_running_sum / random_trials
@@ -356,7 +395,7 @@ if __name__ == '__main__':
     print('List of heteroscedastic errors is: ' + str(hetero_noise_means))
     print('List of average AEI values is: ' + str(aug_means))
     print('List of AEI errors is: ' + str(aug_noise_means))
-    print('List of average het-AEI values is: ' + str(aug_het_noise_means))
+    print('List of average het-AEI values is: ' + str(aug_het_means))
     print('List of het-AEI errors is: ' + str(aug_het_noise_means))
 
     iter_x = np.arange(1, bayes_opt_iters + 1)
@@ -377,35 +416,29 @@ if __name__ == '__main__':
     lower_het_aei = np.array(aug_het_means) - np.array(aug_het_errs)
     upper_het_aei = np.array(aug_het_means) + np.array(aug_het_errs)
 
-    if fill:
-        plt.plot(iter_x, rand_means, color='tab:orange', label='Random Sampling')
-        plt.plot(iter_x, homo_means, color='tab:blue', label='Homoscedastic')
-        plt.plot(iter_x, hetero_means, color='tab:green', label='Heteroscedastic ANPEI')
-        plt.plot(iter_x, aug_means, color='tab:red', label='Homoscedastic AEI')
-        plt.plot(iter_x, aug_het_means, color='tab:purple', label='Heteroscedastic AEI')
-        plt.fill_between(iter_x, lower_rand, upper_rand, color='tab:orange', alpha=0.1)
-        plt.fill_between(iter_x, lower_homo, upper_homo, color='tab:blue', alpha=0.1)
-        plt.fill_between(iter_x, lower_hetero, upper_hetero, color='tab:green', alpha=0.1)
-        plt.fill_between(iter_x, lower_aei, upper_aei, color='tab:red', alpha=0.1)
-        plt.fill_between(iter_x, lower_het_aei, upper_het_aei, color='tab:purple', alpha=0.1)
-    else:
-        plt.errorbar(iter_x, homo_means, yerr=np.concatenate((homo_means - lower_homo, upper_homo - homo_means)).reshape((2,5)), color='r', label='Homoscedastic', capsize=5)
-        plt.errorbar(iter_x, hetero_means, yerr=np.concatenate((hetero_means - lower_hetero, upper_hetero - hetero_means)).reshape((2,5)), color='b', label='Heteroscedastic ANPEI', capsize=5)
-        plt.errorbar(iter_x, rand_means, yerr=np.concatenate((rand_means - lower_rand, upper_rand - rand_means)).reshape((2,5)), color='g', label='Random Sampling', capsize=5)
-        plt.errorbar(iter_x, aug_means, yerr=np.concatenate((aug_means - lower_aei, upper_aei - aug_means)).reshape((2,5)), color='c', label='Homoscedastic AEI', capsize=5)
-        plt.errorbar(iter_x, aug_het_means, yerr=np.concatenate((aug_het_means - lower_het_aei, upper_het_aei - aug_het_means)).reshape((2,5)), color='m', label='Heteroscedastic AEI', capsize=5)
+    plt.plot(iter_x, rand_means, color='tab:orange', label='RS')
+    plt.plot(iter_x, homo_means, color='tab:blue', label='EI')
+    plt.plot(iter_x, hetero_means, color='tab:green', label='ANPEI')
+    plt.plot(iter_x, aug_means, color='tab:red', label='AEI')
+    plt.plot(iter_x, aug_het_means, color='tab:purple', label='HAEI')
+    plt.fill_between(iter_x, lower_rand, upper_rand, color='tab:orange', alpha=0.1)
+    plt.fill_between(iter_x, lower_homo, upper_homo, color='tab:blue', alpha=0.1)
+    plt.fill_between(iter_x, lower_hetero, upper_hetero, color='tab:green', alpha=0.1)
+    plt.fill_between(iter_x, lower_aei, upper_aei, color='tab:red', alpha=0.1)
+    plt.fill_between(iter_x, lower_het_aei, upper_het_aei, color='tab:purple', alpha=0.1)
 
-    plt.title('Best Objective Function Value Found so Far', fontsize=16)
+    #plt.title('Best Objective Function Value Found so Far', fontsize=16)
     plt.xlabel('Function Evaluations', fontsize=14)
     if penalty != 1:
         plt.ylabel(f'Hydration Free Energy (kcal/mol) + {penalty}*Noise', fontsize=14)
     else:
         plt.ylabel(f'Hydration Free Energy (kcal/mol) + Noise', fontsize=14)
     plt.tick_params(labelsize=14)
-    plt.legend(loc=1)
-    plt.savefig('freesolv_figures/bayesopt_plot{}_iters_{}_random_trials_and_init_num_samples_of_{}_and_seed_{}_'
+    #plt.legend(loc=1)
+    plt.legend(loc='lower left', bbox_to_anchor=(0.0, -0.425), ncol=3, borderaxespad=0, fontsize=14, frameon=False)
+    plt.savefig('new_freesolv_figures/bayesopt_plot{}_iters_{}_random_trials_and_init_num_samples_of_{}_and_seed_{}_'
                 'new_acq_penalty_is_{}_aleatoric_weight_is_{}_n_components_is_{}_new_aei_comp_seed_check'.
-                format(bayes_opt_iters, random_trials, init_num_samples, numpy_seed, penalty, aleatoric_weight, n_components))
+                format(bayes_opt_iters, random_trials, init_num_samples, numpy_seed, penalty, aleatoric_weight, n_components), bbox_inches='tight')
 
     plt.close()
 
@@ -425,29 +458,48 @@ if __name__ == '__main__':
     lower_noise_het_aei = np.array(aug_het_noise_means) - np.array(aug_het_noise_errs)
     upper_noise_het_aei = np.array(aug_het_noise_means) + np.array(aug_het_noise_errs)
 
-    if fill:
-        plt.plot(iter_x, rand_noise_means, color='tab:orange', label='Random Sampling')
-        plt.plot(iter_x, homo_noise_means, color='tab:blue', label='Homoscedastic')
-        plt.plot(iter_x, hetero_noise_means, color='tab:green', label='Heteroscedastic ANPEI')
-        plt.plot(iter_x, aug_noise_means, color='tab:red', label='Homoscedastic AEI')
-        plt.plot(iter_x, aug_het_noise_means, color='tab:purple', label='Heteroscedastic AEI')
-        plt.fill_between(iter_x, lower_noise_rand, upper_noise_rand, color='tab:orange', alpha=0.1)
-        plt.fill_between(iter_x, lower_noise_homo, upper_noise_homo, color='tab:blue', alpha=0.1)
-        plt.fill_between(iter_x, lower_noise_hetero, upper_noise_hetero, color='tab:green', alpha=0.1)
-        plt.fill_between(iter_x, lower_noise_aei, upper_noise_aei, color='tab:red', alpha=0.1)
-        plt.fill_between(iter_x, lower_noise_het_aei, upper_noise_het_aei, color='tab:purple', alpha=0.1)
-    else:
-        plt.errorbar(iter_x, homo_noise_means, yerr=np.concatenate((homo_noise_means - lower_noise_homo, upper_noise_homo - homo_noise_means)).reshape((2,5)), color='r', label='Homoscedastic', capsize=5)
-        plt.errorbar(iter_x, hetero_noise_means, yerr=np.concatenate((hetero_noise_means - lower_noise_hetero, upper_noise_hetero - hetero_noise_means)).reshape((2,5)), color='b', label='Heteroscedastic ANPEI', capsize=5)
-        plt.errorbar(iter_x, rand_noise_means, yerr=np.concatenate((rand_noise_means - lower_noise_rand, upper_noise_rand - rand_noise_means)).reshape((2,5)), color='g', label='Random Sampling', capsize=5)
-        plt.errorbar(iter_x, aug_noise_means, yerr=np.concatenate((aug_noise_means - lower_noise_aei, upper_noise_aei - aug_noise_means)).reshape((2,5)), color='c', label='Homoscedastic AEI', capsize=5)
-        plt.errorbar(iter_x, aug_het_noise_means, yerr=np.concatenate((aug_het_noise_means - lower_noise_het_aei, upper_noise_het_aei - aug_het_noise_means)).reshape((2,5)), color='m', label='Heteroscedastic AEI', capsize=5)
+    plt.plot(iter_x, rand_noise_means, color='tab:orange', label='RS')
+    plt.plot(iter_x, homo_noise_means, color='tab:blue', label='EI')
+    plt.plot(iter_x, hetero_noise_means, color='tab:green', label='ANPEI')
+    plt.plot(iter_x, aug_noise_means, color='tab:red', label='AEI')
+    plt.plot(iter_x, aug_het_noise_means, color='tab:purple', label='HAEI')
+    plt.fill_between(iter_x, lower_noise_rand, upper_noise_rand, color='tab:orange', alpha=0.1)
+    plt.fill_between(iter_x, lower_noise_homo, upper_noise_homo, color='tab:blue', alpha=0.1)
+    plt.fill_between(iter_x, lower_noise_hetero, upper_noise_hetero, color='tab:green', alpha=0.1)
+    plt.fill_between(iter_x, lower_noise_aei, upper_noise_aei, color='tab:red', alpha=0.1)
+    plt.fill_between(iter_x, lower_noise_het_aei, upper_noise_het_aei, color='tab:purple', alpha=0.1)
 
-    plt.title('Lowest Aleatoric Noise Found so Far', fontsize=16)
+    #plt.title('Lowest Aleatoric Noise Found so Far', fontsize=16)
     plt.xlabel('Function Evaluations', fontsize=14)
     plt.ylabel('Aleatoric Noise', fontsize=14)
     plt.tick_params(labelsize=14)
-    plt.legend(loc=1)
-    plt.savefig('freesolv_figures/bayesopt_plot{}_iters_{}_random_trials_and_init_num_samples_of_{}_and_seed_{}_'
+    #plt.legend(loc=1)
+    plt.legend(loc='lower left', bbox_to_anchor=(0.0, -0.425), ncol=3, borderaxespad=0, fontsize=14, frameon=False)
+    plt.savefig('new_freesolv_figures/bayesopt_plot{}_iters_{}_random_trials_and_init_num_samples_of_{}_and_seed_{}_'
                 'noise_only_new_acq_penalty_is_{}_aleatoric_weight_is_{}_n_components_is_{}_new_aei_comp_seed_check'.
-                format(bayes_opt_iters, random_trials, init_num_samples, numpy_seed, penalty, aleatoric_weight, n_components))
+                format(bayes_opt_iters, random_trials, init_num_samples, numpy_seed, penalty, aleatoric_weight, n_components), bbox_inches='tight')
+
+
+if __name__ == '__main__':
+
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('-p', '--penalty', type=int, default=1,
+                        help='$\alpha$ parameter specifying weight of noise component to objective.')
+    parser.add_argument('-a', '--aleatoric_weight', type=float, default=1,
+                        help='The value of both $\beta and $\gamma of ANPEI and HAEI')
+    parser.add_argument('-r', '--random_trials', type=int, default=50,
+                        help='Number of random initialisations')
+    parser.add_argument('-b', '--bayes_opt_iters', type=int, default=10,
+                        help='The number of iterations of BayesOpt')
+    parser.add_argument('-t', '--init_set_size', type=float, default=0.2,
+                        help='The fraction of datapoints to initialise with')
+    parser.add_argument('-pc', '--n_components', type=int, default=14,
+                        help='The number of principle components to keep')
+    parser.add_argument('-path', '--path', type=str, default='../bayesopt_datasets/Freesolv/Freesolv.txt',
+                        help='The path to the Freesolv.txt file')
+
+    args = parser.parse_args()
+
+    main(args.penalty, args.aleatoric_weight, args.random_trials, args.bayes_opt_iters, args.init_set_size,
+         args.n_components, args.path)

@@ -8,7 +8,7 @@ import numpy as np
 from scipy.optimize import minimize
 from scipy.stats import norm
 
-from bayesopt_utils import bo_fit_homo_gp, bo_predict_homo_gp, bo_fit_hetero_gp, bo_predict_hetero_gp
+from BayesOpt.bayesopt_utils import bo_fit_homo_gp, bo_predict_homo_gp, bo_fit_hetero_gp, bo_predict_hetero_gp
 
 
 def expected_improvement(X, X_sample, gpr, xi=0.01):
@@ -89,7 +89,7 @@ def augmented_expected_improvement(X, X_sample, Y_sample, noise, l_opt, sigma_f_
         Z = imp / std
         ei = imp * norm.cdf(Z) + std * norm.pdf(Z)
         ei[std == 0.0] = 0.0
-        aei = ei*(1 - aleatoric_weight*noise/np.sqrt(aleatoric_weight**2*noise**2 + var))
+        aei = ei*(1 - (aleatoric_weight*noise)/np.sqrt(aleatoric_weight**2*noise**2 + var))
 
     return aei
 
@@ -226,7 +226,7 @@ def heteroscedastic_augmented_expected_improvement(X, X_sample, Y_sample, varian
     :param gp2_sigma_f_opt: optimised signal amplitude for GP2
     :param gp2_noise: GP2 noise level
     :param mu_sample_opt: incumbent eta
-    :param hetero_ei: whether to use the ei minus one standard deviation as acquisition function
+    :param hetero_ei: whether to use the heteroscedastic acquisition
     :return: expected improvement at the test locations.
     """
 
@@ -235,7 +235,6 @@ def heteroscedastic_augmented_expected_improvement(X, X_sample, Y_sample, varian
     mu, var, aleatoric_std = bo_predict_hetero_gp(X_sample, Y_sample, variance_estimator, X, noise_func, gp1_l_opt, gp1_sigma_f_opt, gp2_noise, gp2_l_opt, gp2_sigma_f_opt)
     std = np.sqrt(np.diag(var))
 
-
     if hetero_ei:
 
         with np.errstate(divide='warn'):
@@ -243,9 +242,10 @@ def heteroscedastic_augmented_expected_improvement(X, X_sample, Y_sample, varian
             Z = imp / std
             ei = imp * norm.cdf(Z) + std * norm.pdf(Z)
             ei[std == 0.0] = 0.0
-            aei = ei*(1 - aleatoric_weight*aleatoric_std/np.sqrt(aleatoric_weight**2*aleatoric_std**2 + var))
+            haei = ei*(1 - (aleatoric_weight*aleatoric_std)/np.sqrt(aleatoric_weight**2*aleatoric_std**2 + var))
+            # recovering old version
 
-        return aei
+        return haei
 
     else:
 
@@ -292,9 +292,9 @@ def heteroscedastic_one_off_augmented_expected_improvement(X, X_sample, Y_sample
             ei = imp * norm.cdf(Z) + std * norm.pdf(Z)
             ei[std == 0.0] = 0.0
             #aei = ei*(1 - np.sqrt(aleatoric_std**2 + std**2)/aleatoric_std)  # appears to be misspecified
-            aei = ei*(np.sqrt(var + aleatoric_weight*aleatoric_std**2)/std)  # works best empirically
+            haei = ei*(np.sqrt(var + aleatoric_weight*aleatoric_std**2)/std)  # works best empirically
 
-        return aei
+        return haei
 
     else:
 
@@ -367,6 +367,8 @@ def my_propose_location(acquisition, X_sample, Y_sample, noise, l_init, sigma_f_
         return -acquisition(X, X_sample, Y_sample, noise, l_opt, sigma_f_opt, mu_sample_opt, aleatoric_weight)
 
     # Find the best optimum by starting from n_restart different random points.
+
+    # np.random.seed(1)
 
     if not aei:
 
@@ -455,6 +457,8 @@ def heteroscedastic_propose_location(acquisition, X_sample, Y_sample, noise, l_i
         #return -acquisition(X, X_sample, Y_sample, noise, l_init, sigma_f_init, l_noise_init, sigma_f_noise_init, gp2_noise, num_iters, sample_size)
         return -acquisition(X, X_sample, Y_sample, variance_estimator, noise_func, gp1_l_opt, gp1_sigma_f_opt, gp2_l_opt,
                             gp2_sigma_f_opt, gp2_noise, mu_sample_opt, hetero_ei=True, aleatoric_weight=aleatoric_weight)
+
+    # np.random.seed(1)  # ensures reproducibility between runs
 
     if dim == 1:  # change bounds for a single dimensions. Added for UCI dataset NAS experiments
         for x0 in np.random.uniform(bounds[0], bounds[1], size=(n_restarts, dim)):

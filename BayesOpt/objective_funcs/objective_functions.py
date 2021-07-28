@@ -29,26 +29,32 @@ def linear_sin_noise(X, noise, plot_sample, coefficient, fplot=True, one_off=Fal
 
     if fplot:
         plt.plot(plot_sample, noise_function, color='green', label='Noise Function', linewidth=4)
-        plt.xlabel('x', fontsize=16)
-        plt.ylabel('g(x)', fontsize=16)
+        plt.xlabel('x', fontsize=24)
+        plt.ylabel('g(x)', fontsize=24)
         #plt.title('Noise Function', fontsize=18)
-        plt.tick_params(labelsize=14)
+        plt.tick_params(labelsize=22)
         plt.ylim(-3, 9)
         plt.xlim(0, 10)
-        plt.savefig('toy_figures/noise_function.png')
-        plt.savefig('toy_one_off_figures/noise_function.png')
+        #plt.show()
+        plt.tight_layout()
+        if not one_off:
+            plt.savefig('toy_figures/noise_function.png')
+        else:
+            plt.savefig('toy_one_off_figures/noise_function.png')
         plt.close()
         plt.cla()
 
         plt.plot(plot_sample, plot_sin_function, color='blue', label='latent function', linewidth=4)
         plt.plot(X, linear_sin_noise, '+', color='green', markersize='12', linewidth='8', label='samples with heteroscedastic noise')
-        plt.xlabel('x', fontsize=16)
-        plt.ylabel('y', fontsize=16)
-        plt.title('Noisy Samples', fontsize=18)
-        plt.tick_params(labelsize=14)
+        plt.xlabel('x', fontsize=24)
+        plt.ylabel('y', fontsize=24)
+        #plt.title('Noisy Samples', fontsize=18)
+        plt.tick_params(labelsize=22)
         plt.ylim(-3, 9)
         plt.xlim(0, 10)
-        plt.legend(loc=3)
+        plt.legend(loc=3, fontsize=16)
+        plt.tight_layout()
+        #plt.show()
 
         if not one_off:
             plt.savefig('toy_figures/samples.png')
@@ -58,32 +64,36 @@ def linear_sin_noise(X, noise, plot_sample, coefficient, fplot=True, one_off=Fal
         plt.cla()
 
         plt.plot(plot_sample, plot_sin_function, color='blue', label='latent function', linewidth=4)
-        plt.xlabel('x', fontsize=16)
-        plt.ylabel('f(x)', fontsize=16)
+        plt.xlabel('x', fontsize=24)
+        plt.ylabel('f(x)', fontsize=24)
         #plt.title('Latent Function', fontsize=18)
-        plt.tick_params(labelsize=14)
+        plt.tick_params(labelsize=22)
         plt.ylim(-3, 9)
         plt.xlim(0, 10)
+        plt.tight_layout()
 
         if not one_off:
             plt.savefig('toy_figures/latent_func.png')
         else:
             plt.savefig('toy_one_off_figures/latent_func.png')
+        #plt.show()
         plt.close()
         plt.cla()
 
         if not one_off:
             plt.plot(plot_sample, plot_sin_function - noise*plot_sample, color='purple', label='black box', linewidth=4)
-            plt.ylabel('f(x) - g(x)', fontsize=16)
+            plt.ylabel('f(x) - g(x)', fontsize=24)
         else:
             plt.plot(plot_sample, plot_sin_function + noise*plot_sample, color='purple', label='black box', linewidth=4)
-            plt.ylabel('f(x) + g(x)', fontsize=16)
-        plt.xlabel('x', fontsize=16)
+            plt.ylabel('f(x) + g(x)', fontsize=24)
+        plt.xlabel('x', fontsize=24)
         #plt.title('Black-Box Objective', fontsize=18)
-        plt.tick_params(labelsize=14)
+        plt.tick_params(labelsize=22)
         plt.ylim(-3, 9)
         plt.xlim(0, 10)
+        plt.tight_layout()
         if not one_off:
+            #plt.show()
             plt.savefig('toy_figures/black_box.png')
         else:
             plt.savefig('toy_one_off_figures/black_box.png')
@@ -214,7 +224,8 @@ def branin_function(x1, x2, noise=0.0, standardised=False):
     if standardised:
         x_bar_one = 15*x1 - 5
         x_bar_two = 15*x2
-        f = (1/51.95)*((x_bar_two - ((5.1*x_bar_one**2)/(4*np.pi**2)) + (5*x_bar_one/np.pi) - 6)**2 + ((10 - 10/8*np.pi)*np.cos(x_bar_one)) - 44.81)
+        f = (1/51.95)*((x_bar_two - ((5.1*x_bar_one**2)/(4*np.pi**2)) + (5*x_bar_one/np.pi) - 6)**2 +
+                       ((10 - 10/8*np.pi)*np.cos(x_bar_one)) - 44.81)
 
     else:
         f = a * (x2 - b * x1 ** 2 + c * x1 - r) ** 2 + s * (1 - t) * np.cos(x1) + s  # Compute the Branin(x1, x2) function
@@ -289,7 +300,7 @@ def noise_plot_function(x1, x2, standardised=False):
         # basis_func_two = amp*np.exp(-np.linalg.norm(min_two_dist, axis=0)**2/(2*bandwidth))
         # basis_func_three = amp*np.exp(-np.linalg.norm(min_three_dist, axis=0)**2/(2*bandwidth))
 
-        return 15 - (2.8*x1**2 + 4.8*x2**2)
+        return 15 - (8*x1 + 8*x2**2)
 
 
 def heteroscedastic_branin(x1, x2, standardised=False, f_plot=False, penalty=1):
@@ -392,6 +403,11 @@ def opt_branin(x):
 
 
 if __name__ == '__main__':
-    res = minimize(opt_branin, x0=np.array([0.25, 0.25]), method='L-BFGS-B', bounds=((0, 1), (0, 1)))
-    print(res.x)
-    print(opt_branin(np.array(res.x)))
+    # res = minimize(opt_branin, x0=np.array([0.25, 0.25]), method='L-BFGS-B', bounds=((0, 1), (0, 1)))
+    # print(res.x)
+    # print(opt_branin(np.array(res.x)))
+    X = np.linspace(0, 10, 50).reshape(-1, 1)
+    plot_sample = np.linspace(0, 10, 50).reshape(-1, 1)  # samples for plotting purposes
+    noise = 0.5
+    coefficient = 0.2
+    linear_sin_noise(X, noise, plot_sample, coefficient)
