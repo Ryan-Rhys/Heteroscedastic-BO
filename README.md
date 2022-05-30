@@ -2,7 +2,8 @@
 
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-Heteroscedastic Bayesian Optimisation uisng the most likely heteroscedatic Gaussian Process as the surrogate model.
+Heteroscedastic Bayesian Optimisation uisng the most likely heteroscedatic Gaussian Process as the surrogate model. Implements the approach from "Achieving Robustness to Aleatoric Uncertainty with Heteroscedastic Bayesian Optimisation" available at [https://iopscience.iop.org/article/10.1088/2632-2153/ac298c/meta]
+
 Experiment scripts may be found in the BayesOpt/bayesopt_experiments directory.
 
 <p align="center">
@@ -46,15 +47,17 @@ per your task requirements.
 
 ## Citing
 
-If you find this code useful please consider citing the following paper https://arxiv.org/abs/1910.07779
+If you find this code useful please consider citing the following paper [https://iopscience.iop.org/article/10.1088/2632-2153/ac298c/meta]
 
 ```
-@misc{griffiths2021achieving,
-      title={Achieving Robustness to Aleatoric Uncertainty with Heteroscedastic Bayesian Optimisation}, 
-      author={Ryan-Rhys Griffiths and Alexander A. Aldrick and Miguel Garcia-Ortegon and Vidhi R. Lalchand and Alpha A. Lee},
-      year={2021},
-      eprint={1910.07779},
-      archivePrefix={arXiv},
-      primaryClass={stat.ML}
+@article{griffiths2021achieving,
+  title={Achieving robustness to aleatoric uncertainty with heteroscedastic Bayesian optimisation},
+  author={Griffiths, Ryan-Rhys and Aldrick, Alexander A and Garcia-Ortegon, Miguel and Lalchand, Vidhi and others},
+  journal={Machine Learning: Science and Technology},
+  volume={3},
+  number={1},
+  pages={015004},
+  year={2021},
+  publisher={IOP Publishing}
 }
 ```
