@@ -54,5 +54,5 @@ tensorflow-tensorboard==0.4.0
 termcolor==1.1.0
 Theano==1.0.4
 typed-ast==1.1.0
-Werkzeug==0.14.1
+Werkzeug==0.15.5
 wrapt==1.10.11
